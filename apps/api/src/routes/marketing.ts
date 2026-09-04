@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { requireAuth, requirePermission, AuthedRequest } from "../middleware/require-auth";
 import { prisma } from "../prisma";
+import { broadcast } from "../websockets";
 import {
   createCampaign,
   listCampaigns,
@@ -39,6 +40,12 @@ marketingRouter.post("/campaigns", requireAuth, requirePermission("crm.write"), 
       },
       marketingRepo,
     );
+    broadcast(req.auth!.outletId, "marketing.campaign_created", {
+      campaignId: campaign.id,
+      name: campaign.name,
+      triggerType: campaign.triggerType,
+      outletId: req.auth!.outletId,
+    });
     res.status(201).json(campaign);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -62,6 +69,11 @@ marketingRouter.get("/campaigns", requireAuth, requirePermission("crm.write"), a
 marketingRouter.post("/campaigns/:id/queue", requireAuth, requirePermission("crm.write"), async (req: AuthedRequest, res) => {
   try {
     const result = await queueCampaign(req.auth!.outletId, req.params.id, marketingRepo);
+    broadcast(req.auth!.outletId, "marketing.campaign_queued", {
+      campaignId: req.params.id,
+      recipientCount: result.recipientCount,
+      outletId: req.auth!.outletId,
+    });
     res.status(200).json({
       ...result,
       dispatchNote:
@@ -158,6 +170,10 @@ marketingRouter.post("/campaigns/:id/pause", requireAuth, requirePermission("crm
     }
 
     await marketingRepo.setCampaignStatus(req.params.id, "PAUSED");
+    broadcast(outletId, "marketing.campaign_paused", {
+      campaignId: req.params.id,
+      outletId,
+    });
     res.status(200).json({
       id: req.params.id,
       status: "PAUSED",

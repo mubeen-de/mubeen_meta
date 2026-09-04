@@ -94,15 +94,17 @@ export default function KitchenMonitor() {
     };
   }, [authLoading, isHistoryView]);
 
-  const handleUpdateStatus = async (ticketId: string, currentStatus: string) => {
+  const handleUpdateStatus = async (ticketId: string, toStatus: "PREPARING" | "READY" | "SERVED") => {
     try {
       await authedFetch(`/kitchen/kot/${ticketId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toStatus: "READY" }),
+        body: JSON.stringify({ toStatus }),
       });
       fetchTickets();
-    } catch {}
+    } catch (e) {
+      console.error("Failed to update status", e);
+    }
   };
 
   const liveDbTickets: KotCardData[] = tickets.map((t, idx) => ({
@@ -159,8 +161,9 @@ export default function KitchenMonitor() {
       ) : (
         <KapMetaKotView
           initialTickets={mappedTickets}
+          onUpdateStatus={handleUpdateStatus}
           onMarkFoodReady={(id) => {
-            handleUpdateStatus(id, "PREPARING");
+            handleUpdateStatus(id, "READY");
           }}
           onBackToPos={() => {
             window.location.href = "/";

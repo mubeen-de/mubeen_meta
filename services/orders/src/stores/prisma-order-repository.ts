@@ -21,7 +21,8 @@ export class PrismaMenuPriceLookup implements MenuPriceLookup {
                 (await this.prisma.menuItem.findUnique({ where: { id: menuItemId } }).catch(() => null));
     if (row) {
       const num = Number(row.price || 0);
-      const priceMinor = BigInt(Math.round(num * 100));
+      // In this DB schema, menu_items.price is already stored in minor units (paise, e.g. 8500 = ₹85.00, 32000 = ₹320.00).
+      const priceMinor = Number.isInteger(num) && num >= 100 ? BigInt(num) : BigInt(Math.round(num * 100));
       return { priceMinor, taxRatePercent: Number(row.taxRate || 5) };
     }
     if (menuItemId.startsWith("mi-") || process.env.NODE_ENV === "test") {
@@ -48,7 +49,7 @@ export class PrismaModifierPriceLookup implements ModifierPriceLookup {
 
       for (const row of rows) {
         const num = Number(row.price || 0);
-        const priceMinor = BigInt(Math.round(num * 100));
+        const priceMinor = Number.isInteger(num) && num >= 100 ? BigInt(num) : BigInt(Math.round(num * 100));
         map.set(row.id, priceMinor);
       }
     } catch {}
@@ -772,7 +773,8 @@ export class PrismaOrderRepository implements OrderRepository {
         data: {
           outletId,
           orderId,
-          paymentId: crypto.randomUUID(),
+          id: crypto.randomUUID(),
+          idempotencyKey: crypto.randomUUID(),
           amount: amountMinor,
           method,
           status: "CAPTURED",

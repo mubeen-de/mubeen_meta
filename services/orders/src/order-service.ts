@@ -197,7 +197,8 @@ export function priceOrder(
 
     const rate = Number(taxRatePercent ?? 5);
     const taxRateBasisPoints = BigInt(Math.round(rate * 100));
-    const lineTaxMinor = lineSubtotalMinor - (lineSubtotalMinor * 10000n) / (10000n + taxRateBasisPoints);
+    // Tax-exclusive (Option A: 5% GST added on top of food subtotal)
+    const lineTaxMinor = (lineSubtotalMinor * taxRateBasisPoints) / 10000n;
 
     pricedLines.push({
       menuItemId: line.menuItemId,
@@ -213,14 +214,11 @@ export function priceOrder(
     taxTotalMinor += lineTaxMinor;
   }
 
-  // Tax is inclusive, not additive — it's already inside subtotalMinor, so
-  // grand total is still just subtotal minus discount (applied elsewhere).
-  // taxTotalMinor exists purely to report the CGST+SGST breakdown correctly
-  // on the invoice and Finance ledger (was hardcoded to 0 before — DEC-004).
+  // Tax-exclusive: Grand Total = Subtotal + Tax
   return {
     subtotalMinor,
     taxTotalMinor,
-    grandTotalMinor: subtotalMinor,
+    grandTotalMinor: subtotalMinor + taxTotalMinor,
     lines: pricedLines,
   };
 }

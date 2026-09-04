@@ -103,6 +103,18 @@ export async function settleOrderCommand(
         data: { settledAt: new Date() },
       });
     }
+    // Cleanly transition any unserved KOTs to SERVED so no ghost tickets linger in kitchen
+    await prisma.kOTTicket.updateMany({
+      where: {
+        orderId,
+        outletId,
+        status: { in: ["QUEUED", "PREPARING", "READY"] },
+      },
+      data: {
+        status: "SERVED",
+        servedAt: new Date(),
+      },
+    }).catch(() => undefined);
     const dissolved = order.diningTableId
       ? await dissolveMergeGroupForTable(prisma, outletId, order.diningTableId)
       : { ids: [] as string[], numbers: [] as string[] };
@@ -223,6 +235,19 @@ export async function settleOrderCommand(
     data: { settledAt: new Date() },
   });
 
+  // Cleanly transition any unserved KOTs to SERVED so no ghost tickets linger in kitchen
+  await prisma.kOTTicket.updateMany({
+    where: {
+      orderId,
+      outletId,
+      status: { in: ["QUEUED", "PREPARING", "READY"] },
+    },
+    data: {
+      status: "SERVED",
+      servedAt: new Date(),
+    },
+  }).catch(() => undefined);
+
   const dissolved = order.diningTableId
     ? await dissolveMergeGroupForTable(prisma, outletId, order.diningTableId)
     : { ids: [] as string[], numbers: [] as string[] };
@@ -289,6 +314,7 @@ export async function settleOrderCommand(
     if (bom.deductedCount > 0) {
       broadcast(outletId, "inventory.stock_updated", { orderId, deductedCount: bom.deductedCount });
     }
+    broadcast(outletId, "kot.status_updated", { orderId, status: "SERVED" });
   }).catch(() => undefined);
 
   return {

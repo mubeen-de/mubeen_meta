@@ -73,7 +73,9 @@ export default function A2aAgentStatusDrawer({ isOpen, onClose }: A2aAgentStatus
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: "agent-frontend",
           agentId: "agent-frontend",
+          status: "ONLINE",
           currentTask: `POS Terminal Active • ${new Date().toLocaleTimeString()}`,
           health: "Passing",
         }),

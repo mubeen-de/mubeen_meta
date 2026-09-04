@@ -808,7 +808,7 @@ const handleRecordPayment = async (req: AuthedRequest, res: any) => {
   }
 };
 
-ordersRouter.post("/orders/:id/payments", requireAuth, requirePermission("bill.settle"), handleRecordPayment);
+ordersRouter.post("/orders/:id/payments", requireAuth, requirePermission("bill.settle", "order.create"), handleRecordPayment);
 
 // POST /orders/:id/items - Add items to existing running order
 ordersRouter.post("/orders/:id/items", requireAuth, requirePermission("order.create"), async (req: AuthedRequest, res) => {
@@ -833,7 +833,7 @@ ordersRouter.post("/orders/:id/items", requireAuth, requirePermission("order.cre
     await onItemsAdded(req.params.id, prisma).catch(() => {});
     const live = await prisma.order.findFirst({
       where: { id: req.params.id, outletId },
-      select: { id: true, diningTableId: true, table_number: true },
+      select: { id: true, diningTableId: true },
     });
     if (live?.diningTableId) {
       await occupyMergeMembers(prisma, outletId, live.diningTableId);
@@ -907,8 +907,8 @@ const handleCharges = async (req: AuthedRequest, res: any) => {
   }
 };
 
-ordersRouter.post("/orders/:id/charges", requireAuth, requirePermission("order.discount"), handleCharges);
-ordersRouter.patch("/orders/:id/charges", requireAuth, requirePermission("order.discount"), handleCharges);
+ordersRouter.post("/orders/:id/charges", requireAuth, requirePermission("order.discount", "bill.settle", "order.create"), handleCharges);
+ordersRouter.patch("/orders/:id/charges", requireAuth, requirePermission("order.discount", "bill.settle", "order.create"), handleCharges);
 
 // POST /orders/:id/settle - Settle and complete order with payment.
 // Cashiers use bill.settle. Captains with order.create may settle a table they collected payment on.

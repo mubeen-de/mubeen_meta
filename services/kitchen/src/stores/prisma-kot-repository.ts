@@ -63,16 +63,12 @@ export class PrismaKotRepository implements KotRepository {
         });
 
         if (group.lines.length > 0) {
-          await tx.kOTItem.createMany({
-            data: group.lines.map((line) => ({
-              kotTicketId: ticket.id,
-              menuItemId: line.menuItemId,
-              quantity: line.quantity,
-              notes: line.notes,
-              course: line.course,
-              orderItemId: line.orderItemId ?? null,
-            })),
-          });
+          for (const line of group.lines) {
+            await tx.$executeRaw`
+              INSERT INTO kot_items (id, outlet_id, kot_ticket_id, menu_item_id, order_item_id, quantity, notes, course)
+              VALUES (gen_random_uuid(), ${outletId}::uuid, ${ticket.id}::uuid, ${line.menuItemId}::uuid, ${line.orderItemId ? line.orderItemId : null}::uuid, ${line.quantity}, ${line.notes || null}, ${line.course || null})
+            `;
+          }
         }
 
         await tx.kOTStatusHistory.create({

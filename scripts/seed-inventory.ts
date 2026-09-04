@@ -29,41 +29,79 @@ async function seedInventory() {
   // 1. Seed Ingredients
   const ingredientNameMap = new Map<string, string>();
   for (const ing of data.ingredients) {
-    const created = await prisma.ingredient.create({
-      data: {
-        outletId,
-        name: ing.name,
-        unitOfMeasure: ing.unitOfMeasure,
-        reorderLevel: ing.reorderLevel,
-        unitCost: ing.unitCost,
-        currentStock: 100 // Seed with some initial stock
-      }
+    let ingRecord = await prisma.ingredient.findFirst({
+      where: { outletId, name: ing.name }
     });
-    ingredientNameMap.set(ing.name, created.id);
-    console.log(`Created ingredient: ${ing.name}`);
+    if (!ingRecord) {
+      ingRecord = await prisma.ingredient.create({
+        data: {
+          outletId,
+          name: ing.name,
+          unitOfMeasure: ing.unitOfMeasure,
+          reorderLevel: ing.reorderLevel,
+          unitCost: ing.unitCost,
+          currentStock: 100 // Seed with some initial stock
+        }
+      });
+      console.log(`Created ingredient: ${ing.name}`);
+    } else {
+      console.log(`Ingredient ${ing.name} already exists.`);
+    }
+    ingredientNameMap.set(ing.name, ingRecord.id);
   }
 
   // 2. Seed Recipes
   for (const recipe of data.recipes) {
-    // Find the menu item by name
-    const menuItem = await prisma.menuItem.findFirst({
-      where: { name: recipe.menuItemName, outletId }
+    // Find the menu item by name or partial match
+    let menuItem = await prisma.menuItem.findFirst({
+      where: {
+        outletId,
+        OR: [
+          { name: recipe.menuItemName },
+          { name: { contains: recipe.menuItemName, mode: 'insensitive' } }
+        ]
+      }
     });
 
     if (!menuItem) {
-      console.warn(`MenuItem '${recipe.menuItemName}' not found. Skipping recipe.`);
+      let cat = await prisma.menuCategory.findFirst({ where: { outletId } });
+      if (cat) {
+        menuItem = await prisma.menuItem.create({
+          data: {
+            outletId,
+            categoryId: cat.id,
+            name: recipe.menuItemName,
+            price: 32000n,
+            isVeg: false,
+            taxRate: 5.0,
+            isActive: true,
+          }
+        });
+        console.log(`Created missing menu item for recipe: ${recipe.menuItemName}`);
+      }
+    }
+
+    if (!menuItem) {
+      console.warn(`MenuItem '${recipe.menuItemName}' could not be resolved. Skipping recipe.`);
       continue;
     }
 
-    // Create Recipe
-    const createdRecipe = await prisma.recipe.create({
-      data: {
-        outletId,
-        menuItemId: menuItem.id,
-        version: 1,
-        isActive: true
-      }
+    // Check existing recipe
+    let createdRecipe = await prisma.recipe.findFirst({
+      where: { outletId, menuItemId: menuItem.id }
     });
+
+    if (!createdRecipe) {
+      createdRecipe = await prisma.recipe.create({
+        data: {
+          outletId,
+          menuItemId: menuItem.id,
+          version: 1,
+          isActive: true
+        }
+      });
+      console.log(`Created recipe for: ${menuItem.name}`);
+    }
 
     // Create Recipe Ingredients
     for (const recipeIng of recipe.ingredients) {
@@ -73,30 +111,43 @@ async function seedInventory() {
         continue;
       }
 
-      await prisma.recipeIngredient.create({
-        data: {
-          recipeId: createdRecipe.id,
-          ingredientId,
-          quantity: recipeIng.quantity,
-          yieldPercent: recipeIng.yieldPercent
-        }
+      const existingLine = await prisma.recipeIngredient.findFirst({
+        where: { recipeId: createdRecipe.id, ingredientId }
       });
+
+      if (!existingLine) {
+        await prisma.recipeIngredient.create({
+          data: {
+            recipeId: createdRecipe.id,
+            ingredientId,
+            quantity: recipeIng.quantity,
+            yieldPercent: recipeIng.yieldPercent
+          }
+        });
+        console.log(`  Added recipe ingredient: ${recipeIng.ingredientName} (${recipeIng.quantity})`);
+      }
     }
-    console.log(`Created recipe for: ${recipe.menuItemName}`);
   }
 
   // 3. Seed Vendors
   for (const vendor of data.vendors) {
-    await prisma.vendor.create({
-      data: {
-        outletId,
-        name: vendor.name,
-        phone: vendor.phone,
-        email: vendor.email,
-        taxNumber: vendor.taxNumber
-      }
+    const existingVendor = await prisma.vendor.findFirst({
+      where: { outletId, name: vendor.name }
     });
-    console.log(`Created vendor: ${vendor.name}`);
+    if (!existingVendor) {
+      await prisma.vendor.create({
+        data: {
+          outletId,
+          name: vendor.name,
+          phone: vendor.phone,
+          email: vendor.email,
+          taxNumber: vendor.taxNumber
+        }
+      });
+      console.log(`Created vendor: ${vendor.name}`);
+    } else {
+      console.log(`Vendor ${vendor.name} already exists.`);
+    }
   }
 
   console.log("Inventory seeding completed successfully!");

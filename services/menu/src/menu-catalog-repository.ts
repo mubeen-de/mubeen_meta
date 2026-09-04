@@ -156,7 +156,11 @@ export class PrismaMenuCatalogRepository {
       categoryName: row.category?.name ?? "General",
       name: row.name,
       description: row.description,
-      priceMinor: row.priceMinor !== undefined ? BigInt(row.priceMinor) : BigInt(Math.round(Number(row.price || 0) * 100)),
+      priceMinor: row.priceMinor !== undefined 
+        ? BigInt(row.priceMinor) 
+        : (Number.isInteger(Number(row.price || 0)) && Number(row.price || 0) >= 100 
+            ? BigInt(Number(row.price || 0)) 
+            : BigInt(Math.round(Number(row.price || 0) * 100))),
       isVeg: Boolean(row.isVeg),
       taxRate: (row.taxRate ?? 5.0).toString(),
       isActive: row.isActive !== false,
@@ -186,7 +190,11 @@ export class PrismaMenuCatalogRepository {
       categoryName: row.category?.name ?? "General",
       name: row.name,
       description: row.description,
-      priceMinor: row.priceMinor !== undefined ? BigInt(row.priceMinor) : BigInt(Math.round(Number(row.price || 0) * 100)),
+      priceMinor: row.priceMinor !== undefined 
+        ? BigInt(row.priceMinor) 
+        : (Number.isInteger(Number(row.price || 0)) && Number(row.price || 0) >= 100 
+            ? BigInt(Number(row.price || 0)) 
+            : BigInt(Math.round(Number(row.price || 0) * 100))),
       isVeg: Boolean(row.isVeg),
       taxRate: (row.taxRate ?? 5.0).toString(),
       isActive: row.isActive !== false,

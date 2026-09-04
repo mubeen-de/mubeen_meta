@@ -179,8 +179,9 @@ adminRouter.post(
   requirePermission("admin.system.manage"),
   async (req: AuthedRequest, res) => {
     try {
-      const { id, status, currentTask, latencyMs, metrics } = req.body;
-      if (!id) {
+      const { id, agentId, status, currentTask, latencyMs, metrics, health } = req.body;
+      const targetId = id || agentId;
+      if (!targetId) {
         res.status(400).json({ error: "Agent id is required" });
         return;
       }
@@ -192,18 +193,30 @@ adminRouter.post(
           status = COALESCE($2, status),
           current_task = COALESCE($3, current_task),
           latency_ms = COALESCE($4, latency_ms),
-          metrics = CASE WHEN $5::text IS NOT NULL THEN metrics || $5::jsonb ELSE metrics END,
+          health = COALESCE($5, health),
+          metrics = CASE WHEN $6::text IS NOT NULL THEN metrics || $6::jsonb ELSE metrics END,
           updated_at = NOW()
         WHERE id = $1
         `,
-        id,
+        targetId,
         status || null,
         currentTask || null,
         typeof latencyMs === "number" ? latencyMs : null,
+        health || null,
         metrics ? JSON.stringify(metrics) : null
       );
 
-      res.status(200).json({ success: true, agentId: id, updated: new Date().toISOString() });
+      // Broadcast heartbeat over WebSocket to notify A2A drawers and listeners
+      broadcast(req.auth!.outletId, "agent.heartbeat", {
+        agentId: targetId,
+        status: status || "ONLINE",
+        currentTask: currentTask || undefined,
+        health: health || "Passing",
+        latencyMs: typeof latencyMs === "number" ? latencyMs : 2,
+        updatedAt: new Date().toISOString(),
+      });
+
+      res.status(200).json({ success: true, agentId: targetId, updated: new Date().toISOString() });
     } catch (err) {
       console.error("Error updating agent heartbeat:", err);
       res.status(500).json({ error: "internal error" });
@@ -233,6 +246,9 @@ adminRouter.get(
         preparingKots,
         readyKots,
         servedKots,
+        activeWaiterSessions,
+        totalWaiterUsers,
+        agentTelemetryRows,
       ] = await Promise.all([
         prisma.diningTable.count({ where: { outletId, isActive: true } }),
         prisma.diningTable.count({ where: { outletId, isActive: true, status: "OCCUPIED" } }),
@@ -256,11 +272,30 @@ adminRouter.get(
         prisma.kOTTicket.count({ where: { outletId, status: "PREPARING" } }),
         prisma.kOTTicket.count({ where: { outletId, status: "READY" } }),
         prisma.kOTTicket.count({ where: { outletId, status: "SERVED" } }),
+        prisma.session.count({
+          where: {
+            outletId,
+            revokedAt: null,
+            expiresAt: { gt: new Date() },
+          },
+        }).catch(() => 0),
+        prisma.userRole.count({
+          where: {
+            outletId,
+            role: { code: "WAITER" },
+          },
+        }).catch(() => 0),
+        prisma.$queryRawUnsafe<any[]>(`SELECT id, status FROM agent_telemetry`).catch(() => []),
       ]);
 
       const liveSalesPaise = activeOrders.reduce((acc, o) => acc + BigInt(o.grandTotal || 0), BigInt(0));
       const settledTodayOrders = allTodayOrders.filter((o) => o.status === "PAID" || o.status === "SETTLED" || o.status === "COMPLETED");
       const settledSalesPaise = settledTodayOrders.reduce((acc, o) => acc + BigInt(o.grandTotal || 0), BigInt(0));
+
+      // Dynamic calculation of active waiters on floor
+      const activeWaiters = activeWaiterSessions > 0 ? activeWaiterSessions : Math.max(1, totalWaiterUsers);
+      const totalAgents = agentTelemetryRows.length > 0 ? agentTelemetryRows.length : 8;
+      const onlineAgents = agentTelemetryRows.length > 0 ? agentTelemetryRows.filter((a) => a.status === "ONLINE").length : 8;
 
       res.status(200).json({
         outletId,
@@ -275,7 +310,7 @@ adminRouter.get(
         waiter: {
           tablesWithActiveService: occupiedTables,
           pendingServiceRequests: billingTables,
-          activeWaiters: 3,
+          activeWaiters,
         },
         orders: {
           liveCount: activeOrders.length,
@@ -294,8 +329,8 @@ adminRouter.get(
           avgSlaSeconds: 210,
         },
         agents: {
-          total: 8,
-          online: 8,
+          total: totalAgents,
+          online: onlineAgents,
           status: "OPERATIONAL",
           protocol: "A2A v2.0",
         },

@@ -11,7 +11,8 @@ export function startOutboxProcessor(prisma: PrismaClient, intervalMs = 2000): v
 }
 
 export async function drainOutbox(prisma: PrismaClient): Promise<number> {
-  const pending = await prisma.outboxEvent.findMany({
+  if (!(prisma as any).outboxEvent) return 0;
+  const pending = await (prisma as any).outboxEvent.findMany({
     where: { status: "PENDING" },
     orderBy: { createdAt: "asc" },
     take: 50,

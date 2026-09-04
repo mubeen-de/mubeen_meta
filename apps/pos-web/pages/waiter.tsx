@@ -63,6 +63,7 @@ interface CartItem {
 
 interface KOTTicket {
   id: string;
+  orderId?: string | null;
   ticketNumber: string;
   status: "QUEUED" | "PREPARING" | "READY" | "SERVED";
   createdAt: string;
@@ -847,9 +848,24 @@ export default function WaiterDashboard() {
     setCart((prev) => prev.map((ci) => ci.item.id === itemId ? { ...ci, notes } : ci));
   };
 
-  const totalAmount = useMemo(() => {
-    return cart.reduce((acc, ci) => acc + (ci.item.priceMinor * ci.quantity), 0);
+  const manageOrderTotal = useMemo(() => {
+    if (!manageOrder) return 0;
+    if (manageOrder.grandTotalMinor) return Number(manageOrder.grandTotalMinor);
+    if (manageOrder.items && Array.isArray(manageOrder.items)) {
+      return manageOrder.items
+        .filter((i: any) => !i.isVoided)
+        .reduce((sum: number, i: any) => sum + Number(i.subtotalMinor || (Number(i.unitPriceMinor || 0) * (Number(i.quantity) || 1)) || 0), 0);
+    }
+    return 0;
+  }, [manageOrder]);
+
+  const cartTotal = useMemo(() => {
+    return cart.reduce((acc, ci) => acc + (Number(ci.item.priceMinor || 0) * ci.quantity), 0);
   }, [cart]);
+
+  const totalAmount = useMemo(() => {
+    return manageOrderTotal + cartTotal;
+  }, [manageOrderTotal, cartTotal]);
 
   const loadedWaiterTableRef = React.useRef<string | null>(null);
   const isWaiterLoadedRef = React.useRef<boolean>(false);
@@ -1016,6 +1032,17 @@ export default function WaiterDashboard() {
     } catch (e) {
       console.error("Failed to update table status", e);
     }
+  };
+
+  const handleVacateTable = async (table: DiningTable) => {
+    const totalDue = table.currentOrder ? Number((table.currentOrder as any).grandTotalPaise || (table.currentOrder as any).grandTotalMinor || (table.currentOrder as any).totalAmount || 0) : 0;
+    if (totalDue > 0) {
+      alert(`⚠️ Table ${table.tableNumber} has an unpaid running order of ₹${totalDue.toFixed(2)}!\n\nPlease click "Bill" to collect payment before vacating.`);
+      return;
+    }
+    const confirmed = window.confirm(`Mark Table ${table.tableNumber} as VACANT?`);
+    if (!confirmed) return;
+    await updateTableStatus(table.id, "VACANT");
   };
 
   const serveTable = async (table: DiningTable) => {
@@ -1224,6 +1251,20 @@ export default function WaiterDashboard() {
 
   // Bill & payment
   const openBill = async (table: DiningTable) => {
+    const hasPendingKots = myKots.some((kot) => {
+      const matchTable = kot.tableNumber && table.tableNumber &&
+        kot.tableNumber.trim().toLowerCase() === table.tableNumber.trim().toLowerCase();
+      const matchOrderId = table.currentOrderId && kot.orderId && kot.orderId === table.currentOrderId;
+      return (matchTable || matchOrderId) && (kot.status === "QUEUED" || kot.status === "PREPARING" || kot.status === "READY");
+    });
+    const tableOrderKots = (table.currentOrder?.kots || []).some((k: any) =>
+      k.status === "QUEUED" || k.status === "PREPARING" || k.status === "READY"
+    );
+    if (table.status === "OCCUPIED" && (table.kitchenStage !== "SERVED" || hasPendingKots || tableOrderKots)) {
+      showPickupNotification(`Cannot bill Table ${table.tableNumber}: All ordered food must be served first 🍽️`);
+      return;
+    }
+
     setBillTable(table);
     setBill(null);
     setSeatBills([]);
@@ -1232,7 +1273,7 @@ export default function WaiterDashboard() {
     setServiceChargeInput("");
     setLoadingBill(true);
     try {
-      const orderId = table.currentOrderId;
+      const orderId = (table as any).activeOrderId || (table as any).currentOrderId || (table as any).currentOrder?.id || (table as any).active_order_id;
       let resolvedOrderId = orderId || null;
       if (!resolvedOrderId) {
         const activeRes = await authedFetch(`/orders/by-table/${table.id}/active`);
@@ -1309,8 +1350,45 @@ export default function WaiterDashboard() {
     }
   };
 
+  const handleTipChange = (val: string) => {
+    setTipInput(val);
+    if (!bill) return;
+    const tMinor = Math.round((parseFloat(val) || 0) * 100);
+    const sMinor = Math.round((parseFloat(serviceChargeInput) || 0) * 100);
+    const baseDue = Number(bill.subtotalMinor || 0) - Number(bill.discountTotalMinor || 0) + Number(bill.taxTotalMinor || 0) - Number(bill.paidMinor || 0);
+    const newDue = Math.max(0, baseDue + tMinor + sMinor);
+    setPaymentAmount((newDue / 100).toFixed(2));
+  };
+
+  const handleServiceChargeChange = (val: string) => {
+    setServiceChargeInput(val);
+    if (!bill) return;
+    const tMinor = Math.round((parseFloat(tipInput) || 0) * 100);
+    const sMinor = Math.round((parseFloat(val) || 0) * 100);
+    const baseDue = Number(bill.subtotalMinor || 0) - Number(bill.discountTotalMinor || 0) + Number(bill.taxTotalMinor || 0) - Number(bill.paidMinor || 0);
+    const newDue = Math.max(0, baseDue + tMinor + sMinor);
+    setPaymentAmount((newDue / 100).toFixed(2));
+  };
+
   const submitPayment = async (overrideAmountMinor?: number, seatNumber?: number) => {
     if (!bill) return;
+
+    // Option 2 (Strict Flow): Prevent payment and settlement if food is still unserved in kitchen
+    const pendingKots = myKots.filter((kot) => {
+      const matchOrderId = bill?.orderId && kot.orderId && kot.orderId === bill.orderId;
+      const matchTable = kot.tableNumber && billTable &&
+        kot.tableNumber.trim().toLowerCase() === billTable.tableNumber.trim().toLowerCase();
+      const isUnserved = kot.status === "QUEUED" || kot.status === "PREPARING" || kot.status === "READY";
+      return (matchOrderId || matchTable) && isUnserved;
+    });
+    const tableOrderKots = (billTable?.currentOrder?.kots || []).filter((k: any) =>
+      k.status === "QUEUED" || k.status === "PREPARING" || k.status === "READY"
+    );
+    if (pendingKots.length > 0 || tableOrderKots.length > 0) {
+      showPickupNotification("Cannot take payment: Food is still in kitchen. Mark all as served to table first.");
+      return;
+    }
+
     setSubmittingPayment(true);
     try {
       await applyCharges();
@@ -1331,11 +1409,15 @@ export default function WaiterDashboard() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ paymentMethod }),
         });
-        await authedFetch(`/tables/${billTable.id}/vacant`, { method: "POST" }).catch(() => {});
+        await authedFetch(`/tables/${billTable.id}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "DIRTY" }),
+        }).catch(() => {});
         setBillTable(null);
         fetchTables();
         fetchMyStats();
-        showPickupNotification(settleRes.ok ? "Bill settled — table vacant" : "Settle failed");
+        showPickupNotification(settleRes.ok ? "Bill settled — table needs cleaning 🧹" : "Settle failed");
         setSubmittingPayment(false);
         return;
       }
@@ -1381,31 +1463,15 @@ export default function WaiterDashboard() {
               const errData = await settleRes.json().catch(() => ({}));
               showPickupNotification(errData.error || "Paid, but settle failed");
             }
-            const vacantRes = await authedFetch(`/tables/${billTable.id}/vacant`, { method: "POST" }).catch(() => null);
-            // #region agent log
-            fetch("http://127.0.0.1:7323/ingest/28c85a32-5ef1-4fe5-9437-78139f7a5bfb", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "9c675b" },
-              body: JSON.stringify({
-                sessionId: "9c675b",
-                runId: "post-fix",
-                hypothesisId: "W",
-                location: "waiter.tsx:submitPayment:vacant",
-                message: "waiter vacant after settle",
-                data: {
-                  orderId: bill.orderId,
-                  tableId: billTable.id,
-                  vacantOk: vacantRes ? vacantRes.ok : false,
-                  vacantStatus: vacantRes ? vacantRes.status : null,
-                },
-                timestamp: Date.now(),
-              }),
-            }).catch(() => {});
-            // #endregion
+            await authedFetch(`/tables/${billTable.id}/status`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: "DIRTY" }),
+            }).catch(() => null);
             setBillTable(null);
             fetchTables();
             fetchMyStats();
-            showPickupNotification("Bill settled — table vacant");
+            showPickupNotification("Bill paid & settled! Table needs cleaning 🧹");
           }
         }
         if (splitBySeat) await loadSeatBills();
@@ -1834,19 +1900,23 @@ export default function WaiterDashboard() {
                         <div key={i.id} className="flex justify-between items-center text-xs text-slate-300 py-1 border-b border-slate-900 last:border-0">
                           <span>
                             {i.menuItemName} <b className="text-indigo-400">x{i.quantity}</b>
-                            <span className={`ml-2 text-[10px] font-bold ${
-                              i.kitchenStatus === "SERVED" ? "text-emerald-400" :
-                              i.kitchenStatus === "READY" ? "text-amber-400" :
-                              i.kitchenStatus === "PREPARING" ? "text-indigo-400" : "text-slate-500"
+                            <span className="text-slate-400 ml-1.5 text-[11px]">
+                              (₹{(Number(i.subtotalMinor || (Number(i.unitPriceMinor || 0) * (Number(i.quantity) || 1))) / 100).toFixed(2)})
+                            </span>
+                            <span className={`ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                              i.kitchenStatus === "SERVED" ? "bg-emerald-950 text-emerald-400 border border-emerald-800/40" :
+                              i.kitchenStatus === "READY" ? "bg-amber-950 text-amber-400 border border-amber-800/40" :
+                              i.kitchenStatus === "PREPARING" ? "bg-indigo-950 text-indigo-400 border border-indigo-800/40" : "bg-slate-900 text-slate-400 border border-slate-800"
                             }`}>
                               {kitchenItemLabel(i.kitchenStatus)}
                             </span>
                           </span>
                           <button
                             onClick={() => voidItem(i.id)}
-                            className="text-[10px] text-rose-400 hover:text-rose-300 font-semibold"
+                            className="text-[10px] text-rose-400 hover:text-rose-300 font-bold bg-rose-950/40 border border-rose-800/30 px-2 py-0.5 rounded hover:bg-rose-900/60 transition"
+                            title="Void item from kitchen order (requires cancellation reason)"
                           >
-                            Void
+                            ✕ Void
                           </button>
                         </div>
                       ))}
@@ -1923,11 +1993,23 @@ export default function WaiterDashboard() {
 
                   {/* Order Bill Summary */}
                   <div className="border-t border-slate-800 pt-3 flex flex-col gap-1.5">
+                    {manageOrder && (
+                      <div className="flex justify-between items-center text-xs text-slate-400">
+                        <span>Running Order (Fired):</span>
+                        <span className="font-semibold text-slate-200">₹{(manageOrderTotal / 100).toFixed(2)}</span>
+                      </div>
+                    )}
+                    {cart.length > 0 && (
+                      <div className="flex justify-between items-center text-xs text-slate-400">
+                        <span>New Items to Fire:</span>
+                        <span className="font-semibold text-indigo-300">₹{(cartTotal / 100).toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center text-xs text-slate-400">
                       <span>Subtotal:</span>
                       <span>₹{(totalAmount / 100).toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between items-center text-sm font-bold text-white">
+                    <div className="flex justify-between items-center text-sm font-bold text-white pt-1 border-t border-slate-800/60">
                       <span>Total Amount:</span>
                       <span className="text-lg text-emerald-400 font-extrabold">₹{(totalAmount / 100).toFixed(2)}</span>
                     </div>
@@ -2046,8 +2128,8 @@ export default function WaiterDashboard() {
                       statusColor = "border-blue-500/20 bg-blue-950/20 text-blue-400";
                       badgeLabel = "Billing";
                     } else if (table.status === "DIRTY") {
-                      statusColor = "border-amber-500/20 bg-amber-950/20 text-amber-400";
-                      badgeLabel = "Dirty";
+                      statusColor = "border-amber-500/50 bg-amber-950/40 text-amber-300";
+                      badgeLabel = "🧹 Needs Cleaning";
                     } else if (table.status === "OCCUPIED" && table.kitchenStage === "READY") {
                       statusColor = "border-amber-500/30 bg-amber-950/30 text-amber-300";
                       badgeLabel = "Ready";
@@ -2063,6 +2145,16 @@ export default function WaiterDashboard() {
                     }
 
                     const isMergeSelected = mergeSourceIds.includes(table.id);
+                    const hasPendingKots = myKots.some((kot) => {
+                      const matchTable = kot.tableNumber && table.tableNumber &&
+                        kot.tableNumber.trim().toLowerCase() === table.tableNumber.trim().toLowerCase();
+                      const matchOrderId = table.currentOrderId && kot.orderId && kot.orderId === table.currentOrderId;
+                      return (matchTable || matchOrderId) && (kot.status === "QUEUED" || kot.status === "PREPARING" || kot.status === "READY");
+                    });
+                    const tableOrderKots = (table.currentOrder?.kots || []).some((k: any) =>
+                      k.status === "QUEUED" || k.status === "PREPARING" || k.status === "READY"
+                    );
+                    const isAllServed = table.kitchenStage === "SERVED" && !hasPendingKots && !tableOrderKots;
 
                     return (
                       <div
@@ -2155,12 +2247,18 @@ export default function WaiterDashboard() {
                                   </button>
                                   <button
                                     onClick={() => openBill(table)}
-                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-1.5 text-[10px] font-semibold transition-all"
+                                    disabled={!isAllServed}
+                                    title={!isAllServed ? "Food is still being prepared in kitchen. Must be served before billing." : "Open & Settle Bill"}
+                                    className={`flex-1 rounded-lg py-1.5 text-[10px] font-semibold transition-all ${
+                                      !isAllServed
+                                        ? "bg-slate-800/80 text-slate-500 cursor-not-allowed border border-slate-700/50"
+                                        : "bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-600/20"
+                                    }`}
                                   >
                                     Bill
                                   </button>
                                   <button
-                                    onClick={() => updateTableStatus(table.id, "VACANT")}
+                                    onClick={() => handleVacateTable(table)}
                                     className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg py-1.5 text-[10px] font-semibold transition-all"
                                   >
                                     Vacate
@@ -2181,7 +2279,7 @@ export default function WaiterDashboard() {
                                 onClick={() => updateTableStatus(table.id, "VACANT")}
                                 className="w-full bg-amber-600 hover:bg-amber-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all"
                               >
-                                Mark Clean
+                                ✨ Mark Clean & Ready
                               </button>
                             )}
                           </div>
@@ -2400,17 +2498,41 @@ export default function WaiterDashboard() {
               </div>
             )}
 
-            {bill && (
+            {bill && (() => {
+              const liveTip = parseFloat(tipInput) || 0;
+              const liveService = parseFloat(serviceChargeInput) || 0;
+              const liveTipMinor = Math.round(liveTip * 100);
+              const liveServiceMinor = Math.round(liveService * 100);
+              const subtotalNum = Number(bill.subtotalMinor || 0);
+              const discountNum = Number(bill.discountTotalMinor || 0);
+              const taxNum = Number(bill.taxTotalMinor || 0);
+              const paidNum = Number(bill.paidMinor || 0);
+              const liveGrandTotal = (subtotalNum - discountNum + taxNum + liveTipMinor + liveServiceMinor) / 100;
+              const liveDue = Math.max(0, (subtotalNum - discountNum + taxNum + liveTipMinor + liveServiceMinor - paidNum) / 100);
+
+              const unservedKots = myKots.filter((kot) => {
+                const matchOrderId = bill?.orderId && kot.orderId && kot.orderId === bill.orderId;
+                const matchTable = kot.tableNumber && billTable &&
+                  kot.tableNumber.trim().toLowerCase() === billTable.tableNumber.trim().toLowerCase();
+                const isUnserved = kot.status === "QUEUED" || kot.status === "PREPARING" || kot.status === "READY";
+                return (matchOrderId || matchTable) && isUnserved;
+              });
+              const tableOrderKots = (billTable.currentOrder?.kots || []).filter((k: any) =>
+                k.status === "QUEUED" || k.status === "PREPARING" || k.status === "READY"
+              );
+              const hasPendingFood = unservedKots.length > 0 || tableOrderKots.length > 0;
+
+              return (
               <div className="flex flex-col gap-3">
                 <div className="text-xs text-slate-400 flex flex-col gap-1.5 border-b border-slate-800 pb-3">
-                  <div className="flex justify-between"><span>Subtotal</span><span>₹{(Number(bill.subtotalMinor) / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between"><span>Discount</span><span>-₹{(Number(bill.discountTotalMinor) / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between"><span>Tax</span><span>₹{(Number(bill.taxTotalMinor) / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between"><span>Tip</span><span>₹{(Number(bill.tipTotalMinor) / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between"><span>Service Charge</span><span>₹{(Number(bill.serviceChargeTotalMinor) / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between text-slate-200 font-bold text-sm"><span>Grand Total</span><span>₹{(Number(bill.grandTotalMinor) / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between text-emerald-400"><span>Paid</span><span>₹{(Number(bill.paidMinor) / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between text-rose-400 font-bold"><span>Due</span><span>₹{(Number(bill.dueMinor) / 100).toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span>Subtotal</span><span>₹{(subtotalNum / 100).toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span>Discount</span><span>-₹{(discountNum / 100).toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span>Tax (GST 5%)</span><span>₹{(taxNum / 100).toFixed(2)}</span></div>
+                  <div className="flex justify-between text-indigo-300"><span>Tip</span><span>+₹{liveTip.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-indigo-300"><span>Service Charge</span><span>+₹{liveService.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-slate-200 font-bold text-sm"><span>Grand Total</span><span>₹{liveGrandTotal.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-emerald-400"><span>Paid</span><span>₹{(paidNum / 100).toFixed(2)}</span></div>
+                  <div className="flex justify-between text-rose-400 font-bold text-sm"><span>Due</span><span>₹{liveDue.toFixed(2)}</span></div>
                 </div>
 
                 <div className="flex gap-1.5 items-end border-b border-slate-800 pb-3">
@@ -2420,7 +2542,8 @@ export default function WaiterDashboard() {
                       type="number"
                       step="0.01"
                       value={tipInput}
-                      onChange={(e) => setTipInput(e.target.value)}
+                      onChange={(e) => handleTipChange(e.target.value)}
+                      placeholder="0.00"
                       className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none"
                     />
                   </div>
@@ -2430,16 +2553,17 @@ export default function WaiterDashboard() {
                       type="number"
                       step="0.01"
                       value={serviceChargeInput}
-                      onChange={(e) => setServiceChargeInput(e.target.value)}
+                      onChange={(e) => handleServiceChargeChange(e.target.value)}
+                      placeholder="0.00"
                       className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none"
                     />
                   </div>
                   <button
                     onClick={applyCharges}
                     disabled={savingCharges}
-                    className="bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg px-3 py-1.5 text-[10px] font-bold"
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg px-3 py-1.5 text-[10px] font-bold transition-all"
                   >
-                    {savingCharges ? "..." : "Apply"}
+                    {savingCharges ? "..." : "Save"}
                   </button>
                 </div>
 
@@ -2468,8 +2592,12 @@ export default function WaiterDashboard() {
                             {due > 0 ? (
                               <button
                                 onClick={() => submitPayment(due, s.seatNumber ?? undefined)}
-                                disabled={submittingPayment}
-                                className="text-[10px] bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg px-2 py-1 font-bold"
+                                disabled={submittingPayment || hasPendingFood}
+                                className={`text-[10px] rounded-lg px-2 py-1 font-bold ${
+                                  hasPendingFood
+                                    ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                                    : "bg-emerald-700 hover:bg-emerald-600 text-white"
+                                }`}
                               >
                                 Pay ₹{(due / 100).toFixed(2)}
                               </button>
@@ -2480,6 +2608,55 @@ export default function WaiterDashboard() {
                         );
                       })
                     )}
+                  </div>
+                )}
+
+                {/* Option 2 (Strict Flow): Warning banner when food is still cooking or unserved */}
+                {hasPendingFood && (
+                  <div className="bg-amber-950/80 border border-amber-500/50 rounded-xl p-3 flex flex-col gap-2.5 text-amber-200 shadow-lg shadow-amber-950/40">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-bold text-xs">
+                        <span className="text-base">⚠️</span>
+                        <span>Food Pending in Kitchen</span>
+                      </div>
+                      <span className="text-[9px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded-full uppercase border border-amber-500/30">
+                        {unservedKots.length || tableOrderKots.length} Unserved
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-amber-300/90 leading-relaxed">
+                      Dishes are still cooking or waiting to be delivered. Under strict Dine-In rules, all items must be served to Table {billTable.tableNumber} before taking payment.
+                    </p>
+                    {unservedKots.length > 0 && (
+                      <div className="flex flex-col gap-1.5 bg-slate-950/70 rounded-lg p-2 border border-amber-900/50 max-h-32 overflow-y-auto">
+                        {unservedKots.map((k) => (
+                          <div key={k.id} className="flex justify-between items-center text-[10px] py-1 border-b border-slate-900 last:border-0">
+                            <span className="font-semibold text-slate-200">
+                              KOT #{k.ticketNumber} &middot; <span className="uppercase text-amber-400 font-bold">{k.status}</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await serveKot(k.id);
+                              }}
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white text-[9px] font-bold px-2.5 py-1 rounded-md transition-all shadow-sm"
+                            >
+                              Serve to Table 🍽️
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        for (const k of unservedKots) {
+                          await serveKot(k.id);
+                        }
+                      }}
+                      className="w-full bg-emerald-700/30 hover:bg-emerald-700/50 border border-emerald-500/50 text-emerald-300 text-[10px] font-bold py-2 rounded-lg transition-all"
+                    >
+                      🍽️ Mark All Dishes Served to Table
+                    </button>
                   </div>
                 )}
 
@@ -2503,21 +2680,32 @@ export default function WaiterDashboard() {
                       step="0.01"
                       value={paymentAmount}
                       onChange={(e) => setPaymentAmount(e.target.value)}
-                      className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                      disabled={hasPendingFood}
+                      className="bg-slate-950 border border-slate-800 disabled:opacity-50 rounded-xl px-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
                     />
                     <button
                       onClick={() => submitPayment()}
-                      disabled={submittingPayment}
-                      className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-white rounded-xl py-3 text-xs font-bold transition-all"
+                      disabled={submittingPayment || hasPendingFood}
+                      title={hasPendingFood ? "All items must be served to the table before taking payment" : ""}
+                      className={`w-full rounded-xl py-3 text-xs font-bold transition-all ${
+                        hasPendingFood
+                          ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/80"
+                          : "bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-white shadow-lg shadow-emerald-600/20"
+                      }`}
                     >
-                      {submittingPayment ? "Processing..." : "Take Payment (Full Order)"}
+                      {submittingPayment
+                        ? "Processing..."
+                        : hasPendingFood
+                        ? "🚫 Serve Food Before Payment"
+                        : "Take Payment (Full Order)"}
                     </button>
                   </>
                 ) : (
                   <p className="text-center text-emerald-400 text-xs font-semibold py-2">Fully Paid — table cleared</p>
                 )}
               </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "lastSync": "2026-08-14T14:35:00Z",
+  "lastSync": "2026-09-03T12:05:00Z",
   "agents": [
     {
       "id": "agent-orchestrator",
@@ -28,7 +28,9 @@
         "agents/AGENT_REGISTRY.json",
         "agents/task-board.json",
         "apps/api/src/routes/admin.ts",
-        "apps/pos-web/pages/admin.tsx"
+        "apps/pos-web/pages/admin.tsx",
+        "scripts/sync_data_and_agents.js",
+        "db/migrations/0041_agent_telemetry.sql"
       ]
     },
     {

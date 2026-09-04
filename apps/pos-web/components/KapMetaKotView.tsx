@@ -25,6 +25,7 @@ export interface KotCardData {
 export interface KapMetaKotViewProps {
   initialTickets?: KotCardData[];
   onMarkFoodReady?: (kotId: string) => void;
+  onUpdateStatus?: (kotId: string, toStatus: "PREPARING" | "READY" | "SERVED") => void;
   onBackToPos?: () => void;
   // Switches to the historical KOT report table (/kitchen?view=list,
   // rendered by components/KotHistoryView.tsx). This board stays the live
@@ -62,6 +63,7 @@ function playKitchenReadyChime() {
 export default function KapMetaKotView({
   initialTickets = [],
   onMarkFoodReady,
+  onUpdateStatus,
   onBackToPos,
   onOpenKotList,
 }: KapMetaKotViewProps) {
@@ -127,18 +129,36 @@ export default function KapMetaKotView({
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  const handleFoodIsReady = (ticketId: string, kotNo: string | number) => {
-    playKitchenReadyChime();
+  const handleStatusTransition = (
+    ticketId: string,
+    kotNo: string | number,
+    toStatus: "PREPARING" | "READY" | "SERVED"
+  ) => {
+    if (toStatus === "READY") {
+      playKitchenReadyChime();
+    }
     setTickets((prev) =>
-      prev.map((t) => (t.id === ticketId ? { ...t, status: "READY" } : t))
+      prev.map((t) => (t.id === ticketId ? { ...t, status: toStatus } : t))
     );
 
-    setToastMessage(`✓ KOT #${kotNo} marked as Food Ready!`);
+    if (toStatus === "PREPARING") {
+      setToastMessage(`👨‍🍳 KOT #${kotNo} started cooking (In Progress)!`);
+    } else if (toStatus === "READY") {
+      setToastMessage(`🔔 KOT #${kotNo} is Food Ready / Ready to Serve!`);
+    } else if (toStatus === "SERVED") {
+      setToastMessage(`🍽️ KOT #${kotNo} marked as Served!`);
+    }
     setTimeout(() => setToastMessage(null), 3000);
 
-    if (onMarkFoodReady) {
+    if (onUpdateStatus) {
+      onUpdateStatus(ticketId, toStatus);
+    } else if (onMarkFoodReady && toStatus === "READY") {
       onMarkFoodReady(ticketId);
     }
+  };
+
+  const handleFoodIsReady = (ticketId: string, kotNo: string | number) => {
+    handleStatusTransition(ticketId, kotNo, "READY");
   };
 
   // Quick MFR (Mark Food Ready via Search Input)
@@ -452,12 +472,30 @@ export default function KapMetaKotView({
               return (
                 <div
                   key={card.id}
-                  className={`kot-ticket-card-box ${isReady ? "is-ready-state" : ""}`}
+                  className={`kot-ticket-card-box ${isReady ? "is-ready-state" : card.status === "PREPARING" ? "is-cooking-state" : ""}`}
                 >
-                  {/* Card Red / Channel Header Bar */}
-                  <div className="card-top-red-bar">
+                  {/* Card Red / Amber / Green Header Bar */}
+                  <div
+                    className="card-top-red-bar"
+                    style={{
+                      background:
+                        card.status === "READY"
+                          ? "#15803d"
+                          : card.status === "PREPARING"
+                          ? "#d97706"
+                          : card.status === "SERVED"
+                          ? "#475569"
+                          : "#dc2626",
+                    }}
+                  >
                     <div className="badge-order-type">
-                      {card.orderTypeDisplay || "Pick Up"}
+                      {card.status === "PREPARING"
+                        ? "👨‍🍳 Cooking"
+                        : card.status === "READY"
+                        ? "🔔 Food Ready"
+                        : card.status === "SERVED"
+                        ? "✓ Served"
+                        : card.orderTypeDisplay || "Dine In"}
                     </div>
 
                     <div className="kot-number-block">
@@ -503,16 +541,63 @@ export default function KapMetaKotView({
                     </div>
                   </div>
 
-                  {/* Card Bottom Button: Food Is Ready */}
-                  <div className="card-footer-action-wrap">
-                    <button
-                      type="button"
-                      className={`btn-food-ready-pill ${isReady ? "is-marked-ready" : ""}`}
-                      onClick={() => handleFoodIsReady(card.id, card.kotNo)}
-                      disabled={isReady}
-                    >
-                      {isReady ? "✓ Ready" : "Food Is Ready"}
-                    </button>
+                  {/* Card Bottom Progressive Buttons: Start Cooking -> Food Is Ready -> Mark Served */}
+                  <div className="card-footer-action-wrap" style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    {card.status === "QUEUED" && (
+                      <>
+                        <button
+                          type="button"
+                          className="btn-food-ready-pill"
+                          style={{ background: "#d97706", color: "#fff", fontWeight: 800 }}
+                          onClick={() => handleStatusTransition(card.id, card.kotNo, "PREPARING")}
+                        >
+                          ▶ Start Cooking
+                        </button>
+                        <button
+                          type="button"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#64748b",
+                            fontSize: "10px",
+                            cursor: "pointer",
+                            textDecoration: "underline",
+                            padding: "2px 0",
+                          }}
+                          onClick={() => handleStatusTransition(card.id, card.kotNo, "READY")}
+                        >
+                          Directly Mark Ready
+                        </button>
+                      </>
+                    )}
+
+                    {card.status === "PREPARING" && (
+                      <button
+                        type="button"
+                        className="btn-food-ready-pill"
+                        style={{ background: "#16a34a", color: "#fff", fontWeight: 800 }}
+                        onClick={() => handleStatusTransition(card.id, card.kotNo, "READY")}
+                      >
+                        🔔 Food Is Ready (Ready to Serve)
+                      </button>
+                    )}
+
+                    {card.status === "READY" && (
+                      <button
+                        type="button"
+                        className="btn-food-ready-pill"
+                        style={{ background: "#4f46e5", color: "#fff", fontWeight: 800 }}
+                        onClick={() => handleStatusTransition(card.id, card.kotNo, "SERVED")}
+                      >
+                        🍽️ Ready to Serve / Mark Served
+                      </button>
+                    )}
+
+                    {card.status === "SERVED" && (
+                      <div style={{ textAlign: "center", color: "#10b981", fontSize: "11px", fontWeight: 700, padding: "8px 0" }}>
+                        ✓ Food Delivered to Table
+                      </div>
+                    )}
                   </div>
                 </div>
               );

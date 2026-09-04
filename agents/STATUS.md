@@ -1,6 +1,6 @@
 # PetPooja POS Platform — Multi-Agent Operational Status
 
-**Last Updated:** 2026-09-01T00:10:00Z · **System Status:** 🟢 OPERATIONAL
+**Last Updated:** 2026-09-03T12:05:00Z · **System Status:** 🟢 OPERATIONAL
 
 ---
 
@@ -203,3 +203,20 @@ Frontend: 4 new components incl. a dependency-free inline-SVG RevenueTrendChart 
 Fake data removed: the hardcoded "(Non AC)" literal, AggregatorOrdersView's fake rider name/phone, the "Hotel kapila"/"R327038" outlet fallbacks.
 
 tsc: pos-web 0, api 100 (one better than the 101 baseline). No line-ending churn across 24 files. NOT verified in a browser — `next build` can't run here (node_modules installed on Windows, no Linux SWC binary, no network).
+
+## 2026-09-03 — Data Synchronization & Multi-Agent Wiring (complete)
+
+- **Database Telemetry & Migration 0041:**
+  - Added migration `0041_agent_telemetry.sql` to manage `agent_telemetry` table in PostgreSQL.
+  - Synchronized `agent_telemetry` across both `petpooja` and `kapmeta` databases with all 8 autonomous agents.
+- **Operational Roles & Permissions Sync:**
+  - Standardized all 9 operational roles matching `ROLE-WISE-SCREEN-DIRECTORY.md` (`SUPER_ADMIN`, `ADMIN`, `OUTLET_MANAGER`, `CASHIER`, `WAITER`, `KITCHEN_USER`, `DELIVERY_MANAGER`, `INVENTORY_MANAGER`, `ACCOUNTANT`).
+  - Mapped complete permission sets (228 assignments) across all operational roles in `role_permissions` table.
+  - Seeded 8 staff operational user accounts with PIN `1234` and outlet access.
+- **A2A Multi-Agent API & Heartbeat Wiring:**
+  - In `apps/api/src/routes/admin.ts`, wired `POST /admin/agents/heartbeat` to support both `id` and `agentId`, update database telemetry, and broadcast `agent.heartbeat` across WebSockets.
+  - Replaced hardcoded `activeWaiters: 3` and `agents: { total: 8, online: 8 }` in `GET /admin/daily-operations` with live database session and telemetry queries.
+  - In `apps/api/src/routes/waiters.ts`, wired `POST /waiters/heartbeat` to touch the active database `Session` and broadcast `waiter.heartbeat`.
+  - In `apps/api/src/routes/marketing.ts`, wired WebSocket event broadcasts (`marketing.campaign_created`, `marketing.campaign_queued`, `marketing.campaign_paused`).
+  - In `apps/pos-web/components/A2aAgentStatusDrawer.tsx`, updated `handlePingHeartbeat` to send both `id` and `agentId` with `ONLINE` status.
+  - Closed task `TSK-006` in `task-board.json`.

@@ -9,8 +9,8 @@ export type KotStatus = "QUEUED" | "PREPARING" | "READY" | "SERVED" | "CANCELLED
 // (kitchen mistake, guest change, station reassignment). SERVED remains a
 // true terminal status with no further transitions.
 export const KOT_TRANSITIONS: Record<KotStatus, KotStatus[]> = {
-  QUEUED: ["PREPARING", "CANCELLED", "MODIFIED", "SHIFTED"],
-  PREPARING: ["READY", "CANCELLED", "MODIFIED", "SHIFTED"],
+  QUEUED: ["PREPARING", "READY", "CANCELLED", "MODIFIED", "SHIFTED"],
+  PREPARING: ["READY", "SERVED", "CANCELLED", "MODIFIED", "SHIFTED"],
   READY: ["SERVED", "CANCELLED", "MODIFIED", "SHIFTED"],
   SERVED: [],
   CANCELLED: [],

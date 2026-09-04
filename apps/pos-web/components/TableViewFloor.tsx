@@ -527,12 +527,12 @@ export default function TableViewFloor({
 
                       {isOccupied && tbl.kitchenStage && (
                         <div style={{ margin: "2px 0 4px 0", textAlign: "center", display: "flex", justifyContent: "center" }}>
-                          {tbl.kitchenStage === "COOKING" && (
+                          {((tbl.kitchenStage as string) === "COOKING" || (tbl.kitchenStage as string) === "PREPARING") && (
                             <span style={{ fontSize: "10px", background: "rgba(245, 158, 11, 0.2)", color: "#fbbf24", border: "1px solid rgba(245, 158, 11, 0.5)", borderRadius: "4px", padding: "1px 6px", fontWeight: 700 }}>
                               👨‍🍳 Cooking
                             </span>
                           )}
-                          {tbl.kitchenStage === "READY" && (
+                          {((tbl.kitchenStage as string) === "READY" || (tbl.kitchenStage as string) === "FOOD_READY") && (
                             <span style={{ fontSize: "10px", background: "rgba(16, 185, 129, 0.25)", color: "#34d399", border: "1px solid rgba(16, 185, 129, 0.6)", borderRadius: "4px", padding: "1px 6px", fontWeight: 800 }}>
                               🔔 Food Ready
                             </span>
@@ -551,7 +551,7 @@ export default function TableViewFloor({
                       )}
 
                       <div className="card-bottom-actions">
-                        {tbl.kitchenStage === "READY" && (
+                        {((tbl.kitchenStage as string) === "READY" || (tbl.kitchenStage as string) === "FOOD_READY") && (
                           <button
                             type="button"
                             className="btn-card-serve"

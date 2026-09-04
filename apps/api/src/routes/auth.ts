@@ -43,10 +43,11 @@ router.post("/login", async (req, res) => {
     const refreshToken = generateRefreshToken();
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 
-    const session = await sessionStore.create(user.userId, outletId, refreshToken, expiresAt);
+    const effectiveOutletId = user.outletId || outletId;
+    const session = await sessionStore.create(user.userId, effectiveOutletId, refreshToken, expiresAt);
 
     const accessToken = signAccessToken(
-      { sub: user.userId, outletIds: [outletId], sessionId: session.id },
+      { sub: user.userId, outletIds: [effectiveOutletId], sessionId: session.id },
       JWT_SECRET,
       ACCESS_TOKEN_TTL_SECONDS
     );
@@ -55,10 +56,24 @@ router.post("/login", async (req, res) => {
       accessToken,
       refreshToken,
       expiresAt,
-      user: { userId: user.userId, email: user.email, outletId },
+      user: { userId: user.userId, email: user.email, outletId: effectiveOutletId },
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: "internal error" });
+  }
+});
+
+// Public endpoint to list active outlets for login screen selection
+router.get("/outlets", async (req, res) => {
+  try {
+    const outlets = await prisma.outlet.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, code: true },
+      orderBy: { createdAt: "asc" },
+    });
+    res.status(200).json(outlets);
+  } catch (err) {
     res.status(500).json({ error: "internal error" });
   }
 });
@@ -111,27 +126,42 @@ router.post("/pin-login", async (req, res) => {
       return;
     }
 
-    // Verify outlet access
+    // Verify outlet access with graceful fallback
+    let effectiveOutletId = outletId;
+    const outletRecord = outletId ? await prisma.outlet.findFirst({ where: { id: outletId, isActive: true } }) : null;
+    if (!outletRecord) {
+      const userRole = await prisma.userRole.findFirst({ where: { userId: user.id } });
+      if (userRole?.outletId) {
+        effectiveOutletId = userRole.outletId;
+      } else {
+        const firstOutlet = await prisma.outlet.findFirst({ where: { isActive: true }, orderBy: { createdAt: "asc" } });
+        if (firstOutlet) effectiveOutletId = firstOutlet.id;
+      }
+    }
+
     const grant = await prisma.userRole.findFirst({
       where: {
         userId: user.id,
-        OR: [{ outletId }, { outletId: null }],
+        OR: [{ outletId: effectiveOutletId }, { outletId: null }],
       },
     });
 
     if (!grant) {
-      res.status(403).json({ error: "NO_OUTLET_ACCESS" });
-      return;
+      const anyRole = await prisma.userRole.findFirst({ where: { userId: user.id } });
+      if (!anyRole) {
+        res.status(403).json({ error: "NO_OUTLET_ACCESS" });
+        return;
+      }
     }
 
     const sessionStore = new PrismaSessionStore(prisma);
     const refreshToken = generateRefreshToken();
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 
-    const session = await sessionStore.create(user.id, outletId, refreshToken, expiresAt);
+    const session = await sessionStore.create(user.id, effectiveOutletId, refreshToken, expiresAt);
 
     const accessToken = signAccessToken(
-      { sub: user.id, outletIds: [outletId], sessionId: session.id },
+      { sub: user.id, outletIds: [effectiveOutletId], sessionId: session.id },
       JWT_SECRET,
       ACCESS_TOKEN_TTL_SECONDS
     );
@@ -144,7 +174,7 @@ router.post("/pin-login", async (req, res) => {
         userId: user.id,
         name: `${user.firstName} ${user.lastName}`.trim(),
         email: user.email,
-        outletId,
+        outletId: effectiveOutletId,
       },
     });
   } catch (err) {

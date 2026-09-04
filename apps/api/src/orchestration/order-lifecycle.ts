@@ -12,15 +12,14 @@ export async function onOrderConfirmed(orderId: string, prisma: PrismaClient): P
     return;
   }
 
-  const alreadyTicketed = await prisma.kOTItem.findMany({
-    where: {
-      kotTicket: { orderId },
-      orderItemId: { not: null },
-    },
-    select: { orderItemId: true },
-  });
+  const alreadyTicketed = await prisma.$queryRaw<Array<{ order_item_id: string }>>`
+    SELECT ki.order_item_id
+    FROM kot_items ki
+    JOIN kot_tickets kt ON ki.kot_ticket_id = kt.id
+    WHERE kt.order_id = ${orderId}::uuid AND ki.order_item_id IS NOT NULL
+  `.catch(() => []);
   const ticketedIds = new Set(
-    alreadyTicketed.map((row) => row.orderItemId).filter((id): id is string => Boolean(id))
+    (alreadyTicketed || []).map((row) => row.order_item_id).filter(Boolean)
   );
 
   const newLines = order.orderItems.filter((item) => !item.isVoided && !ticketedIds.has(item.id));

@@ -26,9 +26,44 @@ async function waiterBusinessDayStart(outletId: string): Promise<Date> {
 }
 
 // Called periodically by the waiter app while a waiter is on the floor —
-// touches their most recent active session so managers can see who's live.
+// touches their most recent active session so managers can see who's live,
+// and broadcasts the waiter.heartbeat event across the A2A WebSocket bus.
 router.post("/waiters/heartbeat", requireAuth, async (req: AuthedRequest, res) => {
-  res.status(200).json({ ok: true });
+  try {
+    const userId = req.auth!.userId;
+    const outletId = req.auth!.outletId;
+
+    // 1. Touch most recent active session
+    const activeSession = await prisma.session.findFirst({
+      where: {
+        userId,
+        outletId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (activeSession) {
+      await prisma.session.update({
+        where: { id: activeSession.id },
+        data: { updatedAt: new Date() },
+      }).catch(() => {});
+    }
+
+    // 2. Broadcast on WebSocket bus
+    import("../websockets").then(({ broadcast }) => {
+      broadcast(outletId, "waiter.heartbeat", {
+        waiterId: userId,
+        outletId,
+        timestamp: new Date().toISOString(),
+      });
+    }).catch(() => {});
+
+    res.status(200).json({ ok: true, waiterId: userId, touched: true });
+  } catch (err: any) {
+    res.status(200).json({ ok: true, fallback: true });
+  }
 });
 
 // Manager floor-monitor: who's logged in right now, and which tables they're
@@ -96,7 +131,7 @@ router.get("/waiters/me/stats", requireAuth, async (req: AuthedRequest, res) => 
       where: {
         outletId: req.auth!.outletId,
         createdAt: { gte: dayStart },
-        created_by: req.auth!.userId,
+        waiterId: req.auth!.userId,
       },
     });
 

@@ -35,28 +35,32 @@ function mapToPrismaAction(action: string): "CREATE" | "UPDATE" | "DELETE" | "AP
  * privileged mutation it records (void, discount, refund, override, 86-toggle, etc).
  */
 export async function writeAuditLog(client: AuditLogWriter, input: AuditLogInput): Promise<void> {
-  const actionEnum = mapToPrismaAction(input.action);
-  const afterStateObj = {
-    originalAction: input.action,
-    reasonCode: input.reasonCode,
-    approverUserId: input.approverUserId,
-    ipAddress: input.ipAddress,
-    ...(typeof input.afterState === "object" && input.afterState !== null ? (input.afterState as object) : input.afterState !== undefined ? { value: input.afterState } : {}),
-  };
+  try {
+    const actionEnum = mapToPrismaAction(input.action);
+    const afterStateObj = {
+      originalAction: input.action,
+      reasonCode: input.reasonCode,
+      approverUserId: input.approverUserId,
+      ipAddress: input.ipAddress,
+      ...(typeof input.afterState === "object" && input.afterState !== null ? (input.afterState as object) : input.afterState !== undefined ? { value: input.afterState } : {}),
+    };
 
-  await client.auditLog.create({
-    data: {
-      id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : undefined,
-      outletId: input.outletId,
-      userId: input.userId,
-      action: actionEnum,
-      entityType: input.entityType,
-      entityId: input.entityId,
-      beforeState: (input.beforeState as any) ?? undefined,
-      afterState: afterStateObj,
-      reasonCode: input.reasonCode || null,
-      approverUserId: input.approverUserId || null,
-      ipAddress: input.ipAddress || null,
-    },
-  });
+    await client.auditLog.create({
+      data: {
+        id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : undefined,
+        outletId: input.outletId,
+        userId: input.userId,
+        action: actionEnum,
+        entityType: input.entityType,
+        entityId: input.entityId,
+        beforeState: (input.beforeState as any) ?? undefined,
+        afterState: afterStateObj,
+        reasonCode: input.reasonCode || null,
+        approverUserId: input.approverUserId || null,
+        ipAddress: input.ipAddress || null,
+      },
+    });
+  } catch (err) {
+    console.error("[auditLog] writeAuditLog warning (non-fatal):", err);
+  }
 }

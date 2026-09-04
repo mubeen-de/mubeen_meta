@@ -22,8 +22,7 @@ const port = Number(process.env.API_PORT ?? 4001);
 
 server.on("error", (err: NodeJS.ErrnoException) => {
   if (err.code === "EADDRINUSE") {
-    // eslint-disable-next-line no-console
-    console.error(`Kapmeta API port ${port} already in use. Existing process is healthy. Start POS only: npm run dev -w @kapmeta/pos-web`);
+    console.error(`Kapmeta API port ${port} already in use.`);
     process.exit(1);
   }
   throw err;
@@ -34,3 +33,6 @@ server.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log(`Kapmeta API listening on port ${port}`);
 });
+
+process.on("SIGTERM", () => server.close());
+process.on("SIGINT", () => server.close());

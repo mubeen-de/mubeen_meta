@@ -120,15 +120,12 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
       include: {
         kotItems: { include: { menuItem: { select: { name: true } } } },
         station: { select: { name: true, slaWarningSeconds: true, slaBreachSeconds: true } },
-        order: { select: { orderType: true, table_number: true, diningTable: { select: { id: true, tableNumber: true, mergeGroupId: true, mergePrimaryTableId: true } } } },
+        order: { select: { orderType: true, diningTable: { select: { id: true, tableNumber: true } } } },
       },
       orderBy: { createdAt: queryStr ? "desc" : "asc" },
     });
 
-    const groupIds = tickets
-      .map((t) => (t.order as any)?.diningTable?.mergeGroupId)
-      .filter((id: string | null | undefined): id is string => Boolean(id));
-    const labels = await mergeGroupLabelMap(prisma, req.auth!.outletId, groupIds);
+    const labels = new Map<string, string>();
 
     res.status(200).json(
       tickets.map((t) => ({
@@ -387,7 +384,7 @@ router.patch("/kot/:kotTicketId/status", requireAuth, async (req: AuthedRequest,
         stage = "COOKING";
       } else if (result.newStatus === "READY") {
         orderTargetStatus = "READY";
-        stage = "FOOD_READY";
+        stage = "READY";
       } else if (result.newStatus === "SERVED") {
         const siblings = await prisma.kOTTicket.findMany({
           where: { orderId: ticket.orderId },

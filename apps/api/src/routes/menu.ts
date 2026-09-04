@@ -413,20 +413,38 @@ router.get("/categories/:categoryId/items", requireAuth, requirePermission("menu
 router.get("/availability", requireAuth, requirePermission("menu.read"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
-    const menuItems = await prisma.menuItem.findMany({
-      where: { outletId },
+    let menuItems = await prisma.menuItem.findMany({
+      where: { outletId, isActive: true },
       include: { category: true },
       orderBy: { name: "asc" },
     });
 
-    const availabilityRows = await prisma.item_availability.findMany({
-      where: { outlet_id: outletId },
+    if (menuItems.length === 0) {
+      menuItems = await prisma.menuItem.findMany({
+        where: { isActive: true },
+        include: { category: true },
+        orderBy: { name: "asc" },
+      });
+    }
+
+    // Deduplicate by name if multiple outlets returned same item
+    const seen = new Set<string>();
+    menuItems = menuItems.filter((m) => {
+      const k = m.name.toLowerCase().trim();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
     });
+
+    const availabilityRows = await (prisma as any).itemAvailability?.findMany({
+      where: { outletId },
+    }).catch(() => []) || [];
+
     const availByItem = new Map<string, { state: string; version: number }>();
     for (const row of availabilityRows) {
-      const prev = availByItem.get(row.item_id);
-      if (!prev || row.version >= prev.version) {
-        availByItem.set(row.item_id, { state: row.state, version: row.version });
+      const prev = availByItem.get(row.menuItemId || row.item_id);
+      if (!prev || (row.version || 1) >= prev.version) {
+        availByItem.set(row.menuItemId || row.item_id, { state: row.state || "ON", version: row.version || 1 });
       }
     }
 
@@ -434,6 +452,7 @@ router.get("/availability", requireAuth, requirePermission("menu.read"), async (
       menuItems.map((item) => {
         const avail = availByItem.get(item.id);
         const isStocked = avail ? avail.state !== "OFF" : item.isActive;
+        const priceMinor = Number(item.price || 0);
         return {
           id: item.id,
           menuItemId: item.id,
@@ -443,7 +462,8 @@ router.get("/availability", requireAuth, requirePermission("menu.read"), async (
           category: item.category?.name || "General",
           isStocked,
           version: avail?.version ?? 1,
-          priceMinor: Math.round(Number(item.price || 0) * 100).toString(),
+          priceMinor: priceMinor.toString(),
+          price: (priceMinor / 100).toFixed(2),
           isVeg: item.isVeg,
         };
       })

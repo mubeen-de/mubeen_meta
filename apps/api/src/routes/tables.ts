@@ -281,9 +281,9 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
     };
 
     const occupiedNoOrder = tables.filter(
-      (t: any) => t.status !== "VACANT" && !orderForTable(t) && !t.mergeGroupId
+      (t: any) => t.status === "OCCUPIED" && !orderForTable(t) && !t.mergeGroupId
     );
-    const vacantWithOrder = tables.filter((t: any) => t.status === "VACANT" && orderMap.has(t.id));
+    const vacantWithOrder = tables.filter((t: any) => (t.status === "VACANT" || t.status === "DIRTY") && orderMap.has(t.id));
 
     if (occupiedNoOrder.length > 0) {
       await prisma.diningTable.updateMany({
@@ -310,7 +310,7 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
           name: t.tableNumber,
           capacity: extra.groupCapacity || t.capacity,
           section: t.section,
-          status: t.mergeGroupId ? "RUNNING" : "VACANT",
+          status: t.status === "DIRTY" ? "DIRTY" : (t.mergeGroupId ? "RUNNING" : "VACANT"),
           kitchenStage: null,
           isActive: t.isActive,
           activeOrderId: null,
@@ -353,7 +353,7 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
 });
 
 // POST /tables/:id/vacant - Explicitly release and mark table as VACANT
-tablesRouter.post("/tables/:id/vacant", requireAuth, requirePermission("table.session.close"), async (req: AuthedRequest, res) => {
+tablesRouter.post("/tables/:id/vacant", requireAuth, requirePermission("table.session.close", "table.manage"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
     const tableId = req.params.id;
@@ -628,7 +628,7 @@ tablesRouter.get("/tables/occupancy", requireAuth, async (req: AuthedRequest, re
 });
 
 // POST /tables - Create a new dining table
-tablesRouter.post("/tables", requireAuth, requirePermission("settings.manage"), async (req: AuthedRequest, res) => {
+tablesRouter.post("/tables", requireAuth, requirePermission("settings.manage", "table.manage"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
     const { tableNumber, name, capacity, section } = req.body;
@@ -719,7 +719,7 @@ tablesRouter.get("/tables/sections", requireAuth, async (req: AuthedRequest, res
 });
 
 // POST /tables/sections - Create a new area
-tablesRouter.post("/tables/sections", requireAuth, requirePermission("settings.manage"), async (req: AuthedRequest, res) => {
+tablesRouter.post("/tables/sections", requireAuth, requirePermission("settings.manage", "table.manage"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
     const { name, sortOrder } = req.body;
@@ -769,7 +769,7 @@ tablesRouter.post("/tables/sections", requireAuth, requirePermission("settings.m
 });
 
 // PATCH /tables/sections/:id - Rename an area
-tablesRouter.patch("/tables/sections/:id", requireAuth, requirePermission("settings.manage"), async (req: AuthedRequest, res) => {
+tablesRouter.patch("/tables/sections/:id", requireAuth, requirePermission("settings.manage", "table.manage"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
     const { name, sortOrder } = req.body;
@@ -811,7 +811,7 @@ tablesRouter.patch("/tables/sections/:id", requireAuth, requirePermission("setti
 });
 
 // DELETE /tables/sections/:id - Soft delete an area
-tablesRouter.delete("/tables/sections/:id", requireAuth, requirePermission("settings.manage"), async (req: AuthedRequest, res) => {
+tablesRouter.delete("/tables/sections/:id", requireAuth, requirePermission("settings.manage", "table.manage"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
 
@@ -883,7 +883,7 @@ tablesRouter.get("/tables/:id", requireAuth, async (req: AuthedRequest, res) => 
 });
 
 // PUT /tables/:id - Update table properties
-tablesRouter.put("/tables/:id", requireAuth, requirePermission("settings.manage"), async (req: AuthedRequest, res) => {
+tablesRouter.put("/tables/:id", requireAuth, requirePermission("settings.manage", "table.manage"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
     const { tableNumber, name, capacity, section, status, isActive } = req.body;
@@ -1699,7 +1699,7 @@ tablesRouter.post("/tables/unmerge", requireAuth, requirePermission("table.manag
 });
 
 // PATCH /tables/:id - Update table configuration (capacity, section, tableNumber, isActive)
-tablesRouter.patch("/tables/:id", requireAuth, requirePermission("settings.manage"), async (req: AuthedRequest, res) => {
+tablesRouter.patch("/tables/:id", requireAuth, requirePermission("settings.manage", "table.manage"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
     const tableId = req.params.id;
@@ -1758,7 +1758,7 @@ tablesRouter.patch("/tables/:id", requireAuth, requirePermission("settings.manag
 });
 
 // DELETE /tables/:id - Deactivate table
-tablesRouter.delete("/tables/:id", requireAuth, requirePermission("settings.manage"), async (req: AuthedRequest, res) => {
+tablesRouter.delete("/tables/:id", requireAuth, requirePermission("settings.manage", "table.manage"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
     const existing = await prisma.diningTable.findFirst({

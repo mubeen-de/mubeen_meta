@@ -21,7 +21,8 @@ const dir = path.join(__dirname, '..', 'db', 'migrations');
   for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.sql')).sort()) {
     if (!applied.has(file)) continue;
     const sql = fs.readFileSync(path.join(dir, file), 'utf8');
-    const want = [...sql.matchAll(/CREATE TABLE (?:IF NOT EXISTS )?([a-z_][a-z0-9_]*)/gi)].map(m => m[1].toLowerCase());
+    const noComments = sql.replace(/--.*$/gm, '');
+    const want = [...noComments.matchAll(/CREATE TABLE (?:IF NOT EXISTS )?([a-z_][a-z0-9_]*)/gi)].map(m => m[1].toLowerCase());
     const missing = [...new Set(want)].filter(t => !live.has(t));
     if (missing.length) { bad++; console.log(`MARKED APPLIED BUT MISSING: ${file} -> ${missing.join(', ')}`); }
   }
