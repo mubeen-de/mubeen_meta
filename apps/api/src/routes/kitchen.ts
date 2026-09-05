@@ -76,23 +76,44 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
 
     if (queryStr) {
       const rawQuery = queryStr;
-      const cleanedTicketNumber = rawQuery.replace(/^(KOT\s*#?\s*|#\s*)/i, "").trim();
-      const suffixNumber = cleanedTicketNumber.replace(/^KOT-/i, "").trim();
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawQuery);
+
+      // Extract variations of ticket numbers:
+      // Strip any leading prefix like "KOT", "KOT-", "KOT #", "#", or leading hyphens
+      const stripped = rawQuery.replace(/^(kot[\s\-#:]*|#\s*|-+)/i, "").trim();
+
+      // If there are hyphen-separated parts (e.g. KOT-1788464996543-783), extract the suffix token (783)
+      const parts = rawQuery.split(/[\s\-]+/);
+      const lastPart = parts.length > 1 ? parts[parts.length - 1] : "";
+
+      const terms = new Set<string>();
+      if (rawQuery) terms.add(rawQuery);
+      if (stripped) terms.add(stripped);
+      if (lastPart && lastPart.length >= 2) terms.add(lastPart);
 
       const searchConditions: any[] = [];
-      if (cleanedTicketNumber) {
-        searchConditions.push({ ticketNumber: { contains: cleanedTicketNumber, mode: "insensitive" } });
-        searchConditions.push({ id: { contains: cleanedTicketNumber, mode: "insensitive" } });
+      for (const term of terms) {
+        searchConditions.push({ ticketNumber: { contains: term, mode: "insensitive" } });
       }
-      if (rawQuery && rawQuery !== cleanedTicketNumber) {
-        searchConditions.push({ ticketNumber: { contains: rawQuery, mode: "insensitive" } });
-        searchConditions.push({ id: { contains: rawQuery, mode: "insensitive" } });
+
+      // CRITICAL: id is a UUID column in Postgres, so Prisma throws PrismaClientValidationError
+      // if { contains } is used on it. Only check id if the query is a valid UUID string.
+      if (isUuid) {
+        searchConditions.push({ id: rawQuery });
       }
-      if (suffixNumber && suffixNumber !== cleanedTicketNumber && suffixNumber.length >= 2) {
-        searchConditions.push({ ticketNumber: { contains: suffixNumber, mode: "insensitive" } });
-      }
+
+      // Match by orderNumber
       searchConditions.push({ order: { orderNumber: { contains: rawQuery, mode: "insensitive" } } });
+      if (stripped && stripped !== rawQuery) {
+        searchConditions.push({ order: { orderNumber: { contains: stripped, mode: "insensitive" } } });
+      }
+
+      // Match by tableNumber (e.g. "ll" or "bll" if stripped of leading 'b')
       searchConditions.push({ order: { diningTable: { tableNumber: { contains: rawQuery, mode: "insensitive" } } } });
+      const tableStripped = rawQuery.replace(/^[bB]/, "");
+      if (tableStripped && tableStripped !== rawQuery) {
+        searchConditions.push({ order: { diningTable: { tableNumber: { contains: tableStripped, mode: "insensitive" } } } });
+      }
 
       whereClause = {
         outletId: req.auth!.outletId,
@@ -139,11 +160,11 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
         status: t.status,
         createdAt: t.createdAt,
         servedAt: t.servedAt,
-        orderType: t.order!.orderType,
+        orderType: t.order?.orderType ?? "DINE_IN",
         tableNumber:
           (t.order as any)?.table_number ||
-          labels.get((t.order as any)?.diningTable?.mergeGroupId) ||
-          t.order!.diningTable?.tableNumber ||
+          (t.order?.diningTable ? labels.get((t.order.diningTable as any)?.mergeGroupId) : null) ||
+          t.order?.diningTable?.tableNumber ||
           null,
         kotItems: t.kotItems.map((ki) => ({
           id: ki.id,
@@ -151,7 +172,7 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
           notes: ki.notes,
           course: ki.course,
           servedAt: ki.servedAt,
-          menuItem: { name: ki.menuItem!.name },
+          menuItem: { name: ki.menuItem?.name ?? "Unknown Item" },
         })),
       }))
     );

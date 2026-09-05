@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { authedFetch, fetchMe } from "../lib/auth";
 import { useKapmetaSocket } from "../lib/useKapmetaSocket";
 import BillSplitModal from "./BillSplitModal";
+import MorePaymentModal from "./MorePaymentModal";
 import AttractiveMenuItemCard, { MenuItemData } from "./menu/AttractiveMenuItemCard";
 import MenuCustomizerModal, { CustomizedItemSelection } from "./menu/MenuCustomizerModal";
 import CategoryNavbar, { DietaryFilter } from "./menu/CategoryNavbar";
@@ -91,10 +92,28 @@ export default function PosBillingView({
   }>>([]);
 
   // Payment & Settlement
-  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "CARD" | "DUE" | "OTHER">("CASH");
+  const [paymentMethod, setPaymentMethod] = useState<string>("CASH");
   const [isPaidChecked, setIsPaidChecked] = useState(false);
   const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
+  const [isMoreModalOpen, setIsMoreModalOpen] = useState(false);
+  const [upiRefId, setUpiRefId] = useState("");
+  const [roomServiceData, setRoomServiceData] = useState<{ roomNumber?: string; guestName?: string } | null>(null);
   const [processingOrder, setProcessingOrder] = useState(false);
+
+  const isOtherSelected =
+    paymentMethod === "OTHER" ||
+    paymentMethod === "UPI" ||
+    paymentMethod.startsWith("OTHER") ||
+    paymentMethod === "NOT_PAID" ||
+    paymentMethod === "PART";
+
+  const otherButtonLabel = useMemo(() => {
+    if (paymentMethod === "UPI") return "Other (UPI)";
+    if (paymentMethod.toLowerCase().includes("room service")) return "Other (Room)";
+    if (paymentMethod === "NOT_PAID") return "Other (Not Paid)";
+    if (paymentMethod === "PART") return "Other (Part)";
+    return "Other";
+  }, [paymentMethod]);
 
   // Modals & Feedback
   const [receiptModal, setReceiptModal] = useState<any | null>(null);
@@ -719,8 +738,7 @@ export default function PosBillingView({
       const matchCat =
         isSearchActive ||
         selectedCategory === "All" ||
-        item.category === selectedCategory ||
-        (selectedCategory === "Biryani (Non-Veg)" && (item.category === "Biryani (Veg)" || item.name.toLowerCase().includes("paneer")));
+        item.category === selectedCategory;
 
       const matchSearch =
         !isSearchActive ||
@@ -729,11 +747,8 @@ export default function PosBillingView({
 
       let matchDiet = true;
       if (dietaryFilter === "VEG_ONLY") matchDiet = item.isVeg === true;
-      else if (dietaryFilter === "NON_VEG_ONLY") {
-        matchDiet = item.isVeg === false || (selectedCategory === "Biryani (Non-Veg)" && item.name.toLowerCase().includes("paneer"));
-      } else if (dietaryFilter === "BESTSELLERS_ONLY") {
-        matchDiet = item.priceMinor > 8000 && item.priceMinor < 30000;
-      }
+      else if (dietaryFilter === "NON_VEG_ONLY") matchDiet = item.isVeg === false;
+      else if (dietaryFilter === "BESTSELLERS_ONLY") matchDiet = item.priceMinor > 8000 && item.priceMinor < 30000;
 
       return matchCat && matchSearch && matchDiet;
     });
@@ -1152,15 +1167,20 @@ export default function PosBillingView({
                   <span>Due</span>
                 </label>
 
-                <label className={`payment-pill ${paymentMethod === "OTHER" ? "selected" : ""}`}>
+                <label className={`payment-pill ${isOtherSelected ? "selected" : ""}`}>
                   <input
                     type="radio"
                     name="paymentMode"
                     value="OTHER"
-                    checked={paymentMethod === "OTHER"}
-                    onChange={() => setPaymentMethod("OTHER")}
+                    checked={isOtherSelected}
+                    onChange={() => {
+                      if (paymentMethod === "CASH" || paymentMethod === "CARD" || paymentMethod === "DUE") {
+                        setPaymentMethod("OTHER");
+                      }
+                      setIsMoreModalOpen(true);
+                    }}
                   />
-                  <span>Other</span>
+                  <span>{otherButtonLabel}</span>
                 </label>
 
                 <label className="paid-checkbox-label">
@@ -1178,6 +1198,97 @@ export default function PosBillingView({
                 <span className="total-value">₹{(grandTotalMinor / 100).toFixed(2)}</span>
               </div>
             </div>
+
+            {/* Quick Sub-Options when Other is Selected */}
+            {isOtherSelected && (
+              <div className="other-options-strip">
+                <span className="other-strip-label">⚡ Other Modes:</span>
+                <button
+                  type="button"
+                  className={`other-sub-pill ${paymentMethod === "UPI" ? "active" : ""}`}
+                  onClick={() => {
+                    setPaymentMethod("UPI");
+                    setIsPaidChecked(true);
+                  }}
+                  title="Pay via UPI (GPay, PhonePe, Paytm, QR)"
+                >
+                  📱 UPI / QR
+                </button>
+                <button
+                  type="button"
+                  className={`other-sub-pill ${paymentMethod.toLowerCase().includes("room service") ? "active" : ""}`}
+                  onClick={() => {
+                    setIsMoreModalOpen(true);
+                  }}
+                  title="Charge order to Hotel Room Folio"
+                >
+                  🏨 Room Service
+                </button>
+                <button
+                  type="button"
+                  className="other-sub-pill more-options-btn"
+                  onClick={() => setIsMoreModalOpen(true)}
+                  title="Open PetPooja More Payment Modal"
+                >
+                  ⚙️ All Options...
+                </button>
+              </div>
+            )}
+
+            {/* UPI Settlement Strip */}
+            {paymentMethod === "UPI" && (
+              <div className="upi-tender-strip">
+                <div className="upi-tender-left">
+                  <span className="upi-badge-icon">📱</span>
+                  <div className="upi-vpa-details">
+                    <span className="upi-title">Scan & Pay via UPI</span>
+                    <span className="upi-vpa-addr">hotelkapila@okaxis</span>
+                  </div>
+                </div>
+                <div className="upi-utr-input-group">
+                  <label htmlFor="pos-upi-utr">UTR / Ref (Opt):</label>
+                  <input
+                    id="pos-upi-utr"
+                    type="text"
+                    placeholder="e.g. 423985729182"
+                    value={upiRefId}
+                    onChange={(e) => setUpiRefId(e.target.value)}
+                  />
+                </div>
+                <div className="upi-actions">
+                  <button
+                    type="button"
+                    className="btn-upi-qr-view"
+                    onClick={() => setIsMoreModalOpen(true)}
+                  >
+                    📷 View QR
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Room Service Settlement Strip */}
+            {paymentMethod.toLowerCase().includes("room service") && (
+              <div className="room-tender-strip">
+                <div className="room-tender-left">
+                  <span className="room-badge-icon">🏨</span>
+                  <div className="room-details">
+                    <span className="room-title">Charge to Room Folio</span>
+                    <span className="room-meta">
+                      {roomServiceData?.roomNumber ? `Room #${roomServiceData.roomNumber}` : "Room not specified"}
+                      {roomServiceData?.guestName ? ` • Guest: ${roomServiceData.guestName}` : ""}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn-room-edit"
+                  onClick={() => setIsMoreModalOpen(true)}
+                >
+                  ✏️ Edit Room Folio
+                </button>
+              </div>
+            )}
 
             {/* Cash Tender & Change Due Strip */}
             {paymentMethod === "CASH" && (
@@ -1446,6 +1557,52 @@ export default function PosBillingView({
             </div>
           </div>
         </div>
+      )}
+
+      {/* "More" / Other Payment Options Modal (PetPooja UI Parity) */}
+      <MorePaymentModal
+        isOpen={isMoreModalOpen}
+        onClose={() => setIsMoreModalOpen(false)}
+        currentMethod={paymentMethod}
+        isPaid={isPaidChecked}
+        totalMinor={grandTotalMinor}
+        onSelectMethod={(method, extraData) => {
+          setPaymentMethod(method);
+          if (extraData?.isPaid !== undefined) {
+            setIsPaidChecked(extraData.isPaid);
+          }
+          if (extraData?.upiRefId) {
+            setUpiRefId(extraData.upiRefId);
+          }
+          if (extraData?.roomNumber) {
+            setRoomServiceData({
+              roomNumber: extraData.roomNumber,
+              guestName: extraData.guestName,
+            });
+          }
+        }}
+        onOpenSplitModal={() => {
+          setIsMoreModalOpen(false);
+          setIsSplitModalOpen(true);
+        }}
+      />
+
+      {/* Bill Split Tender Modal */}
+      {isSplitModalOpen && (
+        <BillSplitModal
+          cart={cart.map((c) => ({
+            cartItemId: c.cartItemId,
+            item: { name: c.item.name, priceMinor: c.item.priceMinor },
+            quantity: c.quantity,
+            itemTotalMinor: c.quantity * c.item.priceMinor,
+          }))}
+          totalMinor={grandTotalMinor}
+          onClose={() => setIsSplitModalOpen(false)}
+          onConfirmSplit={(splitDetails) => {
+            setPaymentMethod("PART");
+            setIsPaidChecked(true);
+          }}
+        />
       )}
 
       {/* Discount Modal */}
@@ -2056,8 +2213,16 @@ export default function PosBillingView({
           font-size: 0.6875rem;
           font-weight: 600;
           cursor: pointer;
-          padding: 2px 4px;
+          padding: 2px 6px;
           border-radius: 4px;
+          border: 1px solid transparent;
+          transition: background-color 0.15s, border-color 0.15s;
+        }
+        .payment-pill.selected {
+          background: #eff6ff;
+          border-color: #93c5fd;
+          color: #1d4ed8;
+          font-weight: 700;
         }
         .payment-pill input {
           margin: 0;
@@ -2070,6 +2235,179 @@ export default function PosBillingView({
           font-weight: 700;
           color: #2563eb;
           cursor: pointer;
+        }
+
+        /* Other Modes Quick Strip */
+        .other-options-strip {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 8px;
+          background: #f8fafc;
+          border: 1px dashed #cbd5e1;
+          border-radius: 6px;
+          margin-top: 4px;
+        }
+        .other-strip-label {
+          font-size: 0.6875rem;
+          font-weight: 700;
+          color: #64748b;
+        }
+        .other-sub-pill {
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          color: #1e293b;
+          border-radius: 4px;
+          padding: 2px 8px;
+          font-size: 0.6875rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.12s ease;
+        }
+        .other-sub-pill:hover {
+          border-color: #3b82f6;
+          background: #f0f9ff;
+          color: #0284c7;
+        }
+        .other-sub-pill.active {
+          background: #f0fdf4;
+          border-color: #22c55e;
+          color: #15803d;
+          font-weight: 700;
+        }
+        .other-sub-pill.more-options-btn {
+          margin-left: auto;
+          background: #ede9fe;
+          border-color: #c4b5fd;
+          color: #6d28d9;
+          font-weight: 700;
+        }
+        .other-sub-pill.more-options-btn:hover {
+          background: #ddd6fe;
+        }
+
+        /* UPI Tender Strip */
+        .upi-tender-strip {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 6px 10px;
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 6px;
+          margin-top: 4px;
+          gap: 8px;
+        }
+        .upi-tender-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .upi-badge-icon {
+          font-size: 1rem;
+        }
+        .upi-vpa-details {
+          display: flex;
+          flex-direction: column;
+        }
+        .upi-title {
+          font-size: 0.6875rem;
+          font-weight: 700;
+          color: #166534;
+        }
+        .upi-vpa-addr {
+          font-size: 0.625rem;
+          font-weight: 600;
+          color: #15803d;
+        }
+        .upi-utr-input-group {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 0.6875rem;
+          color: #374151;
+        }
+        .upi-utr-input-group label {
+          font-size: 0.625rem;
+          font-weight: 600;
+          color: #4b5563;
+        }
+        .upi-utr-input-group input {
+          border: 1px solid #86efac;
+          border-radius: 4px;
+          padding: 2px 6px;
+          font-size: 0.6875rem;
+          width: 130px;
+          outline: none;
+          background: #ffffff;
+        }
+        .upi-utr-input-group input:focus {
+          border-color: #16a34a;
+        }
+        .upi-actions {
+          display: flex;
+          gap: 4px;
+        }
+        .btn-upi-qr-view {
+          background: #16a34a;
+          color: #ffffff;
+          border: none;
+          border-radius: 4px;
+          padding: 3px 8px;
+          font-size: 0.6875rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .btn-upi-qr-view:hover {
+          background: #15803d;
+        }
+
+        /* Room Service Strip */
+        .room-tender-strip {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 6px 10px;
+          background: #fffbeb;
+          border: 1px solid #fde68a;
+          border-radius: 6px;
+          margin-top: 4px;
+          gap: 8px;
+        }
+        .room-tender-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .room-badge-icon {
+          font-size: 1rem;
+        }
+        .room-details {
+          display: flex;
+          flex-direction: column;
+        }
+        .room-title {
+          font-size: 0.6875rem;
+          font-weight: 700;
+          color: #92400e;
+        }
+        .room-meta {
+          font-size: 0.625rem;
+          font-weight: 600;
+          color: #b45309;
+        }
+        .btn-room-edit {
+          background: #f59e0b;
+          color: #ffffff;
+          border: none;
+          border-radius: 4px;
+          padding: 3px 8px;
+          font-size: 0.6875rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .btn-room-edit:hover {
+          background: #d97706;
         }
 
         .total-display-badge {

@@ -7,11 +7,20 @@ interface QuickSearchModalProps {
   onClose: () => void;
 }
 
-/** Strips the "bill #", "order #", "kot #", "#" prefixes a cashier may type. */
+/** Strips the "bill #", "order #", "kot #", "#" prefixes a cashier may type, while preserving standard KOT formats. */
 function cleanQuery(raw: string, type: "BILL" | "KOT"): string {
-  const pattern =
-    type === "BILL" ? /^(bill\s*#?\s*|ord\s*#?\s*|order\s*#?\s*|#\s*)/i : /^(kot\s*#?\s*|#\s*)/i;
-  return raw.trim().replace(pattern, "").trim();
+  const trimmed = raw.trim();
+  if (type === "BILL") {
+    return trimmed.replace(/^(bill\s*#?\s*|ord\s*#?\s*|order\s*#?\s*|#\s*)/i, "").trim() || trimmed;
+  }
+  // For KOT, preserve standard prefixes like "KOT-12345" as-is so full ticket numbers aren't truncated into "-12345".
+  if (/^kot\s*[-#:]\s*/i.test(trimmed)) {
+    if (/^kot\s*[-:]/i.test(trimmed)) {
+      return trimmed.replace(/^kot\s*[-:]\s*/i, "KOT-").trim();
+    }
+    return trimmed.replace(/^kot\s*#\s*/i, "").trim();
+  }
+  return trimmed.replace(/^(kot\s+|#\s*)/i, "").trim() || trimmed;
 }
 
 export default function QuickSearchModal({ type, onClose }: QuickSearchModalProps) {
@@ -131,11 +140,19 @@ export default function QuickSearchModal({ type, onClose }: QuickSearchModalProp
                   Status: <span className="result-status">{res.status}</span>
                   {" · "}
                   Table: {res.tableNumber || res.diningTableId || "Direct"}
+                  {type === "KOT" && Array.isArray(res.kotItems) && res.kotItems.length > 0 && (
+                    <span style={{ color: "var(--text-secondary)" }}>
+                      {" · "}
+                      {res.kotItems.map((ki: any) => `${ki.quantity > 1 ? `${ki.quantity}x ` : ""}${ki.menuItem?.name || "Item"}`).join(", ")}
+                    </span>
+                  )}
                 </span>
               </span>
               <span className="result-amount">
-                {res.grandTotalMinor
+                {type === "BILL" && res.grandTotalMinor
                   ? `₹${(Number(res.grandTotalMinor) / 100).toFixed(2)}`
+                  : type === "KOT"
+                  ? "Open KDS →"
                   : "View"}
               </span>
             </button>

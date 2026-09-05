@@ -662,7 +662,15 @@ export class PrismaOrderRepository implements OrderRepository {
     }
 
     const paidMinor = payments.reduce((acc, p) => acc + p.amount, 0n);
-    const dueMinor = order.grandTotal > paidMinor ? order.grandTotal - paidMinor : 0n;
+    const expectedGrandTotal =
+      (order.subtotal || 0n) -
+      (order.discountTotal || 0n) +
+      (order.taxTotal || 0n) +
+      (order.tipTotal || 0n) +
+      (order.serviceChargeTotal || 0n);
+    const grandTotalMinor =
+      order.grandTotal === expectedGrandTotal ? order.grandTotal : expectedGrandTotal;
+    const dueMinor = grandTotalMinor > paidMinor ? grandTotalMinor - paidMinor : 0n;
 
     return {
       orderId: order.id,
@@ -672,7 +680,7 @@ export class PrismaOrderRepository implements OrderRepository {
       taxTotalMinor: order.taxTotal || 0n,
       tipTotalMinor: order.tipTotal || 0n,
       serviceChargeTotalMinor: order.serviceChargeTotal || 0n,
-      grandTotalMinor: order.grandTotal,
+      grandTotalMinor,
       paidMinor,
       dueMinor,
     };
@@ -719,17 +727,19 @@ export class PrismaOrderRepository implements OrderRepository {
   ): Promise<{ tipTotalMinor: bigint; serviceChargeTotalMinor: bigint; grandTotalMinor: bigint }> {
     return this.prisma.$transaction(async (tx) => {
       const order = await tx.order.findFirstOrThrow({ where: { id: orderId, outletId } });
-      const currentTip = order.tipTotal || 0n;
-      const currentService = order.serviceChargeTotal || 0n;
-      const tipDelta = tipMinor - currentTip;
-      const serviceDelta = serviceChargeMinor - currentService;
+      const calculatedGrandTotal =
+        (order.subtotal || 0n) -
+        (order.discountTotal || 0n) +
+        (order.taxTotal || 0n) +
+        tipMinor +
+        serviceChargeMinor;
 
       const updated = await tx.order.update({
         where: { id: orderId },
         data: {
           tipTotal: tipMinor,
           serviceChargeTotal: serviceChargeMinor,
-          grandTotal: { increment: tipDelta + serviceDelta },
+          grandTotal: calculatedGrandTotal,
         },
       });
 

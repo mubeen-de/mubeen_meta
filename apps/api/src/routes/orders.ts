@@ -62,7 +62,11 @@ ordersRouter.get("/orders", requireAuth, async (req: AuthedRequest, res) => {
 });
 
 // POST /orders - Create order
-ordersRouter.post("/orders", requireAuth, requirePermission("order.create"), async (req: AuthedRequest, res) => {
+ordersRouter.post(
+  "/orders",
+  requireAuth,
+  requirePermission("order.create", "bill.generate", "order.bill", "kot.create"),
+  async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
     const body = req.body;

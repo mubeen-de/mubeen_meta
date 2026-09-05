@@ -781,8 +781,7 @@ export default function WaiterDashboard() {
       const matchCat =
         isSearchActive ||
         selectedCategory === "All" ||
-        item.category === selectedCategory ||
-        (selectedCategory === "Biryani (Non-Veg)" && (item.category === "Biryani (Veg)" || item.name.toLowerCase().includes("paneer")));
+        item.category === selectedCategory;
 
       const matchSearch =
         !isSearchActive ||
@@ -791,11 +790,8 @@ export default function WaiterDashboard() {
 
       let matchDiet = true;
       if (dietaryFilter === "VEG_ONLY") matchDiet = item.isVeg === true;
-      else if (dietaryFilter === "NON_VEG_ONLY") {
-        matchDiet = item.isVeg === false || (selectedCategory === "Biryani (Non-Veg)" && item.name.toLowerCase().includes("paneer"));
-      } else if (dietaryFilter === "BESTSELLERS_ONLY") {
-        matchDiet = (item.priceMinor > 8000 && item.priceMinor < 30000);
-      }
+      else if (dietaryFilter === "NON_VEG_ONLY") matchDiet = item.isVeg === false;
+      else if (dietaryFilter === "BESTSELLERS_ONLY") matchDiet = (item.priceMinor > 8000 && item.priceMinor < 30000);
 
       return matchCat && matchSearch && matchDiet;
     });
@@ -2673,7 +2669,7 @@ export default function WaiterDashboard() {
                 {Number(bill.dueMinor) > 0 ? (
                   <>
                     <div className="flex gap-1.5">
-                      {(["CASH", "CARD", "UPI"] as const).map((m) => (
+                      {(["CASH", "CARD", "UPI", "DUE", "OTHER"] as const).map((m) => (
                         <button
                           key={m}
                           onClick={() => setPaymentMethod(m)}
@@ -2685,6 +2681,18 @@ export default function WaiterDashboard() {
                         </button>
                       ))}
                     </div>
+                    {paymentMethod === "UPI" && (
+                      <div className="bg-emerald-950/40 border border-emerald-800/40 rounded-lg p-2 text-center">
+                        <div className="text-[10px] text-emerald-400 font-bold">📱 UPI VPA: hotelkapila@okaxis</div>
+                        <div className="text-[9px] text-slate-400">Ask guest to scan QR or send to VPA</div>
+                      </div>
+                    )}
+                    {paymentMethod === "OTHER" && (
+                      <div className="bg-amber-950/40 border border-amber-800/40 rounded-lg p-2 text-center">
+                        <div className="text-[10px] text-amber-400 font-bold">🏨 Room Service / Folio</div>
+                        <div className="text-[9px] text-slate-400">Settled to hotel guest folio / custom tender</div>
+                      </div>
+                    )}
                     <input
                       type="number"
                       step="0.01"
