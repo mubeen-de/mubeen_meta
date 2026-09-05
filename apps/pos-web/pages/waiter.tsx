@@ -777,15 +777,25 @@ export default function WaiterDashboard() {
   // Filtered menu
   const filteredMenu = useMemo(() => {
     return menuItems.filter((item) => {
-      const matchCat = selectedCategory === "All" || item.category === selectedCategory;
+      const isSearchActive = searchQuery.trim().length > 0;
+      const matchCat =
+        isSearchActive ||
+        selectedCategory === "All" ||
+        item.category === selectedCategory ||
+        (selectedCategory === "Biryani (Non-Veg)" && (item.category === "Biryani (Veg)" || item.name.toLowerCase().includes("paneer")));
+
       const matchSearch =
+        !isSearchActive ||
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.category.toLowerCase().includes(searchQuery.toLowerCase());
 
       let matchDiet = true;
       if (dietaryFilter === "VEG_ONLY") matchDiet = item.isVeg === true;
-      else if (dietaryFilter === "NON_VEG_ONLY") matchDiet = item.isVeg === false;
-      else if (dietaryFilter === "BESTSELLERS_ONLY") matchDiet = (item.priceMinor > 8000 && item.priceMinor < 20000);
+      else if (dietaryFilter === "NON_VEG_ONLY") {
+        matchDiet = item.isVeg === false || (selectedCategory === "Biryani (Non-Veg)" && item.name.toLowerCase().includes("paneer"));
+      } else if (dietaryFilter === "BESTSELLERS_ONLY") {
+        matchDiet = (item.priceMinor > 8000 && item.priceMinor < 30000);
+      }
 
       return matchCat && matchSearch && matchDiet;
     });

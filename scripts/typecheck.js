@@ -19,7 +19,8 @@ for (const root of roots) {
     if (!existsSync(tsconfigPath)) continue;
     console.log(`\n[typecheck] ${root}/${dir}`);
     try {
-      execFileSync("npx", ["tsc", "-p", tsconfigPath, "--noEmit"], {
+      const quotedPath = process.platform === "win32" ? `"${tsconfigPath}"` : tsconfigPath;
+      execFileSync("npx", ["tsc", "-p", quotedPath, "--noEmit"], {
         stdio: "inherit",
         shell: process.platform === "win32",
       });

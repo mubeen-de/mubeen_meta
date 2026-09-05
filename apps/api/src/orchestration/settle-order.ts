@@ -77,7 +77,7 @@ export async function settleOrderCommand(
     throw new Error("Order not found");
   }
 
-  const existingInvoice = await prisma.invoice.findUnique({ where: { orderId } }).catch(() => null);
+  const existingInvoice = await prisma.invoice.findFirst({ where: { orderId } }).catch(() => null);
   if (order.status === "COMPLETED") {
 
     const existingPays = await prisma.payment.findMany({
@@ -85,15 +85,16 @@ export async function settleOrderCommand(
     });
     const alreadyPaid = existingPays.reduce((sum, p) => sum + p.amount, 0n);
     let invoice = existingInvoice;
+    let invoiceNumber = invoice?.invoiceNumber;
     if (!invoice) {
-      const invoiceNumber = await nextInvoiceNumber(prisma, outletId);
+      invoiceNumber = await nextInvoiceNumber(prisma, outletId);
       invoice = await prisma.invoice.create({
         data: {
           outletId,
           orderId,
           invoiceNumber,
-          amountMinor: order.grandTotal,
-          taxAmountMinor: order.taxTotal ?? 0n,
+          amount: order.grandTotal,
+          taxAmount: order.taxTotal ?? 0n,
         },
       });
     }
@@ -127,7 +128,7 @@ export async function settleOrderCommand(
     const bom = await deductBomStockForOrder(orderId, outletId, prisma, userId, "ORDER_SETTLED");
     await enqueueOutbox(prisma, outletId, "order.settled", {
       orderId,
-      invoiceNumber: invoice.invoiceNumber,
+      invoiceNumber: invoice.invoiceNumber || invoiceNumber || "",
       paymentMethod: input.paymentMethod || null,
       amountMinor: alreadyPaid.toString(),
     });
@@ -137,7 +138,7 @@ export async function settleOrderCommand(
         outletId,
         paymentMethod: input.paymentMethod || null,
         amountMinor: alreadyPaid.toString(),
-        invoiceNumber: invoice!.invoiceNumber,
+        invoiceNumber: invoice!.invoiceNumber || invoiceNumber || "",
       });
       broadcast(outletId, "table.unmerged", { tableIds: dissolved.ids, orderId });
       const vacantIds = dissolved.ids.length > 0
@@ -154,7 +155,7 @@ export async function settleOrderCommand(
       ok: true,
       orderId,
       status: "COMPLETED",
-      invoiceNumber: invoice.invoiceNumber,
+      invoiceNumber: invoice.invoiceNumber || invoiceNumber || "",
       alreadySettled: true,
     };
   }
@@ -216,16 +217,17 @@ export async function settleOrderCommand(
     }
   }
 
-  let invoice = await prisma.invoice.findUnique({ where: { orderId } });
+  let invoice = await prisma.invoice.findFirst({ where: { orderId } });
+  let invoiceNumber = invoice?.invoiceNumber;
   if (!invoice) {
-    const invoiceNumber = await nextInvoiceNumber(prisma, outletId);
+    invoiceNumber = await nextInvoiceNumber(prisma, outletId);
     invoice = await prisma.invoice.create({
       data: {
         outletId,
         orderId,
         invoiceNumber,
-        amountMinor: order.grandTotal,
-        taxAmountMinor: order.taxTotal ?? 0n,
+        amount: order.grandTotal,
+        taxAmount: order.taxTotal ?? 0n,
       },
     });
   }
@@ -285,7 +287,7 @@ export async function settleOrderCommand(
 
   await enqueueOutbox(prisma, outletId, "order.settled", {
     orderId,
-    invoiceNumber: invoice.invoiceNumber,
+    invoiceNumber: invoice.invoiceNumber || invoiceNumber || "",
     paymentMethod: payMethod || null,
     amountMinor: payAmount.toString(),
   });
@@ -296,7 +298,7 @@ export async function settleOrderCommand(
       outletId,
       paymentMethod: payMethod,
       amountMinor: payAmount.toString(),
-      invoiceNumber: invoice!.invoiceNumber,
+      invoiceNumber: invoice!.invoiceNumber || invoiceNumber || "",
     });
     broadcast(outletId, "table.status_updated", {
       tableId: order.diningTableId,
@@ -321,7 +323,7 @@ export async function settleOrderCommand(
     ok: true,
     orderId,
     status: "COMPLETED",
-    invoiceNumber: invoice.invoiceNumber,
+    invoiceNumber: invoice.invoiceNumber || invoiceNumber || "",
     alreadySettled: false,
   };
 }
