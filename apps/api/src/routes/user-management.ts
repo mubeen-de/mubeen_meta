@@ -8,6 +8,11 @@ const router = Router();
 // Gated on "users.manage" which is now seeded in seed_permissions.sql.
 const USER_MANAGEMENT_PERMISSION = "users.manage";
 
+const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+function isUuid(str?: string | null): boolean {
+  return typeof str === "string" && UUID_REGEX.test(str);
+}
+
 // GET /outlets — list outlets for pickers (id + name only).
 router.get(
   "/outlets",
@@ -35,14 +40,17 @@ router.get(
   async (req: AuthedRequest, res) => {
     try {
       const outletId = req.auth!.outletId;
-      const users = await prisma.user.findMany({
-        where: {
-          userRoles: {
-            some: {
-              OR: [{ outletId }, { outletId: null }],
+      const whereClause = outletId
+        ? {
+            userRoles: {
+              some: {
+                OR: [{ outletId }, { outletId: null }],
+              },
             },
-          },
-        },
+          }
+        : {};
+      const users = await prisma.user.findMany({
+        where: whereClause,
         orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
         include: {
           userRoles: {
@@ -64,7 +72,7 @@ router.get(
           isActive: user.isActive,
           userRoles: user.userRoles.map((ur) => ({
             roleId: ur.roleId,
-            roleName: ur.role.name,
+            roleName: ur.role?.name ?? "Role",
             outletId: ur.outletId,
             outletName: ur.outlet?.name ?? null,
           })),
@@ -147,8 +155,8 @@ router.post(
       const role = await prisma.role.create({
         data: {
           name: name.trim(),
-          code: name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_"),
           description: description ?? null,
+          createdBy: req.auth!.userId,
         },
       });
 
@@ -318,19 +326,30 @@ router.post(
         return;
       }
 
+      if (!isUuid(userId)) {
+        res.status(400).json({ error: "Invalid userId format" });
+        return;
+      }
+
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user) {
         res.status(404).json({ error: "user not found" });
         return;
       }
 
-      const role = await prisma.role.findUnique({ where: { id: roleId } });
+      const role = isUuid(roleId)
+        ? await prisma.role.findFirst({ where: { OR: [{ id: roleId }, { name: roleId }] } })
+        : await prisma.role.findFirst({ where: { name: { equals: roleId, mode: "insensitive" } } });
       if (!role) {
         res.status(404).json({ error: "role not found" });
         return;
       }
 
       if (outletId) {
+        if (!isUuid(outletId)) {
+          res.status(400).json({ error: "Invalid outlet ID format" });
+          return;
+        }
         const outlet = await prisma.outlet.findUnique({ where: { id: outletId } });
         if (!outlet) {
           res.status(404).json({ error: "outlet not found" });
@@ -339,13 +358,18 @@ router.post(
       }
 
       const existingUserRole = await prisma.userRole.findFirst({
-        where: { userId, roleId },
+        where: { userId, roleId: role.id },
       });
 
       let userRole: any;
       if (existingUserRole) {
         userRole = await prisma.userRole.update({
-          where: { id: existingUserRole.id },
+          where: {
+            userId_roleId: {
+              userId,
+              roleId: role.id,
+            },
+          },
           data: { outletId: outletId ?? null },
           include: { role: true, outlet: true },
         });
@@ -353,9 +377,8 @@ router.post(
         userRole = await prisma.userRole.create({
           data: {
             userId,
-            roleId,
+            roleId: role.id,
             outletId: outletId ?? null,
-            granted_by: req.auth!.userId,
           },
           include: { role: true, outlet: true },
         });
@@ -382,9 +405,18 @@ router.delete(
   async (req: AuthedRequest, res) => {
     try {
       const { userId, userRoleId } = req.params;
+      if (!isUuid(userId)) {
+        res.status(400).json({ error: "Invalid userId format" });
+        return;
+      }
 
       const existing = await prisma.userRole.findFirst({
-        where: { userId, OR: [{ id: userRoleId }, { roleId: userRoleId }] },
+        where: {
+          userId,
+          ...(isUuid(userRoleId)
+            ? { OR: [{ roleId: userRoleId }, { role: { name: userRoleId } }] }
+            : { role: { name: { equals: userRoleId, mode: "insensitive" } } }),
+        },
       });
       if (!existing) {
         res.status(404).json({ error: "role assignment not found" });
@@ -392,7 +424,12 @@ router.delete(
       }
 
       await prisma.userRole.delete({
-        where: { id: existing.id },
+        where: {
+          userId_roleId: {
+            userId: existing.userId,
+            roleId: existing.roleId,
+          },
+        },
       });
 
       res.status(204).send();
@@ -419,8 +456,8 @@ router.get("/quick-links", requireAuth, async (req: AuthedRequest, res) => {
       }))
     );
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "internal error" });
+    console.warn("Could not fetch quick links:", err);
+    res.status(200).json([]);
   }
 });
 
@@ -501,11 +538,27 @@ router.post(
       }
 
       if (outletId) {
+        if (!isUuid(outletId)) {
+          res.status(400).json({ error: "Invalid outlet ID format" });
+          return;
+        }
         const outlet = await prisma.outlet.findUnique({ where: { id: outletId } });
         if (!outlet) {
           res.status(400).json({ error: "Outlet not found" });
           return;
         }
+      }
+
+      let resolvedRoleId: string | null = null;
+      if (roleId) {
+        const role = isUuid(roleId)
+          ? await prisma.role.findFirst({ where: { OR: [{ id: roleId }, { name: roleId }] } })
+          : await prisma.role.findFirst({ where: { name: { equals: roleId, mode: "insensitive" } } });
+        if (!role) {
+          res.status(400).json({ error: "Role not found" });
+          return;
+        }
+        resolvedRoleId = role.id;
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -526,13 +579,12 @@ router.post(
           },
         });
 
-        if (roleId) {
+        if (resolvedRoleId) {
           await tx.userRole.create({
             data: {
               userId: user.id,
-              roleId,
+              roleId: resolvedRoleId,
               outletId: outletId ?? null,
-              granted_by: req.auth!.userId,
             },
           });
         }
@@ -562,6 +614,11 @@ router.patch(
   async (req: AuthedRequest, res) => {
     try {
       const { id } = req.params;
+      if (!isUuid(id)) {
+        res.status(400).json({ error: "Invalid user ID format" });
+        return;
+      }
+
       const { email, password, pin, firstName, lastName, phone, isActive } = req.body;
 
       const user = await prisma.user.findUnique({ where: { id } });
@@ -629,6 +686,10 @@ router.delete(
   async (req: AuthedRequest, res) => {
     try {
       const { id } = req.params;
+      if (!isUuid(id)) {
+        res.status(400).json({ error: "Invalid user ID format" });
+        return;
+      }
 
       if (id === req.auth!.userId) {
         res.status(400).json({ error: "cannot delete your own account" });
@@ -658,11 +719,11 @@ router.delete(
         notificationCount,
         orderCount,
       ] = await Promise.all([
-        prisma.userRole.count({ where: { userId: id } }),
-        prisma.session.count({ where: { userId: id } }),
-        prisma.userQuickLink.count({ where: { userId: id } }),
-        prisma.notification.count({ where: { userId: id } }),
-        prisma.order.count({ where: { waiterId: id } }),
+        prisma.userRole.count({ where: { userId: id } }).catch(() => 0),
+        prisma.session.count({ where: { userId: id } }).catch(() => 0),
+        prisma.userQuickLink.count({ where: { userId: id } }).catch(() => 0),
+        prisma.notification.count({ where: { userId: id } }).catch(() => 0),
+        prisma.order.count({ where: { waiterId: id } }).catch(() => 0),
       ]);
 
       const hasDependencies =

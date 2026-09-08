@@ -91,9 +91,17 @@ export default function UserManagement() {
   const [roleError, setRoleError] = useState<string | null>(null);
   const [deletingRoleId, setDeletingRoleId] = useState<string | null>(null);
 
+  // Add/Edit user form status
+  const [createUserError, setCreateUserError] = useState<string | null>(null);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [editUserError, setEditUserError] = useState<string | null>(null);
+  const [editingUserSaving, setEditingUserSaving] = useState(false);
+
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionError(null);
+    setCreateUserError(null);
+    setCreatingUser(true);
     try {
       const res = await authedFetch(`/users`, {
         method: "POST",
@@ -124,7 +132,11 @@ export default function UserManagement() {
       setNewUserOutletId("");
       fetchData();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to create user");
+      const msg = err instanceof Error ? err.message : "Failed to create user";
+      setCreateUserError(msg);
+      setActionError(msg);
+    } finally {
+      setCreatingUser(false);
     }
   };
 
@@ -132,6 +144,8 @@ export default function UserManagement() {
     e.preventDefault();
     if (!editingUserId) return;
     setActionError(null);
+    setEditUserError(null);
+    setEditingUserSaving(true);
     try {
       const payload: any = {
         email: editUserEmail,
@@ -156,7 +170,11 @@ export default function UserManagement() {
       setEditingUserId(null);
       fetchData();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to update user");
+      const msg = err instanceof Error ? err.message : "Failed to update user";
+      setEditUserError(msg);
+      setActionError(msg);
+    } finally {
+      setEditingUserSaving(false);
     }
   };
 
@@ -492,7 +510,7 @@ export default function UserManagement() {
                     <p className="panel-sub">From GET /users — real DB rows only</p>
                   </div>
                   <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                    <button className="add-user-btn" onClick={() => setShowAddUserModal(true)}>
+                    <button className="add-user-btn" onClick={() => { setCreateUserError(null); setShowAddUserModal(true); }}>
                       + Add Staff Member
                     </button>
                     <span className="total-badge">{users.length} users</span>
@@ -596,6 +614,7 @@ export default function UserManagement() {
                                   setEditUserIsActive(user.isActive);
                                   setEditUserPassword("");
                                   setEditUserPin("");
+                                  setEditUserError(null);
                                   setShowEditUserModal(true);
                                 }}
                               >
@@ -722,9 +741,28 @@ export default function UserManagement() {
                         ))}
                       </select>
                     </div>
+                    {createUserError && (
+                      <div style={{
+                        color: "#dc2626",
+                        backgroundColor: "#fef2f2",
+                        border: "1px solid #fecaca",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        marginBottom: "14px",
+                        fontSize: "13px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}>
+                        <span>⚠️</span>
+                        <span>{createUserError}</span>
+                      </div>
+                    )}
                     <div className="modal-actions">
                       <button type="button" className="cancel-modal-btn" onClick={() => setShowAddUserModal(false)}>Cancel</button>
-                      <button type="submit" className="submit-modal-btn">Create Account</button>
+                      <button type="submit" className="submit-modal-btn" disabled={creatingUser}>
+                        {creatingUser ? "Creating..." : "Create Account"}
+                      </button>
                     </div>
                   </form>
                 </div>
@@ -770,9 +808,28 @@ export default function UserManagement() {
                         Account is Active
                       </label>
                     </div>
+                    {editUserError && (
+                      <div style={{
+                        color: "#dc2626",
+                        backgroundColor: "#fef2f2",
+                        border: "1px solid #fecaca",
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        marginBottom: "14px",
+                        fontSize: "13px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}>
+                        <span>⚠️</span>
+                        <span>{editUserError}</span>
+                      </div>
+                    )}
                     <div className="modal-actions">
                       <button type="button" className="cancel-modal-btn" onClick={() => { setShowEditUserModal(false); setEditingUserId(null); }}>Cancel</button>
-                      <button type="submit" className="submit-modal-btn">Save Changes</button>
+                      <button type="submit" className="submit-modal-btn" disabled={editingUserSaving}>
+                        {editingUserSaving ? "Saving..." : "Save Changes"}
+                      </button>
                     </div>
                   </form>
                 </div>
