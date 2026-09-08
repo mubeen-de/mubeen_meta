@@ -2403,7 +2403,7 @@ export default function WaiterDashboard() {
       {detailItem && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setDetailItem(null)}>
           <div
-            className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+            className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-start mb-3">
@@ -2465,7 +2465,7 @@ export default function WaiterDashboard() {
 
       {showStats && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowStats(false)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h2 className="font-bold text-lg text-slate-100">My Shift — Today</h2>
               <button onClick={() => setShowStats(false)} className="text-slate-400 hover:text-slate-200 text-xl font-bold w-9 h-9 flex items-center justify-center">×</button>
@@ -2510,12 +2510,25 @@ export default function WaiterDashboard() {
       )}
 
       {billTable && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <div className="flex justify-between items-center mb-4">
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4"
+          onClick={() => setBillTable(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 w-full max-w-md shadow-2xl max-h-[90vh] flex flex-col my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center pb-3 mb-3 border-b border-slate-800 flex-shrink-0">
               <h2 className="font-bold text-lg text-slate-100">Bill — Table {billTable.tableNumber}</h2>
-              <button onClick={() => setBillTable(null)} className="text-slate-400 hover:text-slate-200 text-xl font-bold">×</button>
+              <button
+                onClick={() => setBillTable(null)}
+                className="text-slate-400 hover:text-slate-200 text-xl font-bold w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center transition"
+              >
+                ×
+              </button>
             </div>
+
+            <div className="overflow-y-auto flex-1 pr-1.5 custom-scroll flex flex-col gap-3">
 
             {loadingBill && <p className="text-xs text-slate-500 py-4 text-center">Loading live bill details...</p>}
 
@@ -2810,6 +2823,7 @@ export default function WaiterDashboard() {
               </div>
               );
             })()}
+            </div>
           </div>
         </div>
       )}
@@ -2906,6 +2920,27 @@ export default function WaiterDashboard() {
           setCustomizingItem(null);
         }}
       />
+
+      <style jsx global>{`
+        .custom-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+          background: #0f172a;
+          border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+          background: #334155;
+          border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+        .custom-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #334155 #0f172a;
+        }
+      `}</style>
 
       </div>
     </div>
