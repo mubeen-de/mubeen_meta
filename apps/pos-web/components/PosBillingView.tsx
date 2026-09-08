@@ -4,6 +4,9 @@ import { authedFetch, fetchMe } from "../lib/auth";
 import { useKapmetaSocket } from "../lib/useKapmetaSocket";
 import BillSplitModal from "./BillSplitModal";
 import MorePaymentModal from "./MorePaymentModal";
+import OrderCommentsModal from "./OrderCommentsModal";
+import AssignCaptainModal from "./AssignCaptainModal";
+import AdvanceOrderModal from "./AdvanceOrderModal";
 import AttractiveMenuItemCard, { MenuItemData } from "./menu/AttractiveMenuItemCard";
 import MenuCustomizerModal, { CustomizedItemSelection } from "./menu/MenuCustomizerModal";
 import CategoryNavbar, { DietaryFilter } from "./menu/CategoryNavbar";
@@ -135,6 +138,75 @@ export default function PosBillingView({
 
   const [cashTendered, setCashTendered] = useState<number | "">("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  // PetPooja Parity States (Order Comments, Assign Captain, Advance Order)
+  const [orderComment, setOrderComment] = useState("");
+  const [isOrderCommentsModalOpen, setIsOrderCommentsModalOpen] = useState(false);
+  const [isAssignCaptainModalOpen, setIsAssignCaptainModalOpen] = useState(false);
+  const [isAdvanceOrderModalOpen, setIsAdvanceOrderModalOpen] = useState(false);
+  const [advanceOrderDetails, setAdvanceOrderDetails] = useState<{
+    scheduledDate: string;
+    scheduledTime: string;
+    advancePaidRupees: number;
+    notes: string;
+  } | null>(null);
+
+  // Inline Customer Form States (for Pick Up, Delivery, or CRM)
+  const [customerMobile, setCustomerMobile] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
+  const [customerLocality, setCustomerLocality] = useState("");
+  const [showCustomerPanel, setShowCustomerPanel] = useState(initialMode !== "DINE_IN");
+  const [copyFeedback, setCopyFeedback] = useState(false);
+
+  // Quick Calculator Popup
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [calcInput, setCalcInput] = useState("");
+
+  const handleClearCart = () => {
+    if (cart.length === 0) return;
+    if (window.confirm("Are you sure you want to clear all un-dispatched items in the cart?")) {
+      setCart([]);
+    }
+  };
+
+  const handleCopyCustomerDetails = () => {
+    const lines = [
+      customerName ? `Name: ${customerName}` : "",
+      customerMobile ? `Mobile: ${customerMobile}` : "",
+      customerAddress ? `Address: ${customerAddress}` : "",
+      customerLocality ? `Locality: ${customerLocality}` : "",
+    ].filter(Boolean);
+
+    if (lines.length === 0) {
+      alert("No customer details to copy. Please enter Mobile or Name.");
+      return;
+    }
+
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(lines.join("\n"));
+      setCopyFeedback(true);
+      setTimeout(() => setCopyFeedback(false), 2000);
+    }
+  };
+
+  const handleCalcButtonClick = (btn: string) => {
+    if (btn === "C") {
+      setCalcInput("");
+    } else if (btn === "=") {
+      try {
+        const sanitized = calcInput.replace(/[^0-9+\-*/.]/g, "");
+        if (!sanitized) return;
+        // eslint-disable-next-line no-eval
+        const res = Function(`"use strict"; return (${sanitized})`)();
+        setCalcInput(String(res));
+      } catch {
+        setCalcInput("Error");
+      }
+    } else {
+      setCalcInput((prev) => (prev === "Error" ? btn : prev + btn));
+    }
+  };
 
   const refreshHeldCount = () => {
     try {
@@ -540,6 +612,7 @@ export default function PosBillingView({
           diningTableId: initialTableId || undefined,
           covers: coversCount,
           waiterName,
+          notes: orderComment || undefined,
           lines: cart.map((c) => ({
             menuItemId: c.item.id,
             quantity: c.quantity,
@@ -604,7 +677,7 @@ export default function PosBillingView({
                 menuItemId: c.item.id,
                 quantity: c.quantity,
                 unitPriceMinor: c.item.priceMinor,
-                notes: c.notes || undefined,
+                notes: c.notes || orderComment || undefined,
               })),
             }),
           });
@@ -637,11 +710,18 @@ export default function PosBillingView({
           diningTableId: initialTableId || undefined,
           covers: coversCount,
           waiterName,
+          notes: orderComment || undefined,
           paymentMethod,
           isPaid: true,
           discountMinor,
           discountReason: discountReason || undefined,
           customerId: selectedCustomer?.id || undefined,
+          customerName: customerName || selectedCustomer?.name || undefined,
+          customerPhone: customerMobile || selectedCustomer?.phone || undefined,
+          customerAddress: [customerAddress, customerLocality].filter(Boolean).join(", ") || undefined,
+          scheduledDate: advanceOrderDetails?.scheduledDate,
+          scheduledTime: advanceOrderDetails?.scheduledTime,
+          advancePaidRupees: advanceOrderDetails?.advancePaidRupees,
           lines: cart.map((c) => ({
             menuItemId: c.item.id,
             quantity: c.quantity,
@@ -681,8 +761,8 @@ export default function PosBillingView({
         grandTotalMinor,
         cashTendered: typeof cashTendered === "number" ? cashTendered : undefined,
         changeDue: typeof cashTendered === "number" ? changeDueRupees : undefined,
-        customerName: selectedCustomer?.name,
-        customerPhone: selectedCustomer?.phone,
+        customerName: customerName || selectedCustomer?.name,
+        customerPhone: customerMobile || selectedCustomer?.phone,
         items: allDisplayItems,
         createdAt: new Date().toISOString(),
       });
@@ -692,6 +772,8 @@ export default function PosBillingView({
       setActiveOrder(null);
       setDiscountMinor(0);
       setDiscountReason("");
+      setOrderComment("");
+      setAdvanceOrderDetails(null);
     } catch (err: any) {
       alert(err.message || "Failed to generate bill");
     } finally {
@@ -903,35 +985,304 @@ export default function PosBillingView({
 
         {/* Column 3: Cart, Ticket & Settlement */}
         <div className="pos-cart-panel">
-          {/* Table Header Bar */}
-          <div className="cart-table-meta-bar">
-            <div className="table-badge-group">
-              <span className="table-tag-icon">T</span>
-              <span className="table-name-label">{tableNumber}</span>
-              <span className="section-badge">{tableSection}</span>
-              {runningItems.length > 0 && (
-                <span className="live-running-badge">● Running Order</span>
-              )}
+          {/* PetPooja Cart Mode Tabs (Dine In, Delivery, Pick Up) */}
+          <div className="petpooja-cart-mode-tabs">
+            <button
+              type="button"
+              className={`petpooja-cart-tab ${orderMode === "DINE_IN" ? "active" : ""}`}
+              onClick={() => {
+                setOrderMode("DINE_IN");
+                setShowCustomerPanel(false);
+              }}
+            >
+              Dine In
+            </button>
+            <button
+              type="button"
+              className={`petpooja-cart-tab ${orderMode === "DELIVERY" ? "active" : ""}`}
+              onClick={() => {
+                setOrderMode("DELIVERY");
+                setShowCustomerPanel(true);
+              }}
+            >
+              Delivery
+            </button>
+            <button
+              type="button"
+              className={`petpooja-cart-tab ${orderMode === "PICKUP" ? "active" : ""}`}
+              onClick={() => {
+                setOrderMode("PICKUP");
+                setShowCustomerPanel(true);
+              }}
+            >
+              Pick Up
+            </button>
+          </div>
+
+          {/* PetPooja Cart Sub-Bar: Action Icons (Customer, Comments, Assign Captain) + Mode/Table Badge */}
+          <div className="petpooja-cart-sub-bar">
+            <div className="cart-sub-bar-left">
+              {/* Customer Panel Toggle */}
+              <button
+                type="button"
+                className={`cart-icon-btn ${showCustomerPanel ? "active" : ""}`}
+                onClick={() => setShowCustomerPanel(!showCustomerPanel)}
+                title="Toggle Customer Details"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+                {(customerMobile || customerName || selectedCustomer) && <span className="icon-badge-dot" />}
+              </button>
+
+              {/* Order-Wise Comments Bubble */}
+              <button
+                type="button"
+                className={`cart-icon-btn ${orderComment ? "has-comment" : ""}`}
+                onClick={() => setIsOrderCommentsModalOpen(true)}
+                title={orderComment ? `Comments: ${orderComment}` : "Order Wise Comments"}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                </svg>
+                {orderComment && <span className="icon-badge-dot comment-dot" />}
+              </button>
+
+              {/* Assign Captain Icon */}
+              <button
+                type="button"
+                className="cart-icon-btn"
+                onClick={() => setIsAssignCaptainModalOpen(true)}
+                title={`Assigned Captain: ${waiterName} (Click to change)`}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </button>
             </div>
 
-            <div className="covers-waiter-group">
-              <div className="covers-counter">
-                <span>👤</span>
-                <input
-                  type="number"
-                  min="1"
-                  max="30"
-                  value={coversCount}
-                  onChange={(e) => setCoversCount(Number(e.target.value))}
-                  className="covers-input"
-                />
-              </div>
-              <div className="waiter-tag">
-                <span>🧑‍🍳</span>
-                <span>{waiterName}</span>
-              </div>
+            <div className="cart-sub-bar-right">
+              {orderMode === "DINE_IN" ? (
+                <div className="table-badge-group">
+                  <span className="table-tag-icon">T</span>
+                  <span className="table-name-label">{tableNumber}</span>
+                  <div className="covers-counter" title="Guest Covers">
+                    <span>👤</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={coversCount}
+                      onChange={(e) => setCoversCount(Number(e.target.value))}
+                      className="covers-input"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="waiter-tag-btn"
+                    onClick={() => setIsAssignCaptainModalOpen(true)}
+                    title="Change Captain"
+                  >
+                    <span>🧑‍🍳 {waiterName}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="petpooja-mode-badge-wrap">
+                  <span className="petpooja-mode-badge">
+                    {orderMode === "PICKUP" ? "Pick Up" : "Delivery"}
+                  </span>
+                  <button
+                    type="button"
+                    className="captain-sub-chip"
+                    onClick={() => setIsAssignCaptainModalOpen(true)}
+                    title="Change Captain / Delivery Steward"
+                  >
+                    🧑‍🍳 {waiterName}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Inline Customer Details Section (Screenshot 2) */}
+          {showCustomerPanel && (
+            <div className="petpooja-customer-panel">
+              <div className="customer-fields-col">
+                <div className="cust-field-row">
+                  <label>Mobile:</label>
+                  <input
+                    type="text"
+                    value={customerMobile}
+                    onChange={(e) => setCustomerMobile(e.target.value)}
+                    placeholder="Customer mobile..."
+                    className="cust-input"
+                  />
+                </div>
+                <div className="cust-field-row">
+                  <label>Name:</label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Customer name..."
+                    className="cust-input"
+                  />
+                </div>
+                <div className="cust-field-row">
+                  <label>Add:</label>
+                  <input
+                    type="text"
+                    value={customerAddress}
+                    onChange={(e) => setCustomerAddress(e.target.value)}
+                    placeholder="Street / Flat / Address..."
+                    className="cust-input"
+                  />
+                </div>
+                <div className="cust-field-row">
+                  <label>Locality:</label>
+                  <input
+                    type="text"
+                    value={customerLocality}
+                    onChange={(e) => setCustomerLocality(e.target.value)}
+                    placeholder="Locality / Landmark..."
+                    className="cust-input"
+                  />
+                </div>
+              </div>
+
+              {/* Action Icons Column (Screenshot 2 right side: Copy, Calc, Tax, Discount, Trash) */}
+              <div className="customer-action-icons-col">
+                {/* 1. Copy Details */}
+                <button
+                  type="button"
+                  className="cust-util-btn"
+                  onClick={handleCopyCustomerDetails}
+                  title={copyFeedback ? "Copied!" : "Copy Customer Details"}
+                >
+                  {copyFeedback ? (
+                    <span style={{ color: "#16a34a", fontSize: "11px", fontWeight: 800 }}>✓</span>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                  )}
+                </button>
+
+                {/* 2. Calculator */}
+                <button
+                  type="button"
+                  className={`cust-util-btn ${isCalculatorOpen ? "active" : ""}`}
+                  onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
+                  title="Quick Calculator"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="4" y="2" width="16" height="20" rx="2"/>
+                    <line x1="8" y1="6" x2="16" y2="6"/>
+                    <line x1="16" y1="14" x2="16" y2="18"/>
+                    <path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/>
+                  </svg>
+                </button>
+
+                {/* 3. Tax */}
+                <button
+                  type="button"
+                  className="cust-util-btn"
+                  title="Tax: 5% GST (2.5% CGST + 2.5% SGST)"
+                  onClick={() => alert(`Tax Details:\n• Subtotal: ₹${(totalSubtotalMinor / 100).toFixed(2)}\n• CGST (2.5%): ₹${((taxMinor / 2) / 100).toFixed(2)}\n• SGST (2.5%): ₹${((taxMinor / 2) / 100).toFixed(2)}\n• Total GST (5%): ₹${(taxMinor / 100).toFixed(2)}`)}
+                >
+                  <span style={{ fontSize: "11px", fontWeight: 800 }}>%</span>
+                </button>
+
+                {/* 4. Discount */}
+                <button
+                  type="button"
+                  className={`cust-util-btn ${discountMinor > 0 ? "has-discount" : ""}`}
+                  onClick={() => setIsDiscountModalOpen(true)}
+                  title={discountMinor > 0 ? `Discount: -₹${(discountMinor / 100).toFixed(2)}` : "Apply Discount (F4)"}
+                >
+                  <span style={{ fontSize: "12px" }}>🏷️</span>
+                </button>
+
+                {/* 5. Clear Cart (Trash) */}
+                <button
+                  type="button"
+                  className="cust-util-btn btn-trash-cart"
+                  onClick={handleClearCart}
+                  title="Clear Draft Cart"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    <line x1="10" y1="11" x2="10" y2="17"/>
+                    <line x1="14" y1="11" x2="14" y2="17"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Floating / Dropdown Calculator Popup */}
+          {isCalculatorOpen && (
+            <div className="petpooja-calc-popup">
+              <div className="calc-header">
+                <span>🧮 Calculator</span>
+                <button type="button" className="calc-close-btn" onClick={() => setIsCalculatorOpen(false)}>✕</button>
+              </div>
+              <div className="calc-display">{calcInput || "0"}</div>
+              <div className="calc-grid">
+                {["C", "/", "*", "DEL", "7", "8", "9", "-", "4", "5", "6", "+", "1", "2", "3", "=", "0", "."].map((btn) => (
+                  <button
+                    key={btn}
+                    type="button"
+                    className={`calc-btn ${btn === "=" ? "calc-btn-eq" : btn === "C" ? "calc-btn-clear" : ""}`}
+                    onClick={() => {
+                      if (btn === "DEL") setCalcInput((prev) => prev.slice(0, -1));
+                      else handleCalcButtonClick(btn);
+                    }}
+                  >
+                    {btn}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Order Comments Banner (if saved) */}
+          {orderComment && (
+            <div className="order-comment-banner">
+              <div className="comment-banner-left">
+                <span className="comment-icon">💬</span>
+                <span className="comment-text"><strong>Comment:</strong> {orderComment}</span>
+              </div>
+              <button
+                type="button"
+                className="btn-edit-comment"
+                onClick={() => setIsOrderCommentsModalOpen(true)}
+              >
+                Edit
+              </button>
+            </div>
+          )}
+
+          {/* Advance Order Banner (if scheduled) */}
+          {advanceOrderDetails && (
+            <div className="advance-order-banner">
+              <div className="advance-banner-left">
+                <span>📅 Scheduled: <strong>{advanceOrderDetails.scheduledDate} at {advanceOrderDetails.scheduledTime}</strong></span>
+                {advanceOrderDetails.advancePaidRupees > 0 && (
+                  <span className="advance-paid-tag">Paid: ₹{advanceOrderDetails.advancePaidRupees}</span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="btn-edit-comment"
+                onClick={() => setIsAdvanceOrderModalOpen(true)}
+              >
+                Edit
+              </button>
+            </div>
+          )}
 
           {/* Cart Table Headers */}
           <div className="cart-table-headers">
@@ -1125,13 +1476,23 @@ export default function PosBillingView({
 
             {/* Split & Tender Modes */}
             <div className="tender-action-bar">
-              <button
-                type="button"
-                className="btn-split"
-                onClick={() => setIsSplitModalOpen(true)}
-              >
-                Split
-              </button>
+              <div className="split-advance-group">
+                <button
+                  type="button"
+                  className="btn-split"
+                  onClick={() => setIsSplitModalOpen(true)}
+                >
+                  Split
+                </button>
+                <button
+                  type="button"
+                  className={`btn-advance-order ${advanceOrderDetails ? "active" : ""}`}
+                  onClick={() => setIsAdvanceOrderModalOpen(true)}
+                  title="Schedule Advance / Future Order (Date & Time)"
+                >
+                  {advanceOrderDetails ? "📅 Scheduled" : "Advance Order"}
+                </button>
+              </div>
 
               <div className="payment-pills-row">
                 <label className={`payment-pill ${paymentMethod === "CASH" ? "selected" : ""}`}>
@@ -1625,7 +1986,13 @@ export default function PosBillingView({
       <CustomerCrmModal
         isOpen={isCrmModalOpen}
         onClose={() => setIsCrmModalOpen(false)}
-        onSelectCustomer={(cust) => setSelectedCustomer(cust)}
+        onSelectCustomer={(cust) => {
+          setSelectedCustomer(cust);
+          if (cust.name) setCustomerName(cust.name);
+          if (cust.phone) setCustomerMobile(cust.phone);
+          if (cust.address) setCustomerAddress(cust.address);
+          setShowCustomerPanel(true);
+        }}
       />
 
       {/* Held Orders Drawer */}
@@ -1649,6 +2016,9 @@ export default function PosBillingView({
               phone: held.customerPhone || "",
               loyaltyPoints: 50,
             });
+            setCustomerName(held.customerName);
+            if (held.customerPhone) setCustomerMobile(held.customerPhone);
+            setShowCustomerPanel(true);
           }
           refreshHeldCount();
         }}
@@ -1664,6 +2034,31 @@ export default function PosBillingView({
       <PosKeyboardShortcutsModal
         isOpen={isShortcutsModalOpen}
         onClose={() => setIsShortcutsModalOpen(false)}
+      />
+
+      {/* Order Wise Comments Modal (PetPooja Screenshot 4) */}
+      <OrderCommentsModal
+        isOpen={isOrderCommentsModalOpen}
+        onClose={() => setIsOrderCommentsModalOpen(false)}
+        initialComment={orderComment}
+        onSave={(comment) => setOrderComment(comment)}
+      />
+
+      {/* Assign Captain Modal (PetPooja Screenshot 3) */}
+      <AssignCaptainModal
+        isOpen={isAssignCaptainModalOpen}
+        onClose={() => setIsAssignCaptainModalOpen(false)}
+        currentCaptain={waiterName}
+        onSelectCaptain={(captain) => setWaiterName(captain)}
+      />
+
+      {/* Advance Order Modal */}
+      <AdvanceOrderModal
+        isOpen={isAdvanceOrderModalOpen}
+        onClose={() => setIsAdvanceOrderModalOpen(false)}
+        orderMode={orderMode}
+        totalRupees={(grandTotalMinor / 100).toFixed(2)}
+        onConfirmAdvance={(details) => setAdvanceOrderDetails(details)}
       />
 
       <style jsx>{`
@@ -1854,6 +2249,7 @@ export default function PosBillingView({
 
         /* Column 3: Cart & Settlement (Strict Vertical Flex Layout) */
         .pos-cart-panel {
+          position: relative;
           display: flex;
           flex-direction: column;
           background: #ffffff;
@@ -1861,6 +2257,412 @@ export default function PosBillingView({
           min-height: 0;
           overflow: hidden;
         }
+
+        /* PetPooja Cart Mode Tabs */
+        .petpooja-cart-mode-tabs {
+          display: flex;
+          background: #f1f5f9;
+          border-bottom: 1px solid #e2e8f0;
+          flex-shrink: 0;
+        }
+        .petpooja-cart-tab {
+          flex: 1;
+          padding: 8px 4px;
+          background: #e2e8f0;
+          border: none;
+          border-right: 1px solid #cbd5e1;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #475569;
+          cursor: pointer;
+          text-align: center;
+          transition: all 0.15s ease;
+        }
+        .petpooja-cart-tab:last-child {
+          border-right: none;
+        }
+        .petpooja-cart-tab:hover {
+          background: #cbd5e1;
+          color: #0f172a;
+        }
+        .petpooja-cart-tab.active {
+          background: #1e293b;
+          color: #ffffff;
+          box-shadow: inset 0 -2px 0 #dc2626;
+        }
+
+        /* PetPooja Cart Sub-Bar */
+        .petpooja-cart-sub-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 6px 10px;
+          background: #ffffff;
+          border-bottom: 1px solid #e2e8f0;
+          flex-shrink: 0;
+        }
+        .cart-sub-bar-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .cart-icon-btn {
+          position: relative;
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
+          border: 1px solid #e2e8f0;
+          background: #f8fafc;
+          color: #475569;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .cart-icon-btn:hover {
+          background: #f1f5f9;
+          color: #0f172a;
+          border-color: #cbd5e1;
+        }
+        .cart-icon-btn.active {
+          background: #eff6ff;
+          color: #2563eb;
+          border-color: #93c5fd;
+        }
+        .cart-icon-btn.has-comment {
+          background: #fef2f2;
+          color: #dc2626;
+          border-color: #fca5a5;
+        }
+        .icon-badge-dot {
+          position: absolute;
+          top: 3px;
+          right: 3px;
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #16a34a;
+          border: 1px solid #ffffff;
+        }
+        .icon-badge-dot.comment-dot {
+          background: #dc2626;
+        }
+
+        .cart-sub-bar-right {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .waiter-tag-btn {
+          background: #f1f5f9;
+          border: 1px solid #cbd5e1;
+          color: #334155;
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: 0.72rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .waiter-tag-btn:hover {
+          background: #e2e8f0;
+        }
+        .petpooja-mode-badge-wrap {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .petpooja-mode-badge {
+          background: #fef08a;
+          color: #854d0e;
+          font-size: 0.75rem;
+          font-weight: 800;
+          padding: 3px 8px;
+          border-radius: 4px;
+          border: 1px solid #fde047;
+        }
+        .captain-sub-chip {
+          background: #f1f5f9;
+          border: 1px solid #cbd5e1;
+          color: #334155;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 0.7rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+        .captain-sub-chip:hover {
+          background: #e2e8f0;
+        }
+
+        /* Inline Customer Details Section (Screenshot 2) */
+        .petpooja-customer-panel {
+          display: flex;
+          padding: 8px 10px;
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+        .customer-fields-col {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .cust-field-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .cust-field-row label {
+          width: 52px;
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: #475569;
+          text-align: right;
+          flex-shrink: 0;
+        }
+        .cust-input {
+          flex: 1;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 4px;
+          padding: 3px 7px;
+          font-size: 0.75rem;
+          color: #0f172a;
+          outline: none;
+          transition: border-color 0.12s;
+        }
+        .cust-input:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 1px #93c5fd;
+        }
+
+        .customer-action-icons-col {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          align-items: center;
+          gap: 4px;
+          padding-left: 4px;
+          border-left: 1px solid #e2e8f0;
+        }
+        .cust-util-btn {
+          width: 26px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 4px;
+          color: #475569;
+          cursor: pointer;
+          transition: all 0.12s;
+          padding: 0;
+        }
+        .cust-util-btn:hover {
+          background: #f1f5f9;
+          color: #0f172a;
+          border-color: #94a3b8;
+        }
+        .cust-util-btn.active {
+          background: #eff6ff;
+          color: #2563eb;
+          border-color: #60a5fa;
+        }
+        .cust-util-btn.has-discount {
+          background: #ecfdf5;
+          color: #059669;
+          border-color: #6ee7b7;
+        }
+        .btn-trash-cart {
+          color: #dc2626;
+        }
+        .btn-trash-cart:hover {
+          background: #fef2f2;
+          border-color: #f87171;
+        }
+
+        /* Order Comments & Advance Banners */
+        .order-comment-banner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 5px 10px;
+          background: #fef3c7;
+          border-bottom: 1px solid #fde68a;
+          font-size: 0.72rem;
+          color: #92400e;
+          flex-shrink: 0;
+        }
+        .comment-banner-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .comment-icon {
+          font-size: 0.85rem;
+        }
+        .comment-text {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .btn-edit-comment {
+          background: transparent;
+          border: 1px solid #b45309;
+          color: #92400e;
+          padding: 1px 6px;
+          border-radius: 3px;
+          font-size: 0.65rem;
+          font-weight: 700;
+          cursor: pointer;
+          margin-left: 6px;
+          flex-shrink: 0;
+        }
+        .btn-edit-comment:hover {
+          background: #fde68a;
+        }
+
+        .advance-order-banner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 5px 10px;
+          background: #eff6ff;
+          border-bottom: 1px solid #bfdbfe;
+          font-size: 0.72rem;
+          color: #1e40af;
+          flex-shrink: 0;
+        }
+        .advance-banner-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .advance-paid-tag {
+          background: #dbeafe;
+          color: #1d4ed8;
+          font-weight: 800;
+          padding: 1px 6px;
+          border-radius: 3px;
+          font-size: 0.65rem;
+        }
+
+        /* Calculator Popup */
+        .petpooja-calc-popup {
+          position: absolute;
+          top: 100px;
+          right: 20px;
+          width: 220px;
+          background: #1e293b;
+          border-radius: 8px;
+          box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+          border: 1px solid #334155;
+          padding: 10px;
+          z-index: 1000;
+        }
+        .calc-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          color: #94a3b8;
+          font-size: 0.72rem;
+          font-weight: 700;
+          margin-bottom: 6px;
+        }
+        .calc-close-btn {
+          background: transparent;
+          border: none;
+          color: #cbd5e1;
+          cursor: pointer;
+          font-size: 0.8rem;
+        }
+        .calc-close-btn:hover {
+          color: #ffffff;
+        }
+        .calc-display {
+          background: #0f172a;
+          color: #22c55e;
+          font-family: monospace;
+          font-size: 1.1rem;
+          font-weight: 700;
+          text-align: right;
+          padding: 8px 10px;
+          border-radius: 4px;
+          margin-bottom: 8px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .calc-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 4px;
+        }
+        .calc-btn {
+          background: #334155;
+          border: 1px solid #475569;
+          color: #f8fafc;
+          border-radius: 4px;
+          padding: 8px 4px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.1s;
+        }
+        .calc-btn:hover {
+          background: #475569;
+        }
+        .calc-btn-eq {
+          background: #2563eb;
+          border-color: #3b82f6;
+          color: #ffffff;
+        }
+        .calc-btn-eq:hover {
+          background: #1d4ed8;
+        }
+        .calc-btn-clear {
+          background: #dc2626;
+          border-color: #ef4444;
+          color: #ffffff;
+        }
+        .calc-btn-clear:hover {
+          background: #b91c1c;
+        }
+
+        /* Split and Advance Order Group */
+        .split-advance-group {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        .btn-advance-order {
+          background: #f1f5f9;
+          border: 1px solid #cbd5e1;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 0.6875rem;
+          font-weight: 700;
+          color: #475569;
+          cursor: pointer;
+          transition: all 0.12s ease;
+        }
+        .btn-advance-order:hover {
+          background: #e2e8f0;
+          color: #0f172a;
+        }
+        .btn-advance-order.active {
+          background: #eff6ff;
+          border-color: #3b82f6;
+          color: #1d4ed8;
+          font-weight: 800;
+        }
+
         .cart-table-meta-bar {
           display: flex;
           align-items: center;

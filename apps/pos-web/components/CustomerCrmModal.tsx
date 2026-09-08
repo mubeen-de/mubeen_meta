@@ -7,6 +7,7 @@ export interface CustomerData {
   phone: string;
   email?: string | null;
   loyaltyPoints?: number;
+  address?: string | null;
 }
 
 interface CustomerCrmModalProps {
@@ -49,6 +50,7 @@ export default function CustomerCrmModal({
             phone: c.phone || "N/A",
             email: c.email || null,
             loyaltyPoints: Number(c.loyaltyPoints || 0),
+            address: c.address || null,
           }))
         );
       }
