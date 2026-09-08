@@ -67,7 +67,7 @@ const ORDER_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
 // A SERVED ticket with no bill printed yet is therefore not "Used In Bill";
 // it is still an open ticket on the floor, so it shows the nearest reference
 // label, "Active".
-export type KotStatusLabel = "Used In Bill" | "Not Prepared" | "Active" | "Preparing" | "Cancelled" | "Unknown";
+export type KotStatusLabel = "Used In Bill" | "Not Prepared" | "Active" | "Preparing" | "Served" | "Cancelled" | "Unknown";
 
 export function normalizeKotStatus(raw: string | null | undefined): string {
   const s = String(raw || "").trim().toUpperCase();
@@ -85,7 +85,7 @@ export function kotStatusLabel(raw: string | null | undefined, billPrintedAt: st
     case "READY":
       return "Active";
     case "SERVED":
-      return billPrintedAt ? "Used In Bill" : "Active";
+      return billPrintedAt ? "Used In Bill" : "Served";
     case "CANCELLED":
       return "Cancelled";
     default:
@@ -101,6 +101,8 @@ function statusToneClass(label: KotStatusLabel): string {
       return "tone-warning";
     case "Active":
       return "tone-blue";
+    case "Served":
+      return "tone-accent";
     case "Cancelled":
       return "tone-destructive";
     case "Not Prepared":
@@ -444,10 +446,11 @@ export default function KotHistoryView({ onBackToBoard }: KotHistoryViewProps) {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">All Status</option>
-              <option value="Used In Bill">Used In Bill</option>
-              <option value="Not Prepared">Not Prepared</option>
               <option value="Active">Active</option>
               <option value="Preparing">Preparing</option>
+              <option value="Served">Served</option>
+              <option value="Used In Bill">Used In Bill</option>
+              <option value="Not Prepared">Not Prepared</option>
               <option value="Cancelled">Cancelled</option>
             </select>
           </label>

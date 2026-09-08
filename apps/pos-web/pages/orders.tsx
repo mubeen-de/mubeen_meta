@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useAuthGuard } from "../lib/auth";
 import KapMetaHeader from "../components/KapMetaHeader";
 import KapMetaOrdersView from "../components/KapMetaOrdersView";
+import Nav from "../components/Nav";
 
 /**
  * The orders register. Each of the four tabs (Live Orders, All Orders,
@@ -46,10 +47,15 @@ export default function OrdersPage() {
         onNewOrder={() => router.push("/")}
       />
 
-      <KapMetaOrdersView
-        onBackToPos={() => router.push("/")}
-        onViewOrderDetails={(id) => router.push(`/pending-order-detail?orderId=${id}`)}
-      />
+      <div className="orders-main-layout">
+        <Nav variant="sidebar" />
+        <div className="orders-content-pane">
+          <KapMetaOrdersView
+            onBackToPos={() => router.push("/")}
+            onViewOrderDetails={(id) => router.push(`/pending-order-detail?orderId=${id}`)}
+          />
+        </div>
+      </div>
 
       <style jsx global>{`
         body {
@@ -63,6 +69,32 @@ export default function OrdersPage() {
           box-sizing: border-box;
         }
       `}</style>
+
+      <style jsx>{`
+        .kapmeta-orders-page-root {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          width: 100vw;
+          overflow: hidden;
+          background: var(--bg-base);
+        }
+        .orders-main-layout {
+          display: flex;
+          flex: 1;
+          min-height: 0;
+          overflow: hidden;
+        }
+        .orders-content-pane {
+          flex: 1;
+          min-width: 0;
+          height: 100%;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+      `}</style>
     </div>
   );
 }
+

@@ -97,6 +97,17 @@ interface OrderDetail {
   }[];
 }
 
+interface BillItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPriceMinor: string | number;
+  subtotalMinor: string | number;
+  course?: string | null;
+  seatNumber?: number | null;
+  notes?: string | null;
+}
+
 interface BillData {
   orderId: string;
   orderNumber: string;
@@ -108,6 +119,7 @@ interface BillData {
   grandTotalMinor: string;
   paidMinor: string;
   dueMinor: string;
+  items?: BillItem[];
 }
 
 interface SeatBillData {
@@ -1287,9 +1299,29 @@ export default function WaiterDashboard() {
         const { id } = await activeRes.json();
         resolvedOrderId = id;
       }
-      const billRes = await authedFetch(`/orders/${resolvedOrderId}/bill`);
+      const [billRes, orderRes] = await Promise.all([
+        authedFetch(`/orders/${resolvedOrderId}/bill`),
+        authedFetch(`/orders/${resolvedOrderId}`).catch(() => null),
+      ]);
       if (billRes.ok) {
         const b = await billRes.json();
+        if ((!b.items || b.items.length === 0) && orderRes && orderRes.ok) {
+          try {
+            const ord = await orderRes.json();
+            if (Array.isArray(ord.items) && ord.items.length > 0) {
+              b.items = ord.items.filter((i: any) => !i.isVoided).map((i: any) => ({
+                id: i.id,
+                name: i.menuItemName || i.name || "Item",
+                quantity: i.quantity,
+                unitPriceMinor: i.unitPriceMinor || i.unitPrice || 0,
+                subtotalMinor: i.subtotalMinor || i.subtotal || 0,
+                course: i.course,
+                seatNumber: i.seatNumber,
+                notes: i.notes,
+              }));
+            }
+          } catch {}
+        }
         setBill(b);
         setPaymentAmount((Number(b.dueMinor) / 100).toFixed(2));
         setTipInput((Number(b.tipTotalMinor) / 100).toFixed(2));
@@ -2479,7 +2511,7 @@ export default function WaiterDashboard() {
 
       {billTable && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-4">
               <h2 className="font-bold text-lg text-slate-100">Bill — Table {billTable.tableNumber}</h2>
               <button onClick={() => setBillTable(null)} className="text-slate-400 hover:text-slate-200 text-xl font-bold">×</button>
@@ -2530,6 +2562,60 @@ export default function WaiterDashboard() {
 
               return (
               <div className="flex flex-col gap-3">
+                {/* Itemized Order Breakdown */}
+                <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
+                  <div className="flex justify-between items-center mb-2 pb-1.5 border-b border-slate-800">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ordered Items</span>
+                    <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full font-semibold">
+                      {bill.items && bill.items.length > 0
+                        ? `${bill.items.reduce((s, it) => s + (Number(it.quantity) || 1), 0)} item${bill.items.length > 1 ? "s" : ""}`
+                        : "0 items"}
+                    </span>
+                  </div>
+
+                  {bill.items && bill.items.length > 0 ? (
+                    <div className="flex flex-col gap-2 max-h-44 overflow-y-auto pr-1">
+                      {bill.items.map((it, idx) => {
+                        const price = Number(it.subtotalMinor || 0) > 0
+                          ? Number(it.subtotalMinor) / 100
+                          : (Number(it.unitPriceMinor || 0) / 100) * (Number(it.quantity) || 1);
+                        return (
+                          <div key={it.id || idx} className="flex justify-between items-start text-xs border-b border-slate-900/80 pb-1.5 last:border-0 last:pb-0">
+                            <div className="flex-1 pr-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-semibold text-slate-200">{it.name}</span>
+                                <span className="text-slate-400 text-[11px] font-bold">×{it.quantity}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                {it.course && (
+                                  <span className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded font-medium">
+                                    {it.course}
+                                  </span>
+                                )}
+                                {it.seatNumber && (
+                                  <span className="text-[9px] bg-indigo-950 text-indigo-300 border border-indigo-800/40 px-1.5 py-0.2 rounded font-medium">
+                                    Seat #{it.seatNumber}
+                                  </span>
+                                )}
+                                {it.notes && (
+                                  <span className="text-[10px] text-amber-300/80 italic truncate max-w-[130px]">
+                                    "{it.notes}"
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <span className="text-slate-200 font-semibold text-xs whitespace-nowrap">
+                              ₹{price.toFixed(2)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-500 text-center py-2">No individual item details available</p>
+                  )}
+                </div>
+
                 <div className="text-xs text-slate-400 flex flex-col gap-1.5 border-b border-slate-800 pb-3">
                   <div className="flex justify-between"><span>Subtotal</span><span>₹{(subtotalNum / 100).toFixed(2)}</span></div>
                   <div className="flex justify-between"><span>Discount</span><span>-₹{(discountNum / 100).toFixed(2)}</span></div>

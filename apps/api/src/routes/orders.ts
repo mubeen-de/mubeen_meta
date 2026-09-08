@@ -755,6 +755,18 @@ ordersRouter.get("/orders/:id/bill", requireAuth, async (req: AuthedRequest, res
     if (!bill) {
       return res.status(404).json({ error: "Order or bill not found" });
     }
+    const orderDetails = await getOrderDetail(outletId, req.params.id, orderRepo).catch(() => null);
+    const items = (orderDetails?.items || []).filter((i: any) => !i.isVoided).map((i: any) => ({
+      id: i.id,
+      menuItemId: i.menuItemId,
+      name: i.menuItemName || i.name || "Item",
+      quantity: i.quantity,
+      unitPriceMinor: i.unitPriceMinor ? i.unitPriceMinor.toString() : "0",
+      subtotalMinor: i.subtotalMinor ? i.subtotalMinor.toString() : "0",
+      course: i.course || null,
+      seatNumber: i.seatNumber || null,
+      notes: i.notes || null,
+    }));
     res.status(200).json({
       orderId: bill.orderId,
       orderNumber: bill.orderNumber,
@@ -766,6 +778,7 @@ ordersRouter.get("/orders/:id/bill", requireAuth, async (req: AuthedRequest, res
       grandTotalMinor: bill.grandTotalMinor.toString(),
       paidMinor: bill.paidMinor.toString(),
       dueMinor: bill.dueMinor.toString(),
+      items,
     });
   } catch (err: any) {
     console.error("Error fetching bill:", err);

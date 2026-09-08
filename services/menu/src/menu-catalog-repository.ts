@@ -16,7 +16,10 @@ export class PrismaMenuCatalogRepository {
   }
 
   async createMenuItem(input: MenuItemInput) {
-    const priceDecimal = (Number(input.priceMinor || 0) / 100).toFixed(2);
+    const priceMinor = typeof input.priceMinor === "bigint"
+      ? input.priceMinor
+      : BigInt(input.priceMinor || 0);
+    const priceDecimal = (Number(priceMinor) / 100).toFixed(2);
     const taxDecimal = input.taxRate !== undefined ? Number(input.taxRate).toFixed(2) : "5.00";
 
     const created = await this.prisma.menuItem.create({
@@ -25,7 +28,7 @@ export class PrismaMenuCatalogRepository {
         categoryId: input.categoryId,
         name: input.name,
         description: input.description,
-        price: priceDecimal as any,
+        price: priceMinor,
         isVeg: input.isVeg !== undefined ? input.isVeg : true,
         taxRate: taxDecimal as any,
       },
@@ -37,7 +40,7 @@ export class PrismaMenuCatalogRepository {
       categoryId: created.categoryId,
       name: created.name,
       description: created.description,
-      priceMinor: input.priceMinor,
+      priceMinor: priceMinor,
       price: priceDecimal,
       isVeg: created.isVeg,
       taxRate: (created.taxRate ?? 5.0).toString(),
@@ -63,7 +66,9 @@ export class PrismaMenuCatalogRepository {
     if (patch.description !== undefined) data.description = patch.description;
     if (patch.categoryId !== undefined) data.categoryId = patch.categoryId;
     if (patch.isVeg !== undefined) data.isVeg = patch.isVeg;
-    if (patch.priceMinor !== undefined) data.price = (Number(patch.priceMinor) / 100).toFixed(2);
+    if (patch.priceMinor !== undefined) {
+      data.price = typeof patch.priceMinor === "bigint" ? patch.priceMinor : BigInt(patch.priceMinor || 0);
+    }
     if (patch.taxRate !== undefined) data.taxRate = Number(patch.taxRate).toFixed(2);
 
     const updated = await this.prisma.menuItem.update({

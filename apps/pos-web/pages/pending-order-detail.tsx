@@ -5,6 +5,7 @@ import KapMetaHeader from "../components/KapMetaHeader";
 import PendingOrderDetailView, {
   PendingOrderDetailData,
 } from "../components/PendingOrderDetailView";
+import Nav from "../components/Nav";
 import { authedFetch, fetchMe } from "../lib/auth";
 
 export default function PendingOrderDetailPage() {
@@ -38,15 +39,24 @@ export default function PendingOrderDetailPage() {
           return;
         }
         const grandTotal = Number(ord.grandTotalMinor || 0) / 100;
-        const items = (ord.items || []).map((it: any) => ({
-          id: it.id || it.menuItemId,
-          name: it.menuItemName || it.name,
-          specialNote: it.notes || "--",
-          availability: "Yes",
-          quantity: it.quantity || 1,
-          unitPrice: Number(it.unitPriceMinor || it.subtotalMinor || 0) / 100,
-          totalPrice: (Number(it.subtotalMinor || it.unitPriceMinor || 0) / 100) * (it.quantity || 1),
-        }));
+        const items = (ord.items || []).map((it: any) => {
+          const qty = Number(it.quantity) || 1;
+          const unitPrice = it.unitPriceMinor
+            ? Number(it.unitPriceMinor) / 100
+            : (Number(it.subtotalMinor || 0) / 100) / qty;
+          const totalPrice = it.subtotalMinor
+            ? Number(it.subtotalMinor) / 100
+            : unitPrice * qty;
+          return {
+            id: it.id || it.menuItemId,
+            name: it.menuItemName || it.name,
+            specialNote: it.notes || "--",
+            availability: "Yes",
+            quantity: qty,
+            unitPrice,
+            totalPrice,
+          };
+        });
 
         setOrderData({
           pendingOrderNo: ord.orderNumber || idToFetch,
@@ -98,17 +108,22 @@ export default function PendingOrderDetailPage() {
         onNewOrder={() => router.push("/")}
       />
 
-      {/* Main Pending Order Detail View */}
-      {loading ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "calc(100vh - 42px)" }}>
-          <p style={{ fontWeight: 600, color: "var(--text-secondary)" }}>Loading order details...</p>
+      {/* Main Layout with Persistent Sidebar */}
+      <div className="order-detail-main-layout">
+        <Nav variant="sidebar" />
+        <div className="order-detail-content-pane">
+          {loading ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+              <p style={{ fontWeight: 600, color: "var(--text-secondary)" }}>Loading order details...</p>
+            </div>
+          ) : (
+            <PendingOrderDetailView
+              initialData={orderData}
+              onBack={() => router.push("/orders?tab=online")}
+            />
+          )}
         </div>
-      ) : (
-        <PendingOrderDetailView
-          initialData={orderData}
-          onBack={() => router.push("/orders?tab=online")}
-        />
-      )}
+      </div>
 
       <style jsx global>{`
         body {
@@ -120,6 +135,22 @@ export default function PendingOrderDetailPage() {
         }
         * {
           box-sizing: border-box;
+        }
+      `}</style>
+
+      <style jsx>{`
+        .order-detail-main-layout {
+          display: flex;
+          flex: 1;
+          height: calc(100vh - 80px);
+          min-height: 0;
+          overflow: hidden;
+        }
+        .order-detail-content-pane {
+          flex: 1;
+          min-width: 0;
+          height: 100%;
+          overflow: auto;
         }
       `}</style>
     </div>

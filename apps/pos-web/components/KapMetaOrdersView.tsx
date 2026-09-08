@@ -219,7 +219,8 @@ export default function KapMetaOrdersView({
         .orders-shell {
           display: flex;
           flex-direction: column;
-          height: calc(100vh - 42px);
+          height: 100%;
+          min-height: 0;
           width: 100%;
           background: var(--bg-base);
           overflow: hidden;

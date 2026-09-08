@@ -5,6 +5,7 @@ import { authedFetch, useAuthGuard } from "../lib/auth";
 import KapMetaHeader from "../components/KapMetaHeader";
 import TableViewFloor from "../components/TableViewFloor";
 import AddTableModal from "../components/AddTableModal";
+import Nav from "../components/Nav";
 
 interface DiningTable {
   id: string;
@@ -207,8 +208,11 @@ export default function TableManagement() {
         onNewOrder={() => router.push("/")}
       />
 
-      {/* Sub-navigation tabs */}
-      <div className="sub-tab-bar">
+      <div className="table-mgmt-main-layout">
+        <Nav variant="sidebar" />
+        <div className="table-mgmt-content-pane">
+          {/* Sub-navigation tabs */}
+          <div className="sub-tab-bar">
         <button
           className={`sub-tab ${activeTab === "VISUAL_FLOOR" ? "active" : ""}`}
           onClick={() => setActiveTab("VISUAL_FLOOR")}
@@ -450,15 +454,30 @@ export default function TableManagement() {
         .btn-cancel-sm { background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; }
         .btn-toggle-sm { background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; }
 
-        .error-box {
-          background: #fef2f2;
-          color: #dc2626;
-          padding: 8px 14px;
-          border-radius: 6px;
-          font-size: 0.8125rem;
-          margin-bottom: 14px;
+        .table-management-root {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          width: 100vw;
+          overflow: hidden;
+          background: #f8fafc;
+        }
+        .table-mgmt-main-layout {
+          display: flex;
+          flex: 1;
+          min-height: 0;
+          overflow: hidden;
+        }
+        .table-mgmt-content-pane {
+          flex: 1;
+          min-width: 0;
+          height: 100%;
+          overflow: auto;
+          padding: 16px 20px;
         }
       `}</style>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1200,6 +1200,7 @@ export default function UserManagement() {
           align-items: center;
           justify-content: center;
           z-index: 100;
+          padding: 16px;
         }
 
         .modal-content {
@@ -1207,8 +1208,13 @@ export default function UserManagement() {
           border: 1px solid var(--border);
           border-radius: var(--radius-lg);
           width: 480px;
+          max-width: 95vw;
+          max-height: 80vh;
+          display: flex;
+          flex-direction: column;
           padding: 24px;
           box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
         }
 
         .modal-header {
@@ -1218,6 +1224,7 @@ export default function UserManagement() {
           border-bottom: 1px solid var(--border-subtle);
           padding-bottom: 12px;
           margin-bottom: 16px;
+          flex-shrink: 0;
         }
 
         .modal-header h4 {
@@ -1239,12 +1246,31 @@ export default function UserManagement() {
           display: flex;
           flex-direction: column;
           gap: 12px;
+          overflow-y: auto;
+          flex: 1;
+          padding-right: 6px;
+        }
+
+        .modal-form::-webkit-scrollbar {
+          width: 6px;
+        }
+        .modal-form::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.04);
+          border-radius: 4px;
+        }
+        .modal-form::-webkit-scrollbar-thumb {
+          background: rgba(148, 163, 184, 0.5);
+          border-radius: 4px;
+        }
+        .modal-form::-webkit-scrollbar-thumb:hover {
+          background: rgba(100, 116, 139, 0.8);
         }
 
         .form-group {
           display: flex;
           flex-direction: column;
           gap: 4px;
+          flex-shrink: 0;
         }
 
         .form-group label {
@@ -1269,13 +1295,18 @@ export default function UserManagement() {
           gap: 8px;
           font-size: 0.875rem;
           color: var(--text-primary);
+          flex-shrink: 0;
         }
 
         .modal-actions {
           display: flex;
           justify-content: flex-end;
           gap: 12px;
-          margin-top: 16px;
+          margin-top: 14px;
+          padding-top: 12px;
+          border-top: 1px solid var(--border-subtle);
+          flex-shrink: 0;
+          background: var(--bg-card);
         }
 
         .cancel-modal-btn {
