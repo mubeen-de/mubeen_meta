@@ -97,9 +97,14 @@ export default function AttractiveMenuItemCard({
               {item.isBestseller && <span className="bestseller-pill">⭐ Bestseller</span>}
               {item.spiceLevel === "SPICY" && <span className="spice-pill" title="Spicy">🌶️</span>}
               {item.spiceLevel === "EXTRA_HOT" && <span className="spice-pill" title="Extra Hot">🔥</span>}
-              {!isAvailable && <span className="stock-pill out">86'd</span>}
-              {isAvailable && item.stockQty !== undefined && item.stockQty > 0 && item.stockQty <= 5 && (
-                <span className="stock-pill low">{item.stockQty} left</span>
+              {!isAvailable && <span className="stock-pill out">86'd (Out)</span>}
+              {isAvailable && item.stockQty !== undefined && item.stockQty > 0 && item.stockQty < 20 && (
+                <span
+                  className={`stock-pill ${item.stockQty <= 5 ? "critical" : "low"}`}
+                  title={`${item.stockQty} portions remaining in kitchen`}
+                >
+                  {item.stockQty <= 5 ? "🔥" : "⚡"} {item.stockQty} left
+                </span>
               )}
             </div>
           </div>
@@ -128,7 +133,15 @@ export default function AttractiveMenuItemCard({
             <div className="status-badges-group">
               {item.isBestseller && <span className="bestseller-pill">⭐ Bestseller</span>}
               {item.spiceLevel === "SPICY" && <span className="spice-pill">🌶️</span>}
-              {!isAvailable && <span className="stock-pill out">86'd</span>}
+              {!isAvailable && <span className="stock-pill out">86'd (Out)</span>}
+              {isAvailable && item.stockQty !== undefined && item.stockQty > 0 && item.stockQty < 20 && (
+                <span
+                  className={`stock-pill ${item.stockQty <= 5 ? "critical" : "low"}`}
+                  title={`${item.stockQty} portions remaining in kitchen`}
+                >
+                  {item.stockQty <= 5 ? "🔥" : "⚡"} {item.stockQty} left
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -365,18 +378,35 @@ export default function AttractiveMenuItemCard({
         }
 
         .stock-pill {
-          font-size: 0.5625rem;
+          font-size: 0.625rem;
           font-weight: 800;
-          padding: 2px 5px;
-          border-radius: 4px;
+          padding: 2px 6px;
+          border-radius: 6px;
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+          letter-spacing: 0.2px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
         }
         .stock-pill.out {
-          background: rgba(254, 226, 226, 0.95);
-          color: #b91c1c;
+          background: #fee2e2;
+          color: #991b1b;
+          border: 1px solid #f87171;
         }
         .stock-pill.low {
-          background: rgba(255, 237, 213, 0.95);
+          background: #fef3c7;
+          color: #92400e;
+          border: 1px solid #f59e0b;
+        }
+        .stock-pill.critical {
+          background: #ffedd5;
           color: #c2410c;
+          border: 1px solid #fb923c;
+          animation: pulse-badge 2s infinite ease-in-out;
+        }
+        @keyframes pulse-badge {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.88; transform: scale(0.97); }
         }
 
         .card-body {

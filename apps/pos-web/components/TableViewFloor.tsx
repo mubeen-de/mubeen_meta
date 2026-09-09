@@ -47,6 +47,34 @@ export default function TableViewFloor({
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [isA2aDrawerOpen, setIsA2aDrawerOpen] = useState(false);
   const [isHeldDrawerOpen, setIsHeldDrawerOpen] = useState(false);
+  const [heldTablesMap, setHeldTablesMap] = useState<Record<string, any>>({});
+
+  const updateHeldTables = React.useCallback(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("kapmeta_held_orders") || "[]");
+      const map: Record<string, any> = {};
+      if (Array.isArray(stored)) {
+        for (const h of stored) {
+          if (h.tableNumber) {
+            map[h.tableNumber.trim().toLowerCase()] = h;
+          }
+        }
+      }
+      setHeldTablesMap(map);
+    } catch {
+      setHeldTablesMap({});
+    }
+  }, []);
+
+  useEffect(() => {
+    updateHeldTables();
+    window.addEventListener("kapmeta_held_orders_updated", updateHeldTables);
+    window.addEventListener("storage", updateHeldTables);
+    return () => {
+      window.removeEventListener("kapmeta_held_orders_updated", updateHeldTables);
+      window.removeEventListener("storage", updateHeldTables);
+    };
+  }, [updateHeldTables]);
 
   const fetchTablesData = async () => {
     try {
@@ -547,6 +575,14 @@ export default function TableViewFloor({
                               🍽️ Served
                             </span>
                           )}
+                        </div>
+                      )}
+
+                      {heldTablesMap[tbl.tableNumber.trim().toLowerCase()] && (
+                        <div style={{ margin: "2px 0 4px 0", textAlign: "center", display: "flex", justifyContent: "center" }}>
+                          <span style={{ fontSize: "10px", background: "rgba(245, 158, 11, 0.2)", color: "#d97706", border: "1px solid rgba(245, 158, 11, 0.5)", borderRadius: "4px", padding: "1px 6px", fontWeight: 700 }}>
+                            ⏸ Parked Draft ({heldTablesMap[tbl.tableNumber.trim().toLowerCase()].itemCount || 1})
+                          </span>
                         </div>
                       )}
 

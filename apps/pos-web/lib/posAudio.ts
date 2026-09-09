@@ -114,6 +114,29 @@ class PosAudioFeedback {
       osc.stop(ctx.currentTime + 0.14);
     } catch {}
   }
+
+  // Advance order due alert chime (distinct 3-tone attention chime: D5 -> A5 -> D6)
+  public playAdvanceOrderAlert() {
+    if (!this.enabled) return;
+    try {
+      const ctx = this.initContext();
+      if (!ctx) return;
+      const pitches = [587.33, 880, 1174.66]; // D5, A5, D6
+      pitches.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        const startTime = ctx.currentTime + idx * 0.11;
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.18, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.24);
+      });
+    } catch {}
+  }
 }
 
 export const posAudio = new PosAudioFeedback();

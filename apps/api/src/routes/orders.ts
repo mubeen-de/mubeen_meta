@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Router } from "express";
 import { requireAuth, requirePermission, checkPermissionDirect, type AuthedRequest } from "../middleware/require-auth";
 import { prisma } from "../prisma";
@@ -14,6 +15,7 @@ import {
 } from "@kapmeta/orders";
 import type { OrderStatus, CreateOrderInput } from "@kapmeta/shared-types/orders";
 import { onOrderConfirmed, onItemsAdded } from "../orchestration/order-lifecycle";
+import { restoreItemPortionOnVoid } from "../orchestration/item-stock-depletion";
 import { settleOrderCommand } from "../orchestration/settle-order";
 import { TaxEngine } from "@kapmeta/finance";
 import { dissolveMergeGroupForTable, expandMergeMemberIds, findLiveOrdersOnTables, occupyMergeMembers, resolveAnchorTable, stampOrderMergeLabel } from "../orchestration/table-merge";
@@ -141,6 +143,36 @@ ordersRouter.post(
     }
 
     const orderType = (body.orderType === "TAKEAWAY" || body.orderType === "PICKUP") ? "PICKUP" : (body.orderType === "DELIVERY" ? "DELIVERY" : "DINE_IN");
+    let customerId = body.customerId || undefined;
+    if (!customerId && (body.customerPhone || body.customerName)) {
+      try {
+        const phone = body.customerPhone || `cust-${Date.now()}`;
+        const existingCust = await prisma.customer.findFirst({
+          where: { phone },
+        });
+        if (existingCust) {
+          customerId = existingCust.id;
+        } else {
+          const outlet = await prisma.outlet.findUnique({
+            where: { id: outletId },
+            select: { organizationId: true },
+          });
+          const organization_id = outlet?.organizationId || "11111111-1111-1111-1111-111111111111";
+          const created = await prisma.customer.create({
+            data: {
+              organization_id,
+              outletId,
+              phone,
+              name: body.customerName || "Guest",
+            },
+          });
+          customerId = created.id;
+        }
+      } catch (err) {
+        console.error("Error auto-resolving customer:", err);
+      }
+    }
+
     const idempotencyKey = body.idempotencyKey || `ord_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
     const input: CreateOrderInput = {
@@ -150,7 +182,7 @@ ordersRouter.post(
       idempotencyKey,
       lines,
       diningTableId,
-      customerId: body.customerId || undefined,
+      customerId,
       waiterId: body.waiterId || undefined,
     };
 
@@ -165,25 +197,66 @@ ordersRouter.post(
       }).catch(() => {});
     }
 
+    let scheduledFireAtDate: Date | null = null;
+    let promisedAtDate: Date | null = null;
+    let depositMinorVal: bigint | null = null;
+
     if (body.scheduledFireAt) {
+      scheduledFireAtDate = new Date(body.scheduledFireAt);
+      promisedAtDate = body.promisedAt ? new Date(body.promisedAt) : scheduledFireAtDate;
+    } else if (body.scheduledDate && body.scheduledTime) {
+      promisedAtDate = new Date(`${body.scheduledDate}T${body.scheduledTime}:00`);
+      const leadMinutes = body.prepLeadMinutes ? Number(body.prepLeadMinutes) : (orderType === "DELIVERY" ? 30 : 20);
+      scheduledFireAtDate = new Date(promisedAtDate.getTime() - leadMinutes * 60 * 1000);
+    }
+
+    if (body.advancePaidRupees != null && !isNaN(Number(body.advancePaidRupees))) {
+      depositMinorVal = BigInt(Math.round(Number(body.advancePaidRupees) * 100));
+    } else if (body.depositMinor != null) {
+      depositMinorVal = BigInt(body.depositMinor);
+    }
+
+    const isAdvance = Boolean(scheduledFireAtDate || body.advanceStatus === "SCHEDULED" || body.isAdvance);
+
+    if (isAdvance) {
       await prisma.order.update({
         where: { id: result.id },
         data: {
-          scheduledFireAt: new Date(body.scheduledFireAt),
-          promisedAt: body.promisedAt ? new Date(body.promisedAt) : undefined,
-          depositMinor: body.depositMinor != null ? BigInt(body.depositMinor) : undefined,
+          scheduledFireAt: scheduledFireAtDate ?? undefined,
+          promisedAt: promisedAtDate ?? undefined,
+          depositMinor: depositMinorVal ?? undefined,
           advanceStatus: "SCHEDULED",
+          riderName: body.customerName || undefined,
+          riderPhone: body.customerPhone || undefined,
         },
       }).catch(() => undefined);
+
+      try {
+        const notif = await prisma.notification.create({
+          data: {
+            id: crypto.randomUUID(),
+            outletId,
+            userId: null,
+            type: "ORDER",
+            title: "📅 Advance Order Booked",
+            message: `Order #${(result as any).orderNumber || result.id.slice(0, 6)} (${orderType}) scheduled for ${promisedAtDate ? promisedAtDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "future"}.`,
+            entityType: "ADVANCE_ORDER",
+            entityId: result.id,
+            isRead: false,
+          },
+        });
+        import("../websockets").then(({ broadcast }) => {
+          broadcast(outletId, "advance_order.created", { orderId: result.id, outletId });
+          broadcast(outletId, "outlet.notification_created", { outletId, notification: notif });
+        }).catch(() => {});
+      } catch {}
     }
 
     // If KOT creation requested (action: "KOT" or status: "ACTIVE" or "KOT_CREATED"):
-    if (body.action === "KOT" || body.status === "ACTIVE" || body.status === "KOT_CREATED") {
-      if (!body.scheduledFireAt) {
-        await transitionOrder(result.id, "CONFIRMED", orderRepo, req.auth!.userId);
-        await transitionOrder(result.id, "KOT_CREATED", orderRepo, req.auth!.userId);
-        await onOrderConfirmed(result.id, prisma);
-      }
+    if ((body.action === "KOT" || body.status === "ACTIVE" || body.status === "KOT_CREATED") && !isAdvance) {
+      await transitionOrder(result.id, "CONFIRMED", orderRepo, req.auth!.userId);
+      await transitionOrder(result.id, "KOT_CREATED", orderRepo, req.auth!.userId);
+      await onOrderConfirmed(result.id, prisma);
 
       if (diningTableId) {
         await occupyMergeMembers(prisma, outletId, diningTableId);
@@ -191,7 +264,7 @@ ordersRouter.post(
       }
     }
     // If Bill / Immediate Settlement requested (action: "BILL" or isPaid: true or status: "COMPLETED"):
-    else if (body.action === "BILL" || body.isPaid || body.status === "COMPLETED") {
+    else if ((body.action === "BILL" || body.isPaid || body.status === "COMPLETED") && !isAdvance) {
       await transitionOrder(result.id, "CONFIRMED", orderRepo, req.auth!.userId);
       await onOrderConfirmed(result.id, prisma);
       await settleOrderCommand(prisma, {
@@ -271,6 +344,70 @@ ordersRouter.get("/orders/advance", requireAuth, async (req: AuthedRequest, res)
   } catch (err) {
     console.error("Error fetching advance orders:", err);
     res.status(500).json({ error: "Failed to fetch advance orders" });
+  }
+});
+
+// GET /orders/advance/due - List scheduled advance orders due within alert window or overdue
+ordersRouter.get("/orders/advance/due", requireAuth, async (req: AuthedRequest, res) => {
+  try {
+    const outletId = req.auth!.outletId;
+    const leadMinutes = req.query.leadMinutes ? Number(req.query.leadMinutes) : 30;
+    const now = new Date();
+    const threshold = new Date(now.getTime() + leadMinutes * 60 * 1000);
+
+    const dueOrders = await prisma.order.findMany({
+      where: {
+        outletId,
+        advanceStatus: "SCHEDULED",
+        status: { in: ["DRAFT", "PLACED"] },
+        scheduledFireAt: {
+          lte: threshold,
+        },
+      },
+      include: {
+        orderItems: {
+          where: { isVoided: false },
+          include: {
+            menuItem: { select: { name: true } },
+          },
+        },
+        diningTable: true,
+      },
+      orderBy: { scheduledFireAt: "asc" },
+    });
+
+    const customerIds = dueOrders.map((o) => o.customerId).filter(Boolean) as string[];
+    const customers = customerIds.length > 0
+      ? await prisma.customer.findMany({
+          where: { id: { in: customerIds } },
+          select: { id: true, name: true, phone: true },
+        })
+      : [];
+    const customerMap = new Map(customers.map((c) => [c.id, c]));
+
+    const enriched = dueOrders.map((o) => {
+      const fireTime = o.scheduledFireAt ? new Date(o.scheduledFireAt).getTime() : now.getTime();
+      const diffMs = fireTime - now.getTime();
+      const minutesUntilDue = Math.round(diffMs / (60 * 1000));
+      const cust = o.customerId ? customerMap.get(o.customerId) : null;
+      return {
+        ...o,
+        customerName: cust?.name || o.riderName || undefined,
+        customerPhone: cust?.phone || o.riderPhone || undefined,
+        subtotal: o.subtotal.toString(),
+        discountTotal: o.discountTotal?.toString() || "0",
+        taxTotal: o.taxTotal?.toString() || "0",
+        grandTotal: o.grandTotal.toString(),
+        depositMinor: o.depositMinor ? o.depositMinor.toString() : "0",
+        minutesUntilDue,
+        isOverdue: minutesUntilDue < 0,
+      };
+    });
+
+    res.status(200).json(enriched);
+  } catch (err) {
+    console.error("Error fetching due advance orders:", err);
+    res.status(500).json({ error: "Failed to fetch due advance orders" });
   }
 });
 
@@ -890,6 +1027,24 @@ const handleVoidItem = async (req: AuthedRequest, res: any) => {
     if (!result.ok) {
       return res.status(404).json({ error: "Item not found or already voided" });
     }
+
+    // Restore item portion stock in item_availability
+    const voidedItem = await prisma.orderItem.findUnique({
+      where: { id: req.params.itemId },
+    }).catch(() => null);
+    if (voidedItem?.menuItemId) {
+      await restoreItemPortionOnVoid(
+        outletId,
+        voidedItem.menuItemId,
+        Number(voidedItem.quantity) || 1,
+        prisma,
+        userId,
+        voidedItem.id
+      ).catch((err) => {
+        console.error("Failed to restore portion on void:", err);
+      });
+    }
+
     res.status(200).json(result);
   } catch (err: any) {
     console.error("Error voiding order item:", err);
@@ -983,6 +1138,12 @@ ordersRouter.post("/orders/:id/fire-advance", requireAuth, requirePermission("or
     await transitionOrder(orderId, "CONFIRMED", orderRepo, req.auth!.userId).catch(() => {});
     await transitionOrder(orderId, "KOT_CREATED", orderRepo, req.auth!.userId).catch(() => {});
     await onOrderConfirmed(orderId, prisma);
+
+    import("../websockets").then(({ broadcast }) => {
+      broadcast(outletId, "advance_order.fired", { orderId, outletId });
+      broadcast(outletId, "kot.created", { orderId, outletId });
+      broadcast(outletId, "order.updated", { orderId, outletId });
+    }).catch(() => {});
 
     res.status(200).json({ ok: true, orderId, status: "KOT_CREATED" });
   } catch (err: any) {

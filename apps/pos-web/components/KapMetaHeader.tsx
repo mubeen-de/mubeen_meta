@@ -5,6 +5,7 @@ import { authedFetch, fetchMe, logout, type MeResponse } from "../lib/auth";
 import QuickSearchModal from "./QuickSearchModal";
 import ItemToggleModal from "./ItemToggleModal";
 import HoldOrdersDrawer from "./HoldOrdersDrawer";
+import AdvanceOrderAlertBanner from "./AdvanceOrderAlertBanner";
 import { filterSidebarGroups } from "./Nav";
 
 export interface KapMetaHeaderProps {
@@ -128,7 +129,7 @@ export default function KapMetaHeader({
   onNewOrder,
   activeMode,
   onModeChange,
-  heldOrdersCount = 0,
+  heldOrdersCount: heldOrdersCountProp,
   onOpenHoldDrawer,
 }: KapMetaHeaderProps) {
   const router = useRouter();
@@ -174,6 +175,29 @@ export default function KapMetaHeader({
   const [newAlertMessage, setNewAlertMessage] = useState("");
   const [newAlertType, setNewAlertType] = useState<"WARNING" | "INFO" | "ORDER" | "FINANCE">("INFO");
   const [isSubmittingAlert, setIsSubmittingAlert] = useState(false);
+
+  const [internalHeldCount, setInternalHeldCount] = useState(0);
+
+  const updateHeldCountFromStorage = React.useCallback(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("kapmeta_held_orders") || "[]");
+      setInternalHeldCount(Array.isArray(stored) ? stored.length : 0);
+    } catch {
+      setInternalHeldCount(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateHeldCountFromStorage();
+    window.addEventListener("kapmeta_held_orders_updated", updateHeldCountFromStorage);
+    window.addEventListener("storage", updateHeldCountFromStorage);
+    return () => {
+      window.removeEventListener("kapmeta_held_orders_updated", updateHeldCountFromStorage);
+      window.removeEventListener("storage", updateHeldCountFromStorage);
+    };
+  }, [updateHeldCountFromStorage]);
+
+  const effectiveHeldCount = heldOrdersCountProp !== undefined ? heldOrdersCountProp : internalHeldCount;
 
   const fetchLiveNotifications = () => {
     authedFetch("/notifications")
@@ -445,6 +469,23 @@ export default function KapMetaHeader({
             <span className="nav-caption">Orders</span>
           </Link>
 
+          {/* Advance Orders Nav Action */}
+          <Link
+            href="/orders?view=ADVANCE"
+            className={`top-nav-action-btn ${router.query?.view === "ADVANCE" ? "is-live" : ""}`}
+            title="Advance / Scheduled Orders Registry"
+          >
+            <div className="nav-icon-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </div>
+            <span className="nav-caption">Advance</span>
+          </Link>
+
           {/* 5. Kitchen KOT */}
           <Link
             href="/kitchen"
@@ -485,13 +526,20 @@ export default function KapMetaHeader({
             }}
             title="Held Orders"
           >
-            <div className="nav-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+            <div className="nav-icon-wrapper" style={{ position: "relative" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={effectiveHeldCount > 0 ? "#f59e0b" : "#475569"} strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
+              {effectiveHeldCount > 0 && (
+                <span className="alert-badge" style={{ background: "#f59e0b" }}>
+                  {effectiveHeldCount}
+                </span>
+              )}
             </div>
-            <span className="nav-caption">Hold {heldOrdersCount > 0 ? `(${heldOrdersCount})` : ""}</span>
+            <span className="nav-caption" style={effectiveHeldCount > 0 ? { color: "#d97706", fontWeight: 700 } : {}}>
+              Hold {effectiveHeldCount > 0 ? `(${effectiveHeldCount})` : ""}
+            </span>
           </button>
 
           {/* 7. Alerts */}
@@ -565,6 +613,9 @@ export default function KapMetaHeader({
           </div>
         </div>
       </header>
+
+      {/* Universal Advance Order Due Alert Banner */}
+      <AdvanceOrderAlertBanner />
 
       {/* LEFT MENU BAR (Exact match to Reference Screenshot) */}
       {showMenuDrawer && (
@@ -733,7 +784,15 @@ export default function KapMetaHeader({
 
       {/* Hold Orders Drawer */}
       {isHoldOpen && (
-        <HoldOrdersDrawer onClose={() => setIsHoldOpen(false)} />
+        <HoldOrdersDrawer
+          onClose={() => setIsHoldOpen(false)}
+          onResumeOrder={(ord) => {
+            setIsHoldOpen(false);
+            if (ord.tableNumber) {
+              router.push(`/?table=${encodeURIComponent(ord.tableNumber)}`);
+            }
+          }}
+        />
       )}
 
       {/* INTERACTIVE STORE OPERATIONS CONTROL MODAL */}

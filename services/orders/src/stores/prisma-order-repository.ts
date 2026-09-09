@@ -621,7 +621,7 @@ export class PrismaOrderRepository implements OrderRepository {
 
       await tx.orderItem.update({
         where: { id: orderItemId },
-        data: { isVoided: true, updated_by: userId },
+        data: { isVoided: true, voidedBy: userId, voidReason: reasonCode },
       });
 
       await tx.order.update({

@@ -51,6 +51,7 @@ export default function HeldOrdersDrawer({
       const updated = heldOrders.filter((o) => o.id !== id);
       localStorage.setItem("kapmeta_held_orders", JSON.stringify(updated));
       setHeldOrders(updated);
+      window.dispatchEvent(new Event("kapmeta_held_orders_updated"));
     } catch (e) {
       console.error(e);
     }
@@ -61,6 +62,8 @@ export default function HeldOrdersDrawer({
       const updated = heldOrders.filter((o) => o.id !== order.id);
       localStorage.setItem("kapmeta_held_orders", JSON.stringify(updated));
       setHeldOrders(updated);
+      window.dispatchEvent(new Event("kapmeta_held_orders_updated"));
+      window.dispatchEvent(new CustomEvent("kapmeta_resume_held_order", { detail: order }));
       posAudio.playItemAdd();
       onRecallOrder(order);
       onClose();

@@ -1,6 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { createKot, PrismaKotRepository } from "@kapmeta/kitchen";
 import { stampOrderMergeLabel } from "./table-merge";
+import { deductItemPortionsForOrder } from "./item-stock-depletion";
 
 export async function onOrderConfirmed(orderId: string, prisma: PrismaClient): Promise<void> {
   const order = await prisma.order.findUnique({
@@ -42,6 +43,12 @@ export async function onOrderConfirmed(orderId: string, prisma: PrismaClient): P
       },
       new PrismaKotRepository(prisma),
     );
+
+    // Deduct available portions from item_availability
+    await deductItemPortionsForOrder(order.id, order.outletId, prisma).catch((err) => {
+      console.error(`onOrderConfirmed: deductItemPortionsForOrder failed for order ${orderId}`, err);
+    });
+
     if (order.diningTableId) {
       await stampOrderMergeLabel(prisma, order.outletId, order.id, order.diningTableId);
     }

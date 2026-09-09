@@ -154,33 +154,57 @@ export class PrismaMenuCatalogRepository {
       include: { category: true },
       orderBy: { name: "asc" },
     });
-    return rows.map((row: any) => ({
-      id: row.id,
-      outletId: row.outletId,
-      categoryId: row.categoryId,
-      categoryName: row.category?.name ?? "General",
-      name: row.name,
-      description: row.description,
-      priceMinor: row.priceMinor !== undefined 
-        ? BigInt(row.priceMinor) 
-        : (Number.isInteger(Number(row.price || 0)) && Number(row.price || 0) >= 100 
-            ? BigInt(Number(row.price || 0)) 
-            : BigInt(Math.round(Number(row.price || 0) * 100))),
-      isVeg: Boolean(row.isVeg),
-      taxRate: (row.taxRate ?? 5.0).toString(),
-      isActive: row.isActive !== false,
-      availability: row.availabilities && row.availabilities[0]
-        ? {
-            isStocked: row.availabilities[0].isStocked,
-            stockQty: row.availabilities[0].stockQty,
-            version: row.availabilities[0].version,
-          }
-        : {
-            isStocked: true,
-            stockQty: 100,
-            version: 1,
-          },
-    }));
+
+    const availRows = await this.prisma.$queryRaw<Array<{
+      item_id: string;
+      state: string;
+      version: number;
+      stock_qty: number | null;
+    }>>`
+      SELECT item_id, state::text, version, stock_qty
+      FROM item_availability
+      WHERE outlet_id = ${outletId}::uuid
+    `.catch(() => []);
+
+    const availMap = new Map<string, { isStocked: boolean; stockQty: number; version: number }>();
+    for (const a of availRows) {
+      const stock = a.stock_qty != null ? Number(a.stock_qty) : 100;
+      availMap.set(a.item_id, {
+        isStocked: a.state !== "OFF" && stock > 0,
+        stockQty: stock,
+        version: a.version || 1,
+      });
+    }
+
+    return rows.map((row: any) => {
+      const avail = availMap.get(row.id);
+      const stockQty = avail?.stockQty ?? 100;
+      const isStocked = avail ? avail.isStocked : (row.isActive !== false);
+
+      return {
+        id: row.id,
+        outletId: row.outletId,
+        categoryId: row.categoryId,
+        categoryName: row.category?.name ?? "General",
+        name: row.name,
+        description: row.description,
+        priceMinor: row.priceMinor !== undefined 
+          ? BigInt(row.priceMinor) 
+          : (Number.isInteger(Number(row.price || 0)) && Number(row.price || 0) >= 100 
+              ? BigInt(Number(row.price || 0)) 
+              : BigInt(Math.round(Number(row.price || 0) * 100))),
+        isVeg: Boolean(row.isVeg),
+        taxRate: (row.taxRate ?? 5.0).toString(),
+        isActive: isStocked,
+        isStocked,
+        stockQty,
+        availability: {
+          isStocked,
+          stockQty,
+          version: avail?.version ?? 1,
+        },
+      };
+    });
   }
 
   async listByCategory(categoryId: string): Promise<MenuItemView[]> {

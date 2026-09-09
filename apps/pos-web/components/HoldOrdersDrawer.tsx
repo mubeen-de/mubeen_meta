@@ -33,6 +33,8 @@ export default function HoldOrdersDrawer({ onClose, onResumeOrder }: HoldOrdersD
     const next = heldOrders.filter((o) => o.id !== order.id);
     setHeldOrders(next);
     localStorage.setItem("kapmeta_held_orders", JSON.stringify(next));
+    window.dispatchEvent(new Event("kapmeta_held_orders_updated"));
+    window.dispatchEvent(new CustomEvent("kapmeta_resume_held_order", { detail: order }));
     if (onResumeOrder) onResumeOrder(order);
     onClose();
   };
@@ -41,6 +43,7 @@ export default function HoldOrdersDrawer({ onClose, onResumeOrder }: HoldOrdersD
     const next = heldOrders.filter((o) => o.id !== id);
     setHeldOrders(next);
     localStorage.setItem("kapmeta_held_orders", JSON.stringify(next));
+    window.dispatchEvent(new Event("kapmeta_held_orders_updated"));
   };
 
   return (

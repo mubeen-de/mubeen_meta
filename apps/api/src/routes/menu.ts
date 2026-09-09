@@ -436,22 +436,35 @@ router.get("/availability", requireAuth, requirePermission("menu.read"), async (
       return true;
     });
 
-    const availabilityRows = await (prisma as any).itemAvailability?.findMany({
-      where: { outletId },
-    }).catch(() => []) || [];
+    const availabilityRows = await prisma.$queryRaw<Array<{
+      item_id: string;
+      state: string;
+      version: number;
+      stock_qty: number | null;
+    }>>`
+      SELECT item_id, state::text, version, stock_qty
+      FROM item_availability
+      WHERE outlet_id = ${outletId}::uuid
+    `.catch(() => []);
 
-    const availByItem = new Map<string, { state: string; version: number }>();
+    const availByItem = new Map<string, { state: string; version: number; stockQty: number }>();
     for (const row of availabilityRows) {
-      const prev = availByItem.get(row.menuItemId || row.item_id);
+      const prev = availByItem.get(row.item_id);
+      const stock = row.stock_qty != null ? Number(row.stock_qty) : 100;
       if (!prev || (row.version || 1) >= prev.version) {
-        availByItem.set(row.menuItemId || row.item_id, { state: row.state || "ON", version: row.version || 1 });
+        availByItem.set(row.item_id, {
+          state: row.state || "ON",
+          version: row.version || 1,
+          stockQty: stock,
+        });
       }
     }
 
     res.status(200).json(
       menuItems.map((item) => {
         const avail = availByItem.get(item.id);
-        const isStocked = avail ? avail.state !== "OFF" : item.isActive;
+        const stockQty = avail?.stockQty ?? 100;
+        const isStocked = avail ? (avail.state !== "OFF" && stockQty > 0) : item.isActive;
         const priceMinor = Number(item.price || 0);
         return {
           id: item.id,
@@ -461,6 +474,7 @@ router.get("/availability", requireAuth, requirePermission("menu.read"), async (
           categoryName: item.category?.name || "General",
           category: item.category?.name || "General",
           isStocked,
+          stockQty,
           version: avail?.version ?? 1,
           priceMinor: priceMinor.toString(),
           price: (priceMinor / 100).toFixed(2),
@@ -494,51 +508,83 @@ router.patch("/items/:menuItemId/availability", requireAuth, requirePermission("
       select: { id: true },
     });
     const channelIds = accounts.length > 0 ? accounts.map((a) => a.id) : [outletId];
-    let newVersion = 1;
+    let newVersion = (expectedVersion || 1) + 1;
+
     for (const channelId of channelIds) {
       const existing = await prisma.item_availability.findFirst({
         where: { outlet_id: outletId, item_id: item.id, channel_id: channelId },
       });
       if (existing) {
-        const updatedAvail = await prisma.item_availability.update({
-          where: { id: existing.id },
-          data: { state: nextState, version: { increment: 1 }, updated_at: new Date(), updated_by: req.auth!.userId },
-        });
-        newVersion = updatedAvail.version;
+        newVersion = existing.version + 1;
+        if (typeof stockQty === "number") {
+          await prisma.$executeRaw`
+            UPDATE item_availability
+            SET state = ${nextState}::availability_state,
+                stock_qty = ${stockQty},
+                version = version + 1,
+                updated_at = NOW(),
+                updated_by = ${req.auth!.userId || null}::uuid
+            WHERE id = ${existing.id}::uuid
+          `;
+        } else {
+          await prisma.item_availability.update({
+            where: { id: existing.id },
+            data: { state: nextState as any, version: { increment: 1 }, updated_at: new Date(), updated_by: req.auth!.userId },
+          });
+        }
       } else {
-        const created = await prisma.item_availability.create({
-          data: {
-            outlet_id: outletId,
-            item_id: item.id,
-            channel_id: channelId,
-            state: nextState,
-            version: (expectedVersion || 1) + 1,
-            created_by: req.auth!.userId,
-            updated_by: req.auth!.userId,
-          },
-        });
-        newVersion = created.version;
+        const initialQty = typeof stockQty === "number" ? stockQty : 100;
+        await prisma.$executeRaw`
+          INSERT INTO item_availability (outlet_id, item_id, channel_id, state, stock_qty, version, created_at, updated_at, created_by, updated_by)
+          VALUES (
+            ${outletId}::uuid,
+            ${item.id}::uuid,
+            ${channelId}::uuid,
+            ${nextState}::availability_state,
+            ${initialQty},
+            ${newVersion},
+            NOW(),
+            NOW(),
+            ${req.auth!.userId || null}::uuid,
+            ${req.auth!.userId || null}::uuid
+          )
+        `;
       }
     }
 
-    const updated = await prisma.menuItem.update({
+    const effectiveStockQty = typeof stockQty === "number" ? stockQty : 100;
+    const finalStocked = nextState !== "OFF" && effectiveStockQty > 0;
+
+    await prisma.menuItem.update({
       where: { id: req.params.menuItemId },
-      data: { isActive: nextState !== "OFF" },
-    });
+      data: { isActive: finalStocked },
+    }).catch(() => {});
 
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: req.auth!.userId,
+        userId: req.auth!.userId,
         action: "UPDATE",
         entityType: "MENU_ITEM_86",
         entityId: item.id,
         beforeState: { isStocked: item.isActive },
-        afterState: { isStocked: nextState !== "OFF", version: newVersion },
+        afterState: { isStocked: finalStocked, stockQty: effectiveStockQty, version: newVersion },
       },
     }).catch(() => {});
 
-    res.status(200).json({ newVersion, isStocked: nextState !== "OFF" });
+    import("../websockets").then(({ broadcast }) => {
+      broadcast(outletId, "inventory.stock_updated", {
+        items: [{ menuItemId: item.id, stockQty: effectiveStockQty, isStocked: finalStocked }],
+      });
+      broadcast(outletId, "menu.item_availability_changed", {
+        itemId: item.id,
+        stockQty: effectiveStockQty,
+        isStocked: finalStocked,
+        version: newVersion,
+      });
+    }).catch(() => {});
+
+    res.status(200).json({ newVersion, isStocked: finalStocked, stockQty: effectiveStockQty });
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ error: err.message });

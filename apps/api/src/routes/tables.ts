@@ -1061,13 +1061,11 @@ const handleTableTransfer = async (req: AuthedRequest, res: any) => {
               orderNumber: `${dateKey}-${String(count + 1).padStart(4, "0")}`,
               orderType: sourceOrder.orderType,
               status: sourceOrder.status,
-              business_date: sourceOrder.business_date,
               subtotal: movedSubtotal,
               taxTotal: movedTax,
               grandTotal: movedGrand,
               diningTableId: targetTableId,
-              table_number: targetTable.tableNumber,
-              created_by: sourceOrder.created_by,
+              waiterId: sourceOrder.waiterId,
             },
           });
         } else {
@@ -1162,7 +1160,6 @@ const handleTableTransfer = async (req: AuthedRequest, res: any) => {
             where: { id: sourceOrder.id },
             data: {
               diningTableId: targetTableId,
-              table_number: targetTable.tableNumber,
             },
           });
         }
@@ -1210,8 +1207,8 @@ const handleTableTransfer = async (req: AuthedRequest, res: any) => {
   }
 };
 
-tablesRouter.post("/tables/transfer", requireAuth, requirePermission("table.transfer"), handleTableTransfer);
-tablesRouter.post("/tables/:id/transfer", requireAuth, requirePermission("table.transfer"), handleTableTransfer);
+tablesRouter.post("/tables/transfer", requireAuth, requirePermission("table.transfer", "table.manage"), handleTableTransfer);
+tablesRouter.post("/tables/:id/transfer", requireAuth, requirePermission("table.transfer", "table.manage"), handleTableTransfer);
 
 // POST /tables/merge/preview - Read-only: shows the captain conflicts before committing to a merge
 tablesRouter.post("/tables/merge/preview", requireAuth, requirePermission("table.manage"), async (req: AuthedRequest, res) => {
@@ -1637,7 +1634,6 @@ tablesRouter.post("/tables/unmerge", requireAuth, requirePermission("table.manag
                   orderType: survivorOrder.orderType,
                   orderNumber: `${survivorOrder.orderNumber}-D${Date.now().toString().slice(-5)}`,
                   status: "DRAFT",
-                  table_number: table.tableNumber,
                   waiterId: (survivorOrder as any).waiterId,
                   subtotal: movedSubtotal,
                   grandTotal: movedSubtotal,

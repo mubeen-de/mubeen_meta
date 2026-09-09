@@ -515,7 +515,7 @@ for (const p of defaultPermissions) {
 // CASHIER permissions
 const cashierActions = [
   "order.create", "order.read", "order.update", "order.settle", "order.discount",
-  "table.manage", "table.session.open", "table.session.close",
+  "table.manage", "table.session.open", "table.session.close", "table.transfer",
   "menu.read", "menu.86.toggle", "report.read",
   "kot.read", "kot.status.update", "kot.create",
   "kitchen.kds.view", "kitchen.kot.status"

@@ -15,6 +15,10 @@ export const FLOOR_EVENT_TOPICS = new Set([
   "finance.order_settled",
   "finance.waiter_shift_handover",
   "inventory.stock_updated",
+  "advance_order.created",
+  "advance_order.fired",
+  "advance_order.due",
+  "outlet.notification_created",
 ]);
 
 export type KapmetaSocketPayload = { topic: string; data?: Record<string, unknown> };

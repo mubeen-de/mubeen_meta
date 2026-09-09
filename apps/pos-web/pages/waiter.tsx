@@ -747,6 +747,38 @@ export default function WaiterDashboard() {
         setMyKots((prev) => prev.filter((k) => !servedIds.includes(k.id)));
       }
 
+      // Real-time item portion stock updates
+      if (payload.topic === "inventory.stock_updated") {
+        if (Array.isArray(payload.data?.items)) {
+          const itemUpdates = new Map(payload.data.items.map((it: any) => [it.menuItemId, it]));
+          setMenuItems((prev) =>
+            prev.map((m) => {
+              const up: any = itemUpdates.get(m.id);
+              if (!up) return m;
+              return {
+                ...m,
+                stockQty: typeof up.stockQty === "number" ? up.stockQty : m.stockQty,
+                isStocked: typeof up.isStocked === "boolean" ? up.isStocked : m.isStocked,
+              };
+            })
+          );
+        } else {
+          fetchMenu();
+        }
+      } else if (payload.topic === "menu.item_availability_changed" && payload.data?.itemId) {
+        const { itemId, stockQty, isStocked } = payload.data;
+        setMenuItems((prev) =>
+          prev.map((m) => {
+            if (m.id !== itemId) return m;
+            return {
+              ...m,
+              stockQty: typeof stockQty === "number" ? stockQty : m.stockQty,
+              isStocked: typeof isStocked === "boolean" ? isStocked : m.isStocked,
+            };
+          })
+        );
+      }
+
       fetchKots();
       fetchTables();
       fetchMyStats();
@@ -997,6 +1029,7 @@ export default function WaiterDashboard() {
         }
         fetchTables();
         fetchKots();
+        fetchMenu();
         showPickupNotification(`KOT sent for Table ${activeTable.tableNumber}.`);
       } else {
         const errData = await res.json().catch(() => ({}));
@@ -1160,6 +1193,7 @@ export default function WaiterDashboard() {
         setCart((prev) => prev.filter((ci) => !firing.includes(ci)));
         await refreshManageOrder();
         fetchKots();
+        fetchMenu();
         showPickupNotification("Items sent to kitchen!");
       } else {
         const errData = await res.json();
@@ -1188,6 +1222,7 @@ export default function WaiterDashboard() {
       });
       if (res.ok) {
         await refreshManageOrder();
+        fetchMenu();
       } else {
         const errData = await res.json();
         setOrderError(errData.error || "Failed to void item");

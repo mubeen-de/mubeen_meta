@@ -132,6 +132,7 @@ export default function PosBillingView({
 
   const [isHeldDrawerOpen, setIsHeldDrawerOpen] = useState(false);
   const [heldOrdersCount, setHeldOrdersCount] = useState(0);
+  const [heldForCurrentTable, setHeldForCurrentTable] = useState<any | null>(null);
 
   const [isA2aDrawerOpen, setIsA2aDrawerOpen] = useState(false);
   const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState(false);
@@ -208,14 +209,137 @@ export default function PosBillingView({
     }
   };
 
-  const refreshHeldCount = () => {
+  const syncHeldOrders = React.useCallback(() => {
     try {
       const stored = JSON.parse(localStorage.getItem("kapmeta_held_orders") || "[]");
-      setHeldOrdersCount(Array.isArray(stored) ? stored.length : 0);
+      const list = Array.isArray(stored) ? stored : [];
+      setHeldOrdersCount(list.length);
+      const current = list.find(
+        (h: any) =>
+          h.tableNumber &&
+          tableNumber &&
+          tableNumber !== "Select Table" &&
+          h.tableNumber.trim().toLowerCase() === tableNumber.trim().toLowerCase()
+      );
+      setHeldForCurrentTable(current || null);
     } catch {
       setHeldOrdersCount(0);
+      setHeldForCurrentTable(null);
     }
+  }, [tableNumber]);
+
+  const refreshHeldCount = () => {
+    syncHeldOrders();
   };
+
+  const mergeHeldIntoCart = (heldCart: any[]) => {
+    if (!Array.isArray(heldCart) || heldCart.length === 0) return;
+    setCart((prevCart) => {
+      const newCart = [...prevCart];
+      for (const item of heldCart) {
+        if (!item || !item.item) continue;
+        const existingIdx = newCart.findIndex(
+          (c) => c.item?.id === item.item?.id && (c.notes || "") === (item.notes || "")
+        );
+        if (existingIdx >= 0) {
+          const existing = newCart[existingIdx];
+          const newQty = existing.quantity + (item.quantity || 1);
+          newCart[existingIdx] = {
+            ...existing,
+            quantity: newQty,
+            itemTotalMinor: newQty * existing.item.priceMinor,
+          };
+        } else {
+          newCart.push({
+            ...item,
+            cartItemId: item.cartItemId || `cart_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          });
+        }
+      }
+      return newCart;
+    });
+  };
+
+  const handleRestoreCurrentTableHeld = () => {
+    if (!heldForCurrentTable) return;
+    mergeHeldIntoCart(heldForCurrentTable.cart || []);
+    if (heldForCurrentTable.customerName) {
+      setSelectedCustomer({
+        id: "crm-held",
+        name: heldForCurrentTable.customerName,
+        phone: heldForCurrentTable.customerPhone || "",
+        loyaltyPoints: 50,
+      });
+      setCustomerName(heldForCurrentTable.customerName);
+      if (heldForCurrentTable.customerPhone) setCustomerMobile(heldForCurrentTable.customerPhone);
+      setShowCustomerPanel(true);
+    }
+    try {
+      const stored = JSON.parse(localStorage.getItem("kapmeta_held_orders") || "[]");
+      const filtered = (Array.isArray(stored) ? stored : []).filter((h: any) => h.id !== heldForCurrentTable.id);
+      localStorage.setItem("kapmeta_held_orders", JSON.stringify(filtered));
+    } catch (e) {
+      console.error(e);
+    }
+    window.dispatchEvent(new Event("kapmeta_held_orders_updated"));
+    posAudio.playItemAdd();
+  };
+
+  const handleDiscardCurrentTableHeld = () => {
+    if (!heldForCurrentTable) return;
+    if (!window.confirm(`Discard parked draft for Table ${tableNumber}?`)) return;
+    try {
+      const stored = JSON.parse(localStorage.getItem("kapmeta_held_orders") || "[]");
+      const filtered = (Array.isArray(stored) ? stored : []).filter((h: any) => h.id !== heldForCurrentTable.id);
+      localStorage.setItem("kapmeta_held_orders", JSON.stringify(filtered));
+    } catch (e) {
+      console.error(e);
+    }
+    window.dispatchEvent(new Event("kapmeta_held_orders_updated"));
+  };
+
+  // Sync held orders on mount and listen to updates
+  useEffect(() => {
+    syncHeldOrders();
+    window.addEventListener("kapmeta_held_orders_updated", syncHeldOrders);
+    window.addEventListener("storage", syncHeldOrders);
+    return () => {
+      window.removeEventListener("kapmeta_held_orders_updated", syncHeldOrders);
+      window.removeEventListener("storage", syncHeldOrders);
+    };
+  }, [syncHeldOrders]);
+
+  // Listen to resume held order events
+  useEffect(() => {
+    const handleResumeEvent = (e: any) => {
+      const order = e.detail;
+      if (!order) return;
+      if (
+        !order.tableNumber ||
+        (tableNumber &&
+          tableNumber !== "Select Table" &&
+          order.tableNumber.trim().toLowerCase() === tableNumber.trim().toLowerCase())
+      ) {
+        mergeHeldIntoCart(order.cart || []);
+        if (order.customerName) {
+          setSelectedCustomer({
+            id: "crm-held",
+            name: order.customerName,
+            phone: order.customerPhone || "",
+            loyaltyPoints: 50,
+          });
+          setCustomerName(order.customerName);
+          if (order.customerPhone) setCustomerMobile(order.customerPhone);
+          setShowCustomerPanel(true);
+        }
+        posAudio.playItemAdd();
+      }
+    };
+    window.addEventListener("kapmeta_resume_held_order", handleResumeEvent);
+    return () => {
+      window.removeEventListener("kapmeta_resume_held_order", handleResumeEvent);
+    };
+  }, [tableNumber]);
 
   // Load Menu, Outlet Info & Running Table Order
   useEffect(() => {
@@ -226,8 +350,8 @@ export default function PosBillingView({
     });
     loadMenu();
     loadActiveTableOrder();
-    refreshHeldCount();
-  }, [initialTableId, initialTable]);
+    syncHeldOrders();
+  }, [initialTableId, initialTable, syncHeldOrders]);
 
   // Global POS Keyboard Shortcuts Listener (Pro Mode)
   useEffect(() => {
@@ -293,10 +417,16 @@ export default function PosBillingView({
   ]);
 
   useKapmetaSocket(
-    () => {
+    (payload) => {
       loadActiveTableOrder();
+      if (
+        payload?.topic === "inventory.stock_updated" ||
+        payload?.topic === "menu.item_availability_changed"
+      ) {
+        loadMenu();
+      }
     },
-    Boolean(initialTableId || initialTable),
+    true,
     "pos-billing"
   );
 
@@ -560,6 +690,7 @@ export default function PosBillingView({
       localStorage.setItem("kapmeta_held_orders", JSON.stringify(stored));
       setCart([]);
       refreshHeldCount();
+      window.dispatchEvent(new Event("kapmeta_held_orders_updated"));
       posAudio.playCartHeld();
       alert(`Order for Table ${tableNumber} is held/parked.`);
     } catch (e) {
@@ -604,22 +735,31 @@ export default function PosBillingView({
         }
         orderNum = activeOrder.orderNumber;
       } else {
-        // Create new order with KOT
+        // Create new order with KOT or Advance Booking
+        const isAdvance = Boolean(advanceOrderDetails);
         const payload = {
-          action: "KOT",
+          action: isAdvance ? "DRAFT" : "KOT",
           orderType: orderMode,
           tableNumber,
           diningTableId: initialTableId || undefined,
           covers: coversCount,
           waiterName,
-          notes: orderComment || undefined,
+          notes: [orderComment, advanceOrderDetails?.notes].filter(Boolean).join(" | ") || undefined,
+          scheduledDate: advanceOrderDetails?.scheduledDate,
+          scheduledTime: advanceOrderDetails?.scheduledTime,
+          advancePaidRupees: advanceOrderDetails?.advancePaidRupees,
+          isAdvance,
+          customerId: selectedCustomer?.id || undefined,
+          customerName: customerName || selectedCustomer?.name || undefined,
+          customerPhone: customerMobile || selectedCustomer?.phone || undefined,
+          customerAddress: [customerAddress, customerLocality].filter(Boolean).join(", ") || undefined,
           lines: cart.map((c) => ({
             menuItemId: c.item.id,
             quantity: c.quantity,
             unitPriceMinor: c.item.priceMinor,
             notes: c.notes || undefined,
           })),
-          status: "KOT_CREATED",
+          status: isAdvance ? "DRAFT" : "KOT_CREATED",
         };
 
         const res = await authedFetch("/orders", {
@@ -629,22 +769,28 @@ export default function PosBillingView({
 
         if (!res.ok) {
           const errJson = await res.json().catch(() => ({}));
-          throw new Error(errJson.error || "Failed to send KOT");
+          throw new Error(errJson.error || (isAdvance ? "Failed to book advance order" : "Failed to send KOT"));
         }
 
         const resData = await res.json();
-        orderNum = resData.orderNumber || "KOT-NEW";
+        orderNum = resData.orderNumber || "ADV-NEW";
       }
 
-      posAudio.playKotDispatched();
-
-      setKotFeedback({
-        orderNumber: orderNum,
-        items: dispatchedList,
-      });
+      if (advanceOrderDetails) {
+        posAudio.playPaymentSettled();
+        alert(`📅 Advance Order #${orderNum} successfully booked for ${advanceOrderDetails.scheduledDate} at ${advanceOrderDetails.scheduledTime}!\nAdvance Deposit: ₹${advanceOrderDetails.advancePaidRupees || 0}`);
+        setAdvanceOrderDetails(null);
+      } else {
+        posAudio.playKotDispatched();
+        setKotFeedback({
+          orderNumber: orderNum,
+          items: dispatchedList,
+        });
+      }
 
       setCart([]);
       await loadActiveTableOrder();
+      await loadMenu();
     } catch (err: any) {
       alert(err.message || "Failed to create KOT");
     } finally {
@@ -774,6 +920,23 @@ export default function PosBillingView({
       setDiscountReason("");
       setOrderComment("");
       setAdvanceOrderDetails(null);
+
+      // Auto-clean any parked draft for this table upon successful settlement
+      try {
+        const stored = JSON.parse(localStorage.getItem("kapmeta_held_orders") || "[]");
+        if (Array.isArray(stored) && tableNumber && tableNumber !== "Select Table") {
+          const next = stored.filter((h: any) => h.tableNumber?.trim().toLowerCase() !== tableNumber.trim().toLowerCase());
+          if (next.length !== stored.length) {
+            localStorage.setItem("kapmeta_held_orders", JSON.stringify(next));
+            window.dispatchEvent(new Event("kapmeta_held_orders_updated"));
+            refreshHeldCount();
+          }
+        }
+      } catch (e) {
+        console.error("Failed to clean held order on settle:", e);
+      }
+
+      await loadMenu();
     } catch (err: any) {
       alert(err.message || "Failed to generate bill");
     } finally {
@@ -1284,6 +1447,44 @@ export default function PosBillingView({
             </div>
           )}
 
+          {/* Parked Draft Detected for this Table Alert Banner */}
+          {heldForCurrentTable && (
+            <div className="table-held-draft-banner">
+              <div className="held-banner-left">
+                <span className="held-banner-icon">⏸️</span>
+                <div className="held-banner-info">
+                  <div className="held-banner-title">
+                    <strong>Parked Draft for Table {tableNumber}</strong>
+                    <span className="held-banner-badge">
+                      {(heldForCurrentTable.cart?.reduce((s: number, c: any) => s + (c.quantity || 1), 0)) || heldForCurrentTable.itemCount || 1} items
+                    </span>
+                  </div>
+                  <div className="held-banner-meta">
+                    ₹{((heldForCurrentTable.totalMinor || 0) / 100).toFixed(2)} • Parked {heldForCurrentTable.heldAt ? new Date(heldForCurrentTable.heldAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "earlier"}
+                  </div>
+                </div>
+              </div>
+              <div className="held-banner-actions">
+                <button
+                  type="button"
+                  className="btn-held-merge"
+                  onClick={handleRestoreCurrentTableHeld}
+                  title="Merge items from parked draft into active cart"
+                >
+                  ➕ Add to Cart
+                </button>
+                <button
+                  type="button"
+                  className="btn-held-discard"
+                  onClick={handleDiscardCurrentTableHeld}
+                  title="Discard this parked draft"
+                >
+                  🗑️ Discard
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Cart Table Headers */}
           <div className="cart-table-headers">
             <span className="col-item">ITEMS</span>
@@ -1724,11 +1925,15 @@ export default function PosBillingView({
 
               <button
                 type="button"
-                className="btn-kot-print"
+                className={`btn-kot-print ${advanceOrderDetails ? "btn-advance-book" : ""}`}
                 onClick={handleKotAndPrint}
                 disabled={processingOrder || (cart.length === 0 && runningItems.length === 0)}
               >
-                {processingOrder ? "Sending..." : "KOT & Print"}
+                {processingOrder
+                  ? "Processing..."
+                  : advanceOrderDetails
+                  ? "📅 Book Advance Order"
+                  : "KOT & Print"}
               </button>
             </div>
           </div>
@@ -2004,7 +2209,7 @@ export default function PosBillingView({
         }}
         onRecallOrder={(held) => {
           if (held.cart && held.cart.length > 0) {
-            setCart(held.cart);
+            mergeHeldIntoCart(held.cart);
           }
           if (held.tableNumber) {
             setTableNumber(held.tableNumber);
@@ -2552,6 +2757,96 @@ export default function PosBillingView({
           padding: 1px 6px;
           border-radius: 3px;
           font-size: 0.65rem;
+        }
+
+        /* Parked Draft on Table Alert Banner */
+        .table-held-draft-banner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 7px 10px;
+          background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+          border-top: 1px solid #fde68a;
+          border-bottom: 2px solid #f59e0b;
+          font-size: 0.75rem;
+          color: #92400e;
+          flex-shrink: 0;
+          box-shadow: 0 1px 3px rgba(245, 158, 11, 0.1);
+        }
+        .held-banner-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .held-banner-icon {
+          font-size: 1.1rem;
+          line-height: 1;
+        }
+        .held-banner-info {
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+        }
+        .held-banner-title {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.76rem;
+          color: #78350f;
+        }
+        .held-banner-badge {
+          background: #f59e0b;
+          color: #ffffff;
+          font-size: 0.65rem;
+          font-weight: 800;
+          padding: 1px 5px;
+          border-radius: 4px;
+        }
+        .held-banner-meta {
+          font-size: 0.68rem;
+          color: #b45309;
+          font-weight: 600;
+        }
+        .held-banner-actions {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .btn-held-merge {
+          background: #f59e0b;
+          color: #ffffff;
+          border: none;
+          border-radius: 4px;
+          padding: 4px 9px;
+          font-size: 0.72rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          transition: background 0.15s;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .btn-held-merge:hover {
+          background: #d97706;
+        }
+        .btn-held-discard {
+          background: #ffffff;
+          color: #b91c1c;
+          border: 1px solid #fca5a5;
+          border-radius: 4px;
+          padding: 3px 7px;
+          font-size: 0.7rem;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          transition: all 0.15s;
+        }
+        .btn-held-discard:hover {
+          background: #fee2e2;
+          border-color: #ef4444;
         }
 
         /* Calculator Popup */
