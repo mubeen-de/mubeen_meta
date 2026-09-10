@@ -195,7 +195,6 @@ router.post("/items/bulk-upload", requireAuth, requirePermission("menu.item.mana
             isVeg,
             taxRate,
             description: raw.description !== undefined ? raw.description : existingItem.description,
-            code: raw.code || existingItem.code,
             isActive: true,
           },
         });
@@ -210,7 +209,6 @@ router.post("/items/bulk-upload", requireAuth, requirePermission("menu.item.mana
             price: priceNum,
             taxRate,
             isVeg,
-            code: raw.code || null,
             isActive: true,
           },
         });

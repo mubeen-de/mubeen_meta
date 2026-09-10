@@ -84,7 +84,8 @@ router.get("/waiters/active", requireAuth, requirePermission("report.read"), asy
     const byUser = new Map<string, { userId: string; name: string; lastSeenAt: Date }>();
     for (const s of sessions) {
       if (!byUser.has(s.userId)) {
-        const uName = s.user ? (s.user.full_name || `${s.user.firstName || ''} ${s.user.lastName || ''}`.trim() || s.user.email || `Captain (${s.userId.slice(-4)})`) : `Captain (${s.userId.slice(-4)})`;
+        const u = s.user as any;
+        const uName = u ? (u.full_name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || `Captain (${s.userId.slice(-4)})`) : `Captain (${s.userId.slice(-4)})`;
         byUser.set(s.userId, { userId: s.userId, name: uName, lastSeenAt: (s as any).lastSeenAt || s.createdAt || new Date() });
       }
     }
@@ -92,7 +93,7 @@ router.get("/waiters/active", requireAuth, requirePermission("report.read"), asy
     const openOrders = await prisma.order.findMany({
       where: {
         outletId: req.auth!.outletId,
-        created_by: { in: Array.from(byUser.keys()) },
+        waiterId: { in: Array.from(byUser.keys()) },
         status: { in: ["DRAFT", "PLACED", "CONFIRMED", "KOT_CREATED", "IN_PREPARATION", "READY", "SERVED", "HANDED_OVER"] },
         diningTableId: { not: null },
       },
@@ -101,10 +102,10 @@ router.get("/waiters/active", requireAuth, requirePermission("report.read"), asy
     const tablesByWaiter = new Map<string, string[]>();
     for (const o of openOrders) {
       const num = o.diningTable?.tableNumber;
-      if (!num || !o.created_by) continue;
-      const list = tablesByWaiter.get(o.created_by) || [];
+      if (!num || !o.waiterId) continue;
+      const list = tablesByWaiter.get(o.waiterId) || [];
       if (!list.includes(num)) list.push(num);
-      tablesByWaiter.set(o.created_by, list);
+      tablesByWaiter.set(o.waiterId, list);
     }
 
     const waiters = Array.from(byUser.values()).map((w) => ({
@@ -181,7 +182,7 @@ router.get("/waiters/me/shift-reconciliation", requireAuth, async (req: AuthedRe
         where: {
           outletId: req.auth!.outletId,
           createdAt: { gte: dayStart },
-          created_by: req.auth!.userId,
+          waiterId: req.auth!.userId,
         },
         include: {
           diningTable: { select: { tableNumber: true, section: true } },
