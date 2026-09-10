@@ -54,9 +54,18 @@ export default function QuickSearchModal({ type, onClose }: QuickSearchModalProp
         const data = await res.json();
         setResults(data.orders || (Array.isArray(data) ? data : [data]));
       } else {
-        const qs = new URLSearchParams({ ticketNumber: term });
+        const qs = new URLSearchParams({ ticketNumber: term, search: term });
         const res = await authedFetch(`/kitchen/kot?${qs.toString()}`);
-        if (!res.ok) throw new Error("KOT Search failed");
+        if (!res.ok) {
+          let msg = "KOT Search failed";
+          try {
+            const errBody = await res.json();
+            if (errBody?.message || errBody?.error) {
+              msg = errBody.message || errBody.error;
+            }
+          } catch {}
+          throw new Error(msg);
+        }
         const data = await res.json();
         setResults(Array.isArray(data) ? data : data.tickets || [data]);
       }
