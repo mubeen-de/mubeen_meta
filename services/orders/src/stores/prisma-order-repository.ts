@@ -274,7 +274,56 @@ export class PrismaOrderRepository implements OrderRepository {
       }
     }
     if (filter.orderNumberSearch) {
-      where.orderNumber = { contains: filter.orderNumberSearch, mode: "insensitive" };
+      const rawQuery = String(filter.orderNumberSearch).trim();
+      const cleaned = rawQuery.replace(/^(bill\s*#?\s*|ord\s*#?\s*|order\s*#?\s*|kot\s*#?\s*|#\s*)/i, "").trim();
+
+      const candidateStrings = new Set<string>();
+      if (rawQuery) candidateStrings.add(rawQuery);
+      if (cleaned) candidateStrings.add(cleaned);
+
+      // Handle 8-digit date + 1-4 digit sequence with no hyphen (e.g. 202609110003 -> 20260911-0003)
+      if (/^\d{8}\d{1,4}$/.test(cleaned)) {
+        candidateStrings.add(`${cleaned.slice(0, 8)}-${cleaned.slice(8)}`);
+      }
+
+      // Handle ISO date with hyphens/spaces (e.g. 2026-09-11-0003 or 2026-09-11 0003 -> 20260911-0003)
+      if (/^\d{4}-\d{2}-\d{2}[-\s]\d{1,4}$/.test(cleaned)) {
+        const parts = cleaned.split(/[-\s]+/);
+        candidateStrings.add(`${parts[0]}${parts[1]}${parts[2]}-${parts[3]}`);
+      }
+
+      // Handle standalone sequence numbers (e.g. 3 -> 0003, -0003, today's full order number)
+      if (/^\d{1,4}$/.test(cleaned)) {
+        const padded = cleaned.padStart(4, "0");
+        candidateStrings.add(`-${padded}`);
+        candidateStrings.add(padded);
+        const todayPrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+        candidateStrings.add(`${todayPrefix}-${padded}`);
+      }
+
+      // Handle table number variations (e.g. T-03, T3, b18)
+      const tableStripped = cleaned.replace(/^[tTbB][-\s]?/, "");
+      if (tableStripped && tableStripped !== cleaned) {
+        candidateStrings.add(tableStripped);
+      }
+
+      const orConditions: any[] = [];
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawQuery);
+      if (isUuid) {
+        orConditions.push({ id: rawQuery });
+      }
+
+      for (const term of candidateStrings) {
+        if (!term) continue;
+        orConditions.push({ orderNumber: { contains: term, mode: "insensitive" } });
+        orConditions.push({ externalOrderId: { contains: term, mode: "insensitive" } });
+        orConditions.push({ diningTable: { tableNumber: { contains: term, mode: "insensitive" } } });
+        orConditions.push({ kotTickets: { some: { ticketNumber: { contains: term, mode: "insensitive" } } } });
+      }
+
+      if (orConditions.length > 0) {
+        where.OR = orConditions;
+      }
     }
     if (filter.fromDate || filter.toDate) {
       const createdAt: Record<string, Date> = {};

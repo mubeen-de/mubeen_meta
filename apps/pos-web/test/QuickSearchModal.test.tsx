@@ -84,4 +84,46 @@ describe("QuickSearchModal Component", () => {
       expect.stringContaining("/kitchen?kot=KOT-1788464996543-783")
     );
   });
+
+  it("searches BILL with unhyphenated date-sequence (e.g. 202609110003) and auto-formats", async () => {
+    const mockOrderResponse = {
+      orders: [
+        {
+          id: "order-uuid-123",
+          orderNumber: "20260911-0003",
+          status: "COMPLETED",
+          grandTotalMinor: "12000",
+          tableNumber: "T-03",
+        },
+      ],
+    };
+
+    const fetchSpy = vi.spyOn(authModule, "authedFetch").mockResolvedValue({
+      ok: true,
+      json: async () => mockOrderResponse,
+    } as any);
+
+    const onClose = vi.fn();
+    render(<QuickSearchModal type="BILL" onClose={onClose} />);
+
+    const input = screen.getByPlaceholderText("Enter bill / order number");
+    fireEvent.change(input, { target: { value: "202609110003" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining("/orders?orderNumber=20260911-0003")
+      );
+    });
+
+    expect(await screen.findByText("20260911-0003")).toBeInTheDocument();
+    expect(screen.getByText("COMPLETED")).toBeInTheDocument();
+    expect(screen.getByText("₹120.00")).toBeInTheDocument();
+
+    const resultButton = screen.getByRole("button", { name: /20260911-0003/i });
+    fireEvent.click(resultButton);
+
+    expect(onClose).toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/pending-order-detail?orderId=order-uuid-123");
+  });
 });

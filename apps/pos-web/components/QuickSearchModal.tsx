@@ -11,7 +11,15 @@ interface QuickSearchModalProps {
 function cleanQuery(raw: string, type: "BILL" | "KOT"): string {
   const trimmed = raw.trim();
   if (type === "BILL") {
-    return trimmed.replace(/^(bill\s*#?\s*|ord\s*#?\s*|order\s*#?\s*|#\s*)/i, "").trim() || trimmed;
+    let clean = trimmed.replace(/^(bill\s*#?\s*|ord\s*#?\s*|order\s*#?\s*|#\s*)/i, "").trim() || trimmed;
+    // Auto-format unhyphenated date-sequence (e.g. 202609110003 -> 20260911-0003)
+    if (/^\d{8}\d{1,4}$/.test(clean)) {
+      clean = `${clean.slice(0, 8)}-${clean.slice(8)}`;
+    } else if (/^\d{4}-\d{2}-\d{2}[-\s]\d{1,4}$/.test(clean)) {
+      const parts = clean.split(/[-\s]+/);
+      clean = `${parts[0]}${parts[1]}${parts[2]}-${parts[3]}`;
+    }
+    return clean;
   }
   // For KOT, preserve standard prefixes like "KOT-12345" as-is so full ticket numbers aren't truncated into "-12345".
   if (/^kot\s*[-#:]\s*/i.test(trimmed)) {
@@ -42,8 +50,7 @@ export default function QuickSearchModal({ type, onClose }: QuickSearchModalProp
 
     // Both endpoints filter server-side: GET /orders maps orderNumber/search
     // onto the repository's orderNumberSearch, and GET /kitchen/kot matches
-    // ticketNumber (raw, cleaned and numeric-suffix forms). Re-filtering the
-    // response here only ever threw away rows the server had already matched.
+    // ticketNumber (raw, cleaned and numeric-suffix forms).
     const term = cleanQuery(raw, type) || raw;
 
     try {
@@ -54,7 +61,7 @@ export default function QuickSearchModal({ type, onClose }: QuickSearchModalProp
         const data = await res.json();
         setResults(data.orders || (Array.isArray(data) ? data : [data]));
       } else {
-        const qs = new URLSearchParams({ ticketNumber: term, search: term });
+        const qs = new URLSearchParams({ ticketNumber: term });
         const res = await authedFetch(`/kitchen/kot?${qs.toString()}`);
         if (!res.ok) {
           let msg = "KOT Search failed";
