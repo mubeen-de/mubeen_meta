@@ -527,7 +527,8 @@ for (const p of defaultPermissions.filter((dp) => cashierActions.includes(dp.act
 const kitchenActions = [
   "kitchen.kds.view", "kitchen.kot.status", "kitchen.bump",
   "kot.read", "kot.status.update", "kot.create",
-  "menu.read", "menu.86.toggle", "report.read"
+  "menu.read", "menu.86.toggle", "report.read",
+  "table.manage", "table.read", "table.session.open", "table.transfer"
 ];
 for (const p of defaultPermissions.filter((dp) => kitchenActions.includes(dp.action))) {
   defaultRolePermissions.push({ id: `rp-kitchen-${p.id}`, roleId: "role-kitchen", permissionId: p.id });
