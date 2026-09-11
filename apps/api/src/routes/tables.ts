@@ -74,11 +74,18 @@ function elapsedMinutesSince(value: any): number | null {
   return Math.max(0, Math.floor((Date.now() - started.getTime()) / 60000));
 }
 
-function serializeCurrentOrder(activeOrder: any) {
+function serializeCurrentOrder(activeOrder: any, resolvedWaiterName?: string | null) {
+  const waiterName = resolvedWaiterName !== undefined
+    ? resolvedWaiterName
+    : (activeOrder.waiter
+        ? `${activeOrder.waiter.firstName || ''} ${activeOrder.waiter.lastName || ''}`.trim() || activeOrder.waiter.email
+        : null);
   return {
     id: activeOrder.id,
     orderNumber: activeOrder.orderNumber,
     status: activeOrder.status,
+    waiterId: activeOrder.waiterId || null,
+    waiterName,
     grandTotalPaise: Number(activeOrder.grandTotal || (activeOrder as any).grandTotalMinor || 0),
     grandTotalMinor: String(activeOrder.grandTotal ?? (activeOrder as any).grandTotalMinor ?? 0),
     totalAmount: Number(activeOrder.grandTotal || (activeOrder as any).grandTotalMinor || 0) / 100,
@@ -253,6 +260,17 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
       orderBy: { createdAt: "desc" },
     });
 
+    const waiterIds = Array.from(
+      new Set(activeOrders.map((o: any) => o.waiterId).filter(Boolean))
+    ) as string[];
+    const waiters = waiterIds.length > 0
+      ? await prisma.user.findMany({
+          where: { id: { in: waiterIds } },
+          select: { id: true, firstName: true, lastName: true, email: true },
+        })
+      : [];
+    const waiterMap = new Map<string, any>(waiters.map((w: any) => [w.id, w]));
+
     const orderMap = new Map<string, any>();
     activeOrders.forEach((ord: any) => {
       if (ord.diningTableId && isLiveFloorSession(ord) && !orderMap.has(ord.diningTableId)) {
@@ -316,6 +334,8 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
           activeOrderId: null,
           active_order_id: null,
           currentOrder: null,
+          waiterId: null,
+          waiterName: null,
           elapsedMinutes: null,
           currentOrderAmountMinor: null,
           ...extra,
@@ -324,6 +344,10 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
 
       const kitchenStage = deriveKitchenStage(activeOrder);
       const computedStatus = deriveFloorStatus(activeOrder);
+      const waiterUser = activeOrder.waiterId ? waiterMap.get(activeOrder.waiterId) : null;
+      const waiterName = waiterUser
+        ? `${waiterUser.firstName || ''} ${waiterUser.lastName || ''}`.trim() || waiterUser.email
+        : null;
 
       return {
         id: t.id,
@@ -337,7 +361,9 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
         isActive: t.isActive,
         activeOrderId: activeOrder.id,
         active_order_id: activeOrder.id,
-        currentOrder: serializeCurrentOrder(activeOrder),
+        currentOrder: serializeCurrentOrder(activeOrder, waiterName),
+        waiterId: activeOrder.waiterId || null,
+        waiterName,
         elapsedMinutes: elapsedMinutesSince(activeOrder.createdAt),
         currentOrderAmountMinor: String(activeOrder.grandTotal ?? 0),
         ...extra,

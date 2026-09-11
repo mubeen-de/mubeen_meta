@@ -585,6 +585,36 @@ const defaultUsers = [
     phone: "+91 9876543213",
     isActive: true,
   },
+  {
+    id: "user-waiter-1",
+    email: "ramesh@hotelkapila.com",
+    passwordHash: hashedPassword123,
+    pinHash: hashedPin1234,
+    firstName: "Ramesh",
+    lastName: "Kumar",
+    phone: "+91 9876543201",
+    isActive: true,
+  },
+  {
+    id: "user-waiter-2",
+    email: "suresh@hotelkapila.com",
+    passwordHash: hashedPassword123,
+    pinHash: hashedPin1234,
+    firstName: "Suresh",
+    lastName: "Patel",
+    phone: "+91 9876543202",
+    isActive: true,
+  },
+  {
+    id: "user-waiter-3",
+    email: "mahesh@hotelkapila.com",
+    passwordHash: hashedPassword123,
+    pinHash: hashedPin1234,
+    firstName: "Mahesh",
+    lastName: "Verma",
+    phone: "+91 9876543203",
+    isActive: true,
+  },
 ];
 
 const defaultUserRoles = [
@@ -592,6 +622,9 @@ const defaultUserRoles = [
   { id: "ur-2", userId: "user-cashier", roleId: "role-cashier", outletId: DEFAULT_OUTLET_ID },
   { id: "ur-3", userId: "user-chef", roleId: "role-kitchen", outletId: DEFAULT_OUTLET_ID },
   { id: "ur-4", userId: "user-waiter", roleId: "role-waiter", outletId: DEFAULT_OUTLET_ID },
+  { id: "ur-w1", userId: "user-waiter-1", roleId: "role-waiter", outletId: DEFAULT_OUTLET_ID },
+  { id: "ur-w2", userId: "user-waiter-2", roleId: "role-waiter", outletId: DEFAULT_OUTLET_ID },
+  { id: "ur-w3", userId: "user-waiter-3", roleId: "role-waiter", outletId: DEFAULT_OUTLET_ID },
 ];
 
 const defaultOrg = {

@@ -359,34 +359,43 @@ async function main() {
     },
   });
 
-  // Seed Waiter user — floor staff account for the Waiter App
-  const waiterUser = await prisma.user.upsert({
-    where: { email: "waiter@hotelkapila.com" },
-    update: { passwordHash, pinHash },
-    create: {
-      email: "waiter@hotelkapila.com",
-      passwordHash,
-      pinHash,
-      firstName: "Ravi",
-      lastName: "Waiter",
-      isActive: true,
-    },
-  });
+  // Seed Waiter users — floor staff accounts for the Waiter App
+  const waiterSeedList = [
+    { email: "waiter@hotelkapila.com", firstName: "Rahul", lastName: "Kumar" },
+    { email: "ramesh@hotelkapila.com", firstName: "Ramesh", lastName: "Kumar" },
+    { email: "suresh@hotelkapila.com", firstName: "Suresh", lastName: "Patel" },
+    { email: "mahesh@hotelkapila.com", firstName: "Mahesh", lastName: "Verma" },
+  ];
 
-  await prisma.userRole.upsert({
-    where: {
-      userId_roleId: {
+  for (const w of waiterSeedList) {
+    const waiterUser = await prisma.user.upsert({
+      where: { email: w.email },
+      update: { passwordHash, pinHash, firstName: w.firstName, lastName: w.lastName, isActive: true },
+      create: {
+        email: w.email,
+        passwordHash,
+        pinHash,
+        firstName: w.firstName,
+        lastName: w.lastName,
+        isActive: true,
+      },
+    });
+
+    await prisma.userRole.upsert({
+      where: {
+        userId_roleId: {
+          userId: waiterUser.id,
+          roleId: waiterRole.id,
+        },
+      },
+      update: {},
+      create: {
         userId: waiterUser.id,
         roleId: waiterRole.id,
+        outletId: outlet.id,
       },
-    },
-    update: {},
-    create: {
-      userId: waiterUser.id,
-      roleId: waiterRole.id,
-      outletId: outlet.id,
-    },
-  });
+    });
+  }
 
   // Seed Kitchen/Chef user (needed for Quick Access login on login.tsx)
   const chefUser = await prisma.user.upsert({
@@ -672,7 +681,9 @@ async function main() {
   console.log(`  Terminal:    ${terminal.terminalNumber}`);
   console.log(`  Admin User:  admin@hotelkapila.com / password123 (PIN: 1234)`);
   console.log(`  Cashier:     cashier@hotelkapila.com / password123 (PIN: 1234)`);
-  console.log(`  Waiter:      waiter@hotelkapila.com / password123 (PIN: 1234)`);
+  console.log(`  Waiter 1:    ramesh@hotelkapila.com / password123 (PIN: 1234)`);
+  console.log(`  Waiter 2:    suresh@hotelkapila.com / password123 (PIN: 1234)`);
+  console.log(`  Waiter 3:    mahesh@hotelkapila.com / password123 (PIN: 1234)`);
   console.log(`  Chef/KDS:    chef@hotelkapila.com / password123 (PIN: 1234)`);
 }
 

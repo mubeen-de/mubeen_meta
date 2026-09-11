@@ -70,6 +70,7 @@ export default function KapMetaKotView({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"ORDER_VIEW" | "KOT_VIEW">("KOT_VIEW");
   const [viewStyle, setViewStyle] = useState<"NEW" | "OLD">("OLD");
+  const [checkedItemMap, setCheckedItemMap] = useState<Record<string, boolean>>({});
   const [tickets, setTickets] = useState<KotCardData[]>(initialTickets);
   const [elapsedMap, setElapsedMap] = useState<Record<string, number>>(() => {
     const map: Record<string, number> = {};
@@ -78,6 +79,35 @@ export default function KapMetaKotView({
     });
     return map;
   });
+
+  // Restore saved viewStyle preference (New View vs Old View)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("kapmeta_kot_view_style");
+      if (saved === "NEW" || saved === "OLD") {
+        setViewStyle(saved);
+      }
+    } catch {
+      // Graceful fallback for SSR/storage disabled
+    }
+  }, []);
+
+  const handleViewStyleChange = (style: "NEW" | "OLD") => {
+    setViewStyle(style);
+    try {
+      localStorage.setItem("kapmeta_kot_view_style", style);
+    } catch {
+      // ignore
+    }
+  };
+
+  const toggleItemChecked = (ticketId: string, itemKey: string | number) => {
+    const key = `${ticketId}-${itemKey}`;
+    setCheckedItemMap((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
   // Search & Filter state
   const [quickSearchText, setQuickSearchText] = useState("");
@@ -221,6 +251,21 @@ export default function KapMetaKotView({
     });
   }, [tickets, quickSearchText, channelFilter]);
 
+  // Aggregate pending items across active tickets for modern KDS batch cooking tally
+  const batchPrepSummary = useMemo(() => {
+    const active = filteredTickets.filter(
+      (t) => t.status === "QUEUED" || t.status === "PREPARING"
+    );
+    const tally: Record<string, number> = {};
+    active.forEach((t) => {
+      t.items.forEach((it) => {
+        const name = it.name.trim();
+        tally[name] = (tally[name] || 0) + (it.quantity || 1);
+      });
+    });
+    return Object.entries(tally).sort((a, b) => b[1] - a[1]);
+  }, [filteredTickets]);
+
   const handleBack = () => {
     if (onBackToPos) {
       onBackToPos();
@@ -241,40 +286,47 @@ export default function KapMetaKotView({
       {/* Top Subheader: Tabs on Left, Switcher & Back on Right */}
       <div className="kot-top-navigation-bar">
         <div className="nav-tabs-left">
-          <button
-            type="button"
-            className={`view-tab-btn ${activeTab === "ORDER_VIEW" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("ORDER_VIEW");
-              router.push("/orders");
-            }}
-          >
-            <span className="tab-icon">📋</span>
-            <span className="tab-label">Order View</span>
-          </button>
+          {/* Unified Page Heading */}
+          <h1 className="kot-page-title">KOT</h1>
 
-          <button
-            type="button"
-            className={`view-tab-btn ${activeTab === "KOT_VIEW" ? "is-active kot-active" : ""}`}
-            onClick={() => setActiveTab("KOT_VIEW")}
-          >
-            <span className="tab-icon kot-icon">🧾</span>
-            <span className="tab-label">Kot View</span>
-          </button>
+          <div className="nav-tabs-group" role="tablist">
+            <button
+              type="button"
+              className={`view-tab-btn ${activeTab === "ORDER_VIEW" ? "is-active" : ""}`}
+              onClick={() => {
+                setActiveTab("ORDER_VIEW");
+                router.push("/orders");
+              }}
+              title="Open Orders Register"
+            >
+              <span className="tab-icon">📋</span>
+              <span className="tab-label">Order View</span>
+            </button>
 
-          {/* Historical KOT report table - /kitchen?view=list */}
-          <button
-            type="button"
-            className="view-tab-btn"
-            onClick={() => {
-              if (onOpenKotList) onOpenKotList();
-              else router.push("/kitchen?view=list");
-            }}
-            title="Open the KOT history report"
-          >
-            <span className="tab-icon">📑</span>
-            <span className="tab-label">Kot List</span>
-          </button>
+            <button
+              type="button"
+              className={`view-tab-btn ${activeTab === "KOT_VIEW" ? "is-active kot-active" : ""}`}
+              onClick={() => setActiveTab("KOT_VIEW")}
+              title="Open Live KOT Board"
+            >
+              <span className="tab-icon kot-icon">🧾</span>
+              <span className="tab-label">Kot View</span>
+            </button>
+
+            {/* Historical KOT report table - /kitchen?view=list */}
+            <button
+              type="button"
+              className="view-tab-btn"
+              onClick={() => {
+                if (onOpenKotList) onOpenKotList();
+                else router.push("/kitchen?view=list");
+              }}
+              title="Open the KOT history report"
+            >
+              <span className="tab-icon">📑</span>
+              <span className="tab-label">Kot List</span>
+            </button>
+          </div>
         </div>
 
         <div className="nav-controls-right">
@@ -282,15 +334,17 @@ export default function KapMetaKotView({
           <div className="view-mode-segmented-pill">
             <button
               type="button"
-              className={`segmented-opt ${viewStyle === "NEW" ? "is-selected" : ""}`}
-              onClick={() => setViewStyle("NEW")}
+              className={`segmented-opt ${viewStyle === "NEW" ? "is-selected blue-highlight" : ""}`}
+              onClick={() => handleViewStyleChange("NEW")}
+              title="Modern Kitchen Display System (KDS) View with batch summary and digital checklist"
             >
               New View
             </button>
             <button
               type="button"
               className={`segmented-opt ${viewStyle === "OLD" ? "is-selected blue-highlight" : ""}`}
-              onClick={() => setViewStyle("OLD")}
+              onClick={() => handleViewStyleChange("OLD")}
+              title="Classic PetPooja Physical Slip / Ticket View"
             >
               Old View
             </button>
@@ -462,7 +516,160 @@ export default function KapMetaKotView({
               </button>
             )}
           </div>
+        ) : viewStyle === "NEW" ? (
+          <div className="modern-kds-wrapper">
+            {/* Live Batch Cooking Preparation Summary Bar across active tickets */}
+            {batchPrepSummary.length > 0 && (
+              <div className="modern-kds-summary-bar">
+                <div className="summary-title-pill">
+                  <span className="flame-icon">🔥</span>
+                  <span className="summary-title-text">Batch Cooking Tally</span>
+                </div>
+                <div className="summary-items-list">
+                  {batchPrepSummary.map(([itemName, totalQty]) => (
+                    <div key={itemName} className="summary-item-badge">
+                      <span className="summary-item-name">{itemName}</span>
+                      <span className="summary-item-qty">×{totalQty}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Modern Digital KDS Cards */}
+            <div className="kot-4col-grid">
+              {filteredTickets.map((card) => {
+                const currentElapsed = elapsedMap[card.id] || card.initialElapsedSeconds;
+                const formattedTime = formatTimer(currentElapsed);
+                const isExceeded = currentElapsed >= 1200; // > 20 mins
+                const isWarning = currentElapsed >= 600 && !isExceeded; // 10-20 mins
+                const isReady = card.status === "READY";
+                const isCooking = card.status === "PREPARING";
+                const isServed = card.status === "SERVED";
+
+                const channelClass = `channel-${String(card.orderType || "DINE_IN").toLowerCase()}`;
+
+                return (
+                  <div
+                    key={card.id}
+                    className={`modern-kds-card ${
+                      isReady
+                        ? "kds-ready"
+                        : isCooking
+                        ? "kds-cooking"
+                        : isServed
+                        ? "kds-served"
+                        : "kds-queued"
+                    }`}
+                  >
+                    {/* Top Bar: Channel Badge + Table/Tag + KOT # + Timer */}
+                    <div className="kds-card-header">
+                      <div className="kds-channel-row">
+                        <span className={`kds-channel-badge ${channelClass}`}>
+                          {card.orderTypeDisplay || card.orderType || "Dine In"}
+                        </span>
+                        {card.orderTag && (
+                          <span className="kds-table-tag">{card.orderTag}</span>
+                        )}
+                        <span className="kds-kot-num">#{card.kotNo}</span>
+                      </div>
+
+                      <div
+                        className={`kds-timer-badge ${
+                          isExceeded ? "timer-exceeded" : isWarning ? "timer-warning" : "timer-normal"
+                        }`}
+                      >
+                        <span className="timer-icon">⏱</span>
+                        <span className="timer-val">{formattedTime}</span>
+                      </div>
+                    </div>
+
+                    {/* Station / Biller row with status pill */}
+                    <div className="kds-station-row">
+                      <span className="kds-station-icon">👨‍🍳</span>
+                      <span className="kds-station-name">{card.biller}</span>
+                      <span className={`kds-status-pill pill-${card.status.toLowerCase()}`}>
+                        {card.status === "QUEUED"
+                          ? "⏳ Queued"
+                          : card.status === "PREPARING"
+                          ? "🔥 Cooking"
+                          : card.status === "READY"
+                          ? "🔔 Food Ready"
+                          : "✓ Served"}
+                      </span>
+                    </div>
+
+                    {/* Interactive Items Checklist */}
+                    <div className="kds-items-list">
+                      {card.items.map((it, idx) => {
+                        const isChecked = !!checkedItemMap[`${card.id}-${it.id || idx}`];
+                        return (
+                          <div
+                            key={it.id || idx}
+                            className={`kds-item-row ${isChecked ? "is-checked" : ""}`}
+                            onClick={() => toggleItemChecked(card.id, it.id || idx)}
+                            title="Click to check off dish when plated"
+                          >
+                            <div className="kds-check-box">{isChecked ? "✓" : ""}</div>
+                            <span className="kds-item-name">{it.name}</span>
+                            <span className="kds-item-qty">×{it.quantity}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="kds-card-footer">
+                      {card.status === "QUEUED" && (
+                        <>
+                          <button
+                            type="button"
+                            className="kds-btn kds-btn-start"
+                            onClick={() => handleStatusTransition(card.id, card.kotNo, "PREPARING")}
+                          >
+                            ▶ Start Cooking
+                          </button>
+                          <button
+                            type="button"
+                            className="kds-btn-link"
+                            onClick={() => handleStatusTransition(card.id, card.kotNo, "READY")}
+                          >
+                            Directly Mark Ready
+                          </button>
+                        </>
+                      )}
+
+                      {card.status === "PREPARING" && (
+                        <button
+                          type="button"
+                          className="kds-btn kds-btn-ready"
+                          onClick={() => handleStatusTransition(card.id, card.kotNo, "READY")}
+                        >
+                          🔔 Food Is Ready
+                        </button>
+                      )}
+
+                      {card.status === "READY" && (
+                        <button
+                          type="button"
+                          className="kds-btn kds-btn-serve"
+                          onClick={() => handleStatusTransition(card.id, card.kotNo, "SERVED")}
+                        >
+                          🍽️ Ready to Serve / Mark Served
+                        </button>
+                      )}
+
+                      {card.status === "SERVED" && (
+                        <div className="kds-served-notice">✓ Food Delivered</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         ) : (
+          /* Classic Old View (Red top physical slip emulation) */
           <div className="kot-4col-grid">
             {filteredTickets.map((card) => {
               const currentElapsed = elapsedMap[card.id] || card.initialElapsedSeconds;
@@ -656,12 +863,33 @@ export default function KapMetaKotView({
           border-bottom: 1.5px solid #e2e8f0;
           height: 48px;
           box-sizing: border-box;
+          width: 100%;
+          flex-shrink: 0;
         }
 
         .nav-tabs-left {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 14px;
+        }
+
+        .kot-page-title {
+          margin: 0;
+          font-size: 1.25rem;
+          font-weight: 800;
+          letter-spacing: -0.5px;
+          color: #0f172a;
+          display: flex;
+          align-items: center;
+          padding-right: 12px;
+          border-right: 1.5px solid #e2e8f0;
+          height: 28px;
+        }
+
+        .nav-tabs-group {
+          display: flex;
+          align-items: center;
+          gap: 10px;
         }
 
         .view-tab-btn {
@@ -728,11 +956,371 @@ export default function KapMetaKotView({
           transition: all 0.12s;
         }
 
+        .segmented-opt.is-selected,
         .segmented-opt.is-selected.blue-highlight {
           background: #e0f2fe;
           color: #0284c7;
           font-weight: 700;
           box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* ------------------------------------------------------------ */
+        /* MODERN KDS VIEW STYLES                                       */
+        /* ------------------------------------------------------------ */
+        .modern-kds-wrapper {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          width: 100%;
+        }
+
+        .modern-kds-summary-bar {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-left: 4px solid #f59e0b;
+          border-radius: 6px;
+          padding: 8px 14px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .summary-title-pill {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-weight: 700;
+          font-size: 0.8125rem;
+          color: #92400e;
+          background: #fef3c7;
+          padding: 3px 8px;
+          border-radius: 4px;
+        }
+
+        .summary-items-list {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .summary-item-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: #f8fafc;
+          border: 1px solid #cbd5e1;
+          border-radius: 4px;
+          padding: 2px 8px;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          color: #1e293b;
+        }
+
+        .summary-item-qty {
+          background: #0284c7;
+          color: #ffffff;
+          border-radius: 3px;
+          padding: 0 5px;
+          font-size: 0.75rem;
+          font-weight: 800;
+        }
+
+        .modern-kds-card {
+          background: #ffffff;
+          border: 1.5px solid #cbd5e1;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          min-height: 250px;
+          transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .modern-kds-card:hover {
+          box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .modern-kds-card.kds-queued {
+          border-top: 4px solid #64748b;
+        }
+
+        .modern-kds-card.kds-cooking {
+          border-top: 4px solid #f59e0b;
+        }
+
+        .modern-kds-card.kds-ready {
+          border-top: 4px solid #10b981;
+        }
+
+        .modern-kds-card.kds-served {
+          border-top: 4px solid #94a3b8;
+          opacity: 0.8;
+        }
+
+        .kds-card-header {
+          padding: 8px 12px;
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .kds-channel-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .kds-channel-badge {
+          font-size: 0.75rem;
+          font-weight: 700;
+          padding: 2px 6px;
+          border-radius: 4px;
+        }
+
+        .kds-channel-badge.channel-dine_in {
+          background: #fef08a;
+          color: #854d0e;
+        }
+
+        .kds-channel-badge.channel-delivery {
+          background: #bbf7d0;
+          color: #166534;
+        }
+
+        .kds-channel-badge.channel-pick_up,
+        .kds-channel-badge.channel-pickup,
+        .kds-channel-badge.channel-takeaway {
+          background: #bfdbfe;
+          color: #1e40af;
+        }
+
+        .kds-channel-badge.channel-swiggy {
+          background: #fed7aa;
+          color: #9a3412;
+        }
+
+        .kds-channel-badge.channel-zomato {
+          background: #fecdd3;
+          color: #9f1239;
+        }
+
+        .kds-table-tag {
+          font-size: 0.75rem;
+          font-weight: 700;
+          background: #e2e8f0;
+          color: #334155;
+          padding: 2px 6px;
+          border-radius: 4px;
+        }
+
+        .kds-kot-num {
+          font-size: 0.875rem;
+          font-weight: 800;
+          color: #0f172a;
+        }
+
+        .kds-timer-badge {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 0.8125rem;
+          font-weight: 800;
+          font-family: monospace;
+          padding: 2px 6px;
+          border-radius: 4px;
+        }
+
+        .kds-timer-badge.timer-normal {
+          background: #ecfdf5;
+          color: #059669;
+        }
+
+        .kds-timer-badge.timer-warning {
+          background: #fffbeb;
+          color: #d97706;
+        }
+
+        .kds-timer-badge.timer-exceeded {
+          background: #fef2f2;
+          color: #dc2626;
+          border: 1px solid #f87171;
+        }
+
+        .kds-station-row {
+          padding: 6px 12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 1px solid #f1f5f9;
+          font-size: 0.75rem;
+          color: #64748b;
+        }
+
+        .kds-station-name {
+          font-weight: 600;
+          color: #334155;
+          margin-right: auto;
+          margin-left: 4px;
+        }
+
+        .kds-status-pill {
+          font-size: 0.6875rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          padding: 2px 6px;
+          border-radius: 4px;
+        }
+
+        .kds-status-pill.pill-queued {
+          background: #f1f5f9;
+          color: #475569;
+        }
+
+        .kds-status-pill.pill-preparing {
+          background: #fef3c7;
+          color: #b45309;
+        }
+
+        .kds-status-pill.pill-ready {
+          background: #dcfce7;
+          color: #15803d;
+        }
+
+        .kds-status-pill.pill-served {
+          background: #f1f5f9;
+          color: #64748b;
+        }
+
+        .kds-items-list {
+          padding: 8px 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          flex: 1;
+        }
+
+        .kds-item-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 4px 6px;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background 0.1s;
+        }
+
+        .kds-item-row:hover {
+          background: #f8fafc;
+        }
+
+        .kds-item-row.is-checked {
+          background: #f0fdf4;
+          text-decoration: line-through;
+          color: #94a3b8;
+        }
+
+        .kds-check-box {
+          width: 16px;
+          height: 16px;
+          border: 1.5px solid #94a3b8;
+          border-radius: 3px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: 800;
+          color: #16a34a;
+          background: #ffffff;
+          flex-shrink: 0;
+        }
+
+        .kds-item-row.is-checked .kds-check-box {
+          border-color: #16a34a;
+          background: #dcfce7;
+        }
+
+        .kds-item-name {
+          flex: 1;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          color: #1e293b;
+        }
+
+        .kds-item-qty {
+          font-size: 0.8125rem;
+          font-weight: 800;
+          color: #0f172a;
+        }
+
+        .kds-card-footer {
+          padding: 8px 12px;
+          border-top: 1px solid #f1f5f9;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          align-items: center;
+        }
+
+        .kds-btn {
+          width: 100%;
+          border: none;
+          border-radius: 6px;
+          padding: 7px 12px;
+          font-size: 0.8125rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.12s;
+          text-align: center;
+        }
+
+        .kds-btn-start {
+          background: #d97706;
+          color: #ffffff;
+        }
+
+        .kds-btn-start:hover {
+          background: #b45309;
+        }
+
+        .kds-btn-ready {
+          background: #16a34a;
+          color: #ffffff;
+        }
+
+        .kds-btn-ready:hover {
+          background: #15803d;
+        }
+
+        .kds-btn-serve {
+          background: #4f46e5;
+          color: #ffffff;
+        }
+
+        .kds-btn-serve:hover {
+          background: #4338ca;
+        }
+
+        .kds-btn-link {
+          background: transparent;
+          border: none;
+          color: #64748b;
+          font-size: 10px;
+          cursor: pointer;
+          text-decoration: underline;
+          padding: 2px 0;
+        }
+
+        .kds-served-notice {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #10b981;
+          padding: 4px 0;
         }
 
         .btn-back-nav {

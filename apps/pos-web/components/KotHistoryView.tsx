@@ -176,9 +176,10 @@ function toToIso(date: string): string | undefined {
 
 export interface KotHistoryViewProps {
   onBackToBoard?: () => void;
+  onBackToPos?: () => void;
 }
 
-export default function KotHistoryView({ onBackToBoard }: KotHistoryViewProps) {
+export default function KotHistoryView({ onBackToBoard, onBackToPos }: KotHistoryViewProps) {
   const router = useRouter();
 
   const [fromDate, setFromDate] = useState("");
@@ -333,32 +334,78 @@ export default function KotHistoryView({ onBackToBoard }: KotHistoryViewProps) {
 
   return (
     <div className="kot-history-root">
-      {/* Heading + Export */}
-      <div className="kot-history-topbar">
-        <div className="heading-block">
-          <h1 className="kot-history-heading">KOT</h1>
-          <div className="view-switch" role="group" aria-label="KOT view">
-            <button type="button" className="switch-opt" onClick={goToBoard}>
-              Live Board
+      {/* Top Subheader: Exactly matches KOT View */}
+      <div className="kot-top-navigation-bar">
+        <div className="nav-tabs-left">
+          {/* Unified Page Heading */}
+          <h1 className="kot-page-title">KOT</h1>
+
+          <div className="nav-tabs-group" role="tablist">
+            <button
+              type="button"
+              className="view-tab-btn"
+              onClick={() => router.push("/orders")}
+              title="Open Orders Register"
+            >
+              <span className="tab-icon">📋</span>
+              <span className="tab-label">Order View</span>
             </button>
-            <button type="button" className="switch-opt is-selected" aria-current="page">
-              KOT List
+
+            <button
+              type="button"
+              className="view-tab-btn"
+              onClick={goToBoard}
+              title="Open Live KOT Board"
+            >
+              <span className="tab-icon">🧾</span>
+              <span className="tab-label">Kot View</span>
+            </button>
+
+            <button
+              type="button"
+              className="view-tab-btn is-active kot-active"
+              aria-current="page"
+              title="KOT History Report"
+            >
+              <span className="tab-icon kot-icon">📑</span>
+              <span className="tab-label">Kot List</span>
             </button>
           </div>
         </div>
 
-        <button type="button" className="btn-export" onClick={handleExport} disabled={exporting}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          {exporting ? "Exporting..." : "Export Excel"}
-        </button>
+        <div className="nav-controls-right">
+          <button
+            type="button"
+            className="btn-export"
+            onClick={handleExport}
+            disabled={exporting}
+            title="Export KOT history to CSV"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            {exporting ? "Exporting..." : "Export Excel"}
+          </button>
+
+          <button
+            type="button"
+            className="btn-back-nav"
+            onClick={() => {
+              if (onBackToPos) onBackToPos();
+              else goToBoard();
+            }}
+            title="Return to POS Floor"
+          >
+            &lt; Back
+          </button>
+        </div>
       </div>
 
-      {/* Filter row */}
-      <div className="kot-filter-row">
+      <div className="kot-history-content-container">
+        {/* Filter row */}
+        <div className="kot-filter-row">
         <label className="filter-field">
           <span className="filter-label">Start Date</span>
           <input
@@ -627,89 +674,152 @@ export default function KotHistoryView({ onBackToBoard }: KotHistoryViewProps) {
           </div>
         </div>
       </div>
+      </div>
 
       <style jsx>{`
         .kot-history-root {
           display: flex;
           flex-direction: column;
           height: calc(100vh - 64px);
-          background: var(--bg-base);
-          padding: 16px 20px 12px;
-          gap: 12px;
+          background: #f8fafc;
+          padding: 0;
+          gap: 0;
           overflow: hidden;
         }
 
-        .kot-history-topbar {
+        /* Top Subheader: Exactly matches KOT View */
+        .kot-top-navigation-bar {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 16px;
-          flex-wrap: wrap;
+          padding: 8px 16px;
+          background: #ffffff;
+          border-bottom: 1.5px solid #e2e8f0;
+          height: 48px;
+          box-sizing: border-box;
+          width: 100%;
+          flex-shrink: 0;
         }
-        .heading-block {
+
+        .nav-tabs-left {
           display: flex;
           align-items: center;
           gap: 14px;
         }
-        .kot-history-heading {
+
+        .kot-page-title {
           margin: 0;
-          font-size: 1.35rem;
-          font-weight: 700;
-          letter-spacing: -0.3px;
-          color: var(--text-primary);
+          font-size: 1.25rem;
+          font-weight: 800;
+          letter-spacing: -0.5px;
+          color: #0f172a;
+          display: flex;
+          align-items: center;
+          padding-right: 12px;
+          border-right: 1.5px solid #e2e8f0;
+          height: 28px;
         }
 
-        .view-switch {
-          display: inline-flex;
-          background: var(--bg-subtle);
-          border: 1px solid var(--border);
-          border-radius: var(--radius-pill);
-          padding: 3px;
-          gap: 2px;
+        .nav-tabs-group {
+          display: flex;
+          align-items: center;
+          gap: 10px;
         }
-        .switch-opt {
-          border: none;
-          background: transparent;
-          color: var(--text-secondary);
-          font-size: 0.8125rem;
+
+        .view-tab-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          padding: 5px 14px;
+          font-size: 0.84rem;
           font-weight: 600;
-          padding: 7px 14px;
-          min-height: 32px;
-          border-radius: var(--radius-pill);
+          color: #475569;
           cursor: pointer;
-          transition: background 180ms ease, color 180ms ease;
+          transition: all 0.12s;
+          height: 34px;
         }
-        .switch-opt:hover {
-          color: var(--text-primary);
+
+        .view-tab-btn:hover {
+          background: #f8fafc;
+          border-color: #94a3b8;
+          color: #1e293b;
         }
-        .switch-opt.is-selected {
-          background: var(--bg-card);
-          color: var(--text-primary);
-          box-shadow: var(--shadow-sm);
+
+        .view-tab-btn.is-active.kot-active {
+          border-color: #ef4444;
+          color: #dc2626;
+          background: #ffffff;
+          box-shadow: 0 1px 3px rgba(220, 38, 38, 0.12);
+        }
+
+        .tab-icon {
+          font-size: 0.9375rem;
+        }
+
+        .tab-icon.kot-icon {
+          color: #dc2626;
+        }
+
+        .nav-controls-right {
+          display: flex;
+          align-items: center;
+          gap: 10px;
         }
 
         .btn-export {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
-          background: var(--accent);
-          color: var(--bg-card);
-          border: 1px solid var(--accent);
-          border-radius: var(--radius-md);
+          gap: 6px;
+          background: #10b981;
+          color: #ffffff;
+          border: 1px solid #059669;
+          border-radius: 6px;
           font-size: 0.8125rem;
           font-weight: 600;
-          padding: 9px 16px;
-          min-height: 38px;
+          padding: 5px 14px;
+          height: 34px;
           cursor: pointer;
-          transition: background 180ms ease;
+          transition: background 150ms ease;
         }
         .btn-export:hover:not(:disabled) {
-          background: var(--accent-hover);
-          border-color: var(--accent-hover);
+          background: #059669;
         }
         .btn-export:disabled {
           opacity: 0.6;
           cursor: progress;
+        }
+
+        .btn-back-nav {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          padding: 5px 14px;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          color: #334155;
+          cursor: pointer;
+          transition: all 0.12s;
+          height: 34px;
+        }
+        .btn-back-nav:hover {
+          background: #f1f5f9;
+          border-color: #94a3b8;
+        }
+
+        .kot-history-content-container {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          padding: 12px 16px;
+          gap: 12px;
+          overflow: hidden;
+          min-height: 0;
         }
 
         /* Filters */

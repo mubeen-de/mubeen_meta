@@ -135,10 +135,10 @@ export default function WaiterCashTipsCalculator({
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "1.5rem" }}>💰</span>
             <div>
-              <h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 800 }}>
+              <h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 800, color: "#0f172a" }}>
                 Waiter Shift Cash & Tips Reconciliation
               </h3>
-              <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
+              <div style={{ fontSize: "0.75rem", color: "#475569" }}>
                 Shift Cash Drawer Balance & Tips Settlement • {shiftData?.waiter?.name || "Captain"}
               </div>
             </div>
@@ -260,6 +260,19 @@ export default function WaiterCashTipsCalculator({
                   </div>
 
                   <div className="denom-row">
+                    <span className="denom-label">₹5 x</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={denoms.n5 || ""}
+                      onChange={(e) => updateDenom("n5", e.target.value)}
+                      className="denom-input"
+                      placeholder="0"
+                    />
+                    <span className="denom-subtotal">= ₹{denoms.n5 * 5}</span>
+                  </div>
+
+                  <div className="denom-row">
                     <span className="denom-label">Coins (₹)</span>
                     <input
                       type="number"
@@ -321,14 +334,14 @@ export default function WaiterCashTipsCalculator({
 
                   <div className="reconcile-divider" />
 
-                  <div className="reconcile-row" style={{ fontWeight: 700 }}>
-                    <span>Expected Drawer Cash:</span>
-                    <span>₹{expectedCashInHand.toFixed(2)}</span>
+                  <div className="reconcile-row" style={{ fontWeight: 700, color: "#0f172a" }}>
+                    <span style={{ color: "#0f172a" }}>Expected Drawer Cash:</span>
+                    <span style={{ color: "#0f172a" }}>₹{expectedCashInHand.toFixed(2)}</span>
                   </div>
 
-                  <div className="reconcile-row" style={{ fontWeight: 700 }}>
-                    <span>Actual Counted Cash:</span>
-                    <span>₹{totalCountedCash.toFixed(2)}</span>
+                  <div className="reconcile-row" style={{ fontWeight: 700, color: "#0f172a" }}>
+                    <span style={{ color: "#0f172a" }}>Actual Counted Cash:</span>
+                    <span style={{ color: "#0f172a" }}>₹{totalCountedCash.toFixed(2)}</span>
                   </div>
 
                   {/* Overage / Shortage Badge */}
@@ -348,20 +361,20 @@ export default function WaiterCashTipsCalculator({
 
                 <div className="tips-calc-box">
                   <div className="reconcile-row">
-                    <span>Digital Bill Tips:</span>
-                    <strong>₹{digitalTips.toFixed(2)}</strong>
+                    <span style={{ color: "#334155" }}>Digital Bill Tips:</span>
+                    <strong style={{ color: "#0f172a" }}>₹{digitalTips.toFixed(2)}</strong>
                   </div>
                   <div className="reconcile-row">
-                    <span>Cash Tips:</span>
-                    <strong>₹{directCashTips.toFixed(2)}</strong>
+                    <span style={{ color: "#334155" }}>Cash Tips:</span>
+                    <strong style={{ color: "#0f172a" }}>₹{directCashTips.toFixed(2)}</strong>
                   </div>
                   <div className="reconcile-row" style={{ fontWeight: 700, color: "#16a34a" }}>
-                    <span>Total Tips Earned:</span>
-                    <span>₹{totalTips.toFixed(2)}</span>
+                    <span style={{ color: "#16a34a" }}>Total Tips Earned:</span>
+                    <span style={{ color: "#16a34a" }}>₹{totalTips.toFixed(2)}</span>
                   </div>
 
-                  <div className="reconcile-row" style={{ marginTop: "6px", fontSize: "0.75rem", color: "#64748b" }}>
-                    <span>Tip Share Pool (% to Kitchen/Runners):</span>
+                  <div className="reconcile-row" style={{ marginTop: "6px", fontSize: "0.75rem", color: "#475569" }}>
+                    <span style={{ color: "#475569" }}>Tip Share Pool (% to Kitchen/Runners):</span>
                     <input
                       type="number"
                       min="0"
@@ -373,9 +386,9 @@ export default function WaiterCashTipsCalculator({
                     />
                   </div>
 
-                  <div className="reconcile-row" style={{ fontSize: "0.8125rem", color: "#94a3b8" }}>
-                    <span>Kitchen Pool Contribution:</span>
-                    <span>-₹{tipShareAmount.toFixed(2)}</span>
+                  <div className="reconcile-row" style={{ fontSize: "0.8125rem", color: "#64748b" }}>
+                    <span style={{ color: "#64748b" }}>Kitchen Pool Contribution:</span>
+                    <span style={{ color: "#b91c1c", fontWeight: 600 }}>-₹{tipShareAmount.toFixed(2)}</span>
                   </div>
 
                   <div className="net-tip-banner">
@@ -414,7 +427,7 @@ export default function WaiterCashTipsCalculator({
                       digitalTipsMinor: Number(shiftData?.digitalTipsMinor || 0),
                       serviceChargeMinor: Number((shiftData as any)?.serviceChargeMinor || 0),
                       cashSalesMinor: Number(shiftData?.cashSalesMinor || 0),
-                      managerNotes: `Captain Shift Handover: ${shiftData?.waiter?.name || "Captain"}. Net tip payout: ₹${netWaiterTipPayout.toFixed(2)}, Denominations: 500x${denoms.n500}, 200x${denoms.n200}, 100x${denoms.n100}, 50x${denoms.n50}, 20x${denoms.n20}, 10x${denoms.n10}, Coins: ₹${denoms.coins}`,
+                      managerNotes: `Captain Shift Handover: ${shiftData?.waiter?.name || "Captain"}. Net tip payout: ₹${netWaiterTipPayout.toFixed(2)}, Denominations: 500x${denoms.n500}, 200x${denoms.n200}, 100x${denoms.n100}, 50x${denoms.n50}, 20x${denoms.n20}, 10x${denoms.n10}, 5x${denoms.n5}, Coins: ₹${denoms.coins}`,
                     }),
                   });
                   if (res.ok) {
@@ -444,8 +457,8 @@ export default function WaiterCashTipsCalculator({
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: rgba(15, 23, 42, 0.6);
-          backdrop-filter: blur(3px);
+          background: rgba(15, 23, 42, 0.7);
+          backdrop-filter: blur(4px);
           z-index: 250;
           display: flex;
           align-items: center;
@@ -454,12 +467,13 @@ export default function WaiterCashTipsCalculator({
         }
 
         .calc-modal-card {
-          background: #ffffff;
+          background: #ffffff !important;
+          color: #0f172a !important;
           border-radius: 16px;
           padding: 20px 24px;
           width: 95%;
           max-width: 820px;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
           max-height: 90vh;
           display: flex;
           flex-direction: column;
@@ -471,13 +485,23 @@ export default function WaiterCashTipsCalculator({
           justify-content: space-between;
           border-bottom: 1px solid #e2e8f0;
           padding-bottom: 12px;
+          color: #0f172a !important;
+        }
+        .calc-header h3 {
+          color: #0f172a !important;
         }
         .close-btn {
           background: transparent;
           border: none;
-          font-size: 1.2rem;
+          font-size: 1.25rem;
           color: #64748b;
           cursor: pointer;
+          padding: 4px 8px;
+          border-radius: 6px;
+        }
+        .close-btn:hover {
+          color: #0f172a;
+          background: #f1f5f9;
         }
 
         .calc-content-scroll {
@@ -487,6 +511,7 @@ export default function WaiterCashTipsCalculator({
           display: flex;
           flex-direction: column;
           gap: 16px;
+          color: #0f172a !important;
         }
 
         .sales-metrics-grid {
@@ -511,10 +536,10 @@ export default function WaiterCashTipsCalculator({
           font-weight: 900;
         }
 
-        .box-cash { background: #dcfce7; color: #166534; }
-        .box-card { background: #dbeafe; color: #1e40af; }
-        .box-upi { background: #f3e8ff; color: #6b21a8; }
-        .box-total { background: #f1f5f9; color: #0f172a; }
+        .box-cash { background: #dcfce7; color: #166534 !important; }
+        .box-card { background: #dbeafe; color: #1e40af !important; }
+        .box-upi { background: #f3e8ff; color: #6b21a8 !important; }
+        .box-total { background: #f1f5f9; color: #0f172a !important; }
 
         .two-column-layout {
           display: grid;
@@ -526,12 +551,13 @@ export default function WaiterCashTipsCalculator({
           border: 1px solid #e2e8f0;
           border-radius: 10px;
           padding: 14px;
+          color: #0f172a !important;
         }
         .pane-title {
           margin: 0 0 10px 0;
           font-size: 0.8125rem;
           font-weight: 800;
-          color: #334155;
+          color: #0f172a !important;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
@@ -547,10 +573,11 @@ export default function WaiterCashTipsCalculator({
           align-items: center;
           gap: 8px;
           font-size: 0.8125rem;
+          color: #0f172a !important;
         }
         .denom-label {
           font-weight: 600;
-          color: #475569;
+          color: #1e293b !important;
         }
         .denom-input {
           padding: 4px 6px;
@@ -559,11 +586,13 @@ export default function WaiterCashTipsCalculator({
           text-align: center;
           font-weight: 700;
           font-size: 0.8125rem;
+          color: #0f172a !important;
+          background: #ffffff !important;
         }
         .denom-subtotal {
           text-align: right;
           font-weight: 700;
-          color: #0f172a;
+          color: #0f172a !important;
         }
 
         .total-counted-banner {
@@ -576,6 +605,7 @@ export default function WaiterCashTipsCalculator({
           justify-content: space-between;
           font-size: 0.8125rem;
           font-weight: 700;
+          color: #0f172a !important;
         }
 
         .reconcile-field-list {
@@ -583,11 +613,19 @@ export default function WaiterCashTipsCalculator({
           flex-direction: column;
           gap: 6px;
           font-size: 0.8125rem;
+          color: #0f172a !important;
         }
         .reconcile-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          color: #1e293b !important;
+        }
+        .reconcile-row span {
+          color: #1e293b !important;
+        }
+        .reconcile-row strong {
+          color: #0f172a !important;
         }
         .small-num-input {
           width: 80px;
@@ -597,10 +635,12 @@ export default function WaiterCashTipsCalculator({
           text-align: right;
           font-weight: 700;
           font-size: 0.8125rem;
+          color: #0f172a !important;
+          background: #ffffff !important;
         }
         .reconcile-divider {
           height: 1px;
-          background: #e2e8f0;
+          background: #cbd5e1;
           margin: 6px 0;
         }
 
@@ -612,9 +652,9 @@ export default function WaiterCashTipsCalculator({
           font-weight: 800;
           text-align: center;
         }
-        .variance-banner.match { background: #dcfce7; color: #15803d; }
-        .variance-banner.overage { background: #eff6ff; color: #1d4ed8; }
-        .variance-banner.shortage { background: #fee2e2; color: #b91c1c; }
+        .variance-banner.match { background: #dcfce7; color: #15803d !important; }
+        .variance-banner.overage { background: #eff6ff; color: #1d4ed8 !important; }
+        .variance-banner.shortage { background: #fee2e2; color: #b91c1c !important; }
 
         .tips-calc-box {
           display: flex;
@@ -625,6 +665,7 @@ export default function WaiterCashTipsCalculator({
           border: 1px solid #e2e8f0;
           padding: 10px;
           border-radius: 8px;
+          color: #0f172a !important;
         }
         .net-tip-banner {
           margin-top: 6px;
@@ -637,6 +678,7 @@ export default function WaiterCashTipsCalculator({
           justify-content: space-between;
           font-size: 0.8125rem;
           font-weight: 700;
+          color: #065f46 !important;
         }
 
         .calc-footer {
@@ -654,6 +696,10 @@ export default function WaiterCashTipsCalculator({
           font-size: 0.8125rem;
           font-weight: 600;
           cursor: pointer;
+          color: #0f172a !important;
+        }
+        .btn-print:hover {
+          background: #e2e8f0;
         }
         .btn-close {
           background: #f1f5f9;
@@ -663,16 +709,24 @@ export default function WaiterCashTipsCalculator({
           font-weight: 600;
           font-size: 0.8125rem;
           cursor: pointer;
+          color: #334155 !important;
+        }
+        .btn-close:hover {
+          background: #e2e8f0;
+          color: #0f172a !important;
         }
         .btn-complete-shift {
           background: #16a34a;
-          color: #ffffff;
+          color: #ffffff !important;
           border: none;
           padding: 8px 18px;
           border-radius: 6px;
           font-weight: 700;
           font-size: 0.8125rem;
           cursor: pointer;
+        }
+        .btn-complete-shift:hover {
+          background: #15803d;
         }
       `}</style>
     </div>

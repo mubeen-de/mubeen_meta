@@ -131,7 +131,10 @@ router.get("/waiters/me/stats", requireAuth, async (req: AuthedRequest, res) => 
     const orders = await prisma.order.findMany({
       where: {
         outletId: req.auth!.outletId,
-        createdAt: { gte: dayStart },
+        OR: [
+          { createdAt: { gte: dayStart } },
+          { settledAt: { gte: dayStart } },
+        ],
         waiterId: req.auth!.userId,
       },
     });
@@ -181,7 +184,10 @@ router.get("/waiters/me/shift-reconciliation", requireAuth, async (req: AuthedRe
       prisma.order.findMany({
         where: {
           outletId: req.auth!.outletId,
-          createdAt: { gte: dayStart },
+          OR: [
+            { createdAt: { gte: dayStart } },
+            { settledAt: { gte: dayStart } },
+          ],
           waiterId: req.auth!.userId,
         },
         include: {

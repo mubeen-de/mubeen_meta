@@ -18,8 +18,9 @@ interface CaptainPinLoginModalProps {
 }
 
 const STAFF_LIST: StaffProfile[] = [
-  { id: "waiter-1", name: "Ramesh (Captain 1)", role: "Captain", email: "waiter@hotelkapila.com", avatar: "👨‍🍳" },
-  { id: "waiter-2", name: "Suresh (Captain 2)", role: "Captain", email: "waiter@hotelkapila.com", avatar: "🧑‍🍳" },
+  { id: "waiter-1", name: "Ramesh (Captain 1)", role: "Captain", email: "ramesh@hotelkapila.com", avatar: "👨‍🍳" },
+  { id: "waiter-2", name: "Suresh (Captain 2)", role: "Captain", email: "suresh@hotelkapila.com", avatar: "🧑‍🍳" },
+  { id: "waiter-3", name: "Mahesh (Captain 3)", role: "Captain", email: "mahesh@hotelkapila.com", avatar: "🤵" },
   { id: "cashier-1", name: "Kapila Cashier", role: "Cashier", email: "cashier@hotelkapila.com", avatar: "💳" },
   { id: "admin-1", name: "Store Manager", role: "Manager", email: "admin@hotelkapila.com", avatar: "🛡️" },
 ];
@@ -81,11 +82,22 @@ export default function CaptainPinLoginModal({
         throw new Error(data.error === "INVALID_CREDENTIALS" ? "Incorrect PIN. Please try again." : data.error || "Login failed");
       }
 
-      // Store tokens
+      // Store tokens and session
       if (typeof window !== "undefined") {
         localStorage.setItem("kapmeta_access_token", data.accessToken);
         localStorage.setItem("kapmeta_refresh_token", data.refreshToken);
         localStorage.setItem("kapmeta_captain_opening_float", openingFloat);
+
+        // Store standard session so getSession(), useAuthGuard(), and authedFetch() recognize the logged-in user
+        const storedSession = {
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          expiresAt: data.expiresAt,
+          userId: data.user.userId,
+          email: data.user.email,
+          outletId: data.user.outletId,
+        };
+        localStorage.setItem("kapmeta_pos_session", JSON.stringify(storedSession));
       }
 
       onSuccess(data.user);
@@ -276,6 +288,10 @@ export default function CaptainPinLoginModal({
           font-weight: 600;
           color: #334155;
           text-align: left;
+        }
+        .staff-chip:last-child:nth-child(odd) {
+          grid-column: span 2;
+          justify-content: center;
         }
         .staff-chip.active {
           border-color: #2563eb;

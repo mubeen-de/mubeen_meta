@@ -183,7 +183,7 @@ ordersRouter.post(
       lines,
       diningTableId,
       customerId,
-      waiterId: body.waiterId || undefined,
+      waiterId: body.waiterId || req.auth?.userId || undefined,
     };
 
     const result = await createOrder(input, menuPriceLookup, orderRepo, modifierPriceLookup);
@@ -193,6 +193,7 @@ ordersRouter.post(
         where: { id: result.id },
         data: {
           diningTableId,
+          waiterId: body.waiterId || req.auth?.userId || undefined,
         },
       }).catch(() => {});
     }
@@ -884,10 +885,52 @@ ordersRouter.patch("/orders/:id/status", requireAuth, requirePermission("order.u
   }
 });
 
+// Verifies that a floor waiter can only view/bill/settle orders on their own assigned tables
+async function assertWaiterBillAccess(
+  req: AuthedRequest,
+  orderId: string,
+  outletId: string
+): Promise<{ allowed: boolean; error?: string }> {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, waiterId: true },
+    });
+    if (!order) return { allowed: true };
+    if (!order.waiterId) return { allowed: true };
+    if (order.waiterId === req.auth!.userId) return { allowed: true };
+
+    const elevatedCheck = await checkPermissionDirect(req.auth!.userId, outletId, "report.read").catch(() => null);
+    if (elevatedCheck?.allowed) return { allowed: true };
+
+    const waiterUser = await prisma.user.findUnique({
+      where: { id: order.waiterId },
+      select: { firstName: true, lastName: true, email: true },
+    }).catch(() => null);
+
+    const waiterName = waiterUser
+      ? `${waiterUser.firstName || ''} ${waiterUser.lastName || ''}`.trim() || waiterUser.email
+      : "another captain";
+
+    return {
+      allowed: false,
+      error: `This table bill belongs to Captain ${waiterName}. You can only take bills for your own tables.`,
+    };
+  } catch {
+    return { allowed: true };
+  }
+}
+
 // GET /orders/:id/bill - Get bill summary
 ordersRouter.get("/orders/:id/bill", requireAuth, async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
+
+    const access = await assertWaiterBillAccess(req, req.params.id, outletId);
+    if (!access.allowed) {
+      return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
+    }
+
     const bill = await orderRepo.getBill(outletId, req.params.id);
     if (!bill) {
       return res.status(404).json({ error: "Order or bill not found" });
@@ -934,6 +977,11 @@ const handleRecordPayment = async (req: AuthedRequest, res: any) => {
 
     if (!amountMinor) {
       return res.status(400).json({ error: "amountMinor is required" });
+    }
+
+    const access = await assertWaiterBillAccess(req, req.params.id, outletId);
+    if (!access.allowed) {
+      return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
     }
 
     const payment = await orderRepo.recordPayment(
@@ -1059,6 +1107,12 @@ ordersRouter.patch("/orders/:id/items/:itemId/void", requireAuth, requirePermiss
 const handleCharges = async (req: AuthedRequest, res: any) => {
   try {
     const outletId = req.auth!.outletId;
+
+    const access = await assertWaiterBillAccess(req, req.params.id, outletId);
+    if (!access.allowed) {
+      return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
+    }
+
     const { tipMinor, serviceChargeMinor } = req.body;
 
     const updated = await orderRepo.setCharges(
@@ -1086,6 +1140,11 @@ ordersRouter.patch("/orders/:id/charges", requireAuth, requirePermission("order.
 // Cashiers use bill.settle. Captains with order.create may settle a table they collected payment on.
 ordersRouter.post("/orders/:id/settle", requireAuth, async (req: AuthedRequest, res) => {
   try {
+    const access = await assertWaiterBillAccess(req, req.params.id, req.auth!.outletId);
+    if (!access.allowed) {
+      return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
+    }
+
     const settlePerm = await checkPermissionDirect(req.auth!.userId, req.auth!.outletId, "bill.settle");
     const createPerm = await checkPermissionDirect(req.auth!.userId, req.auth!.outletId, "order.create");
     if (!settlePerm.allowed && !createPerm.allowed) {
@@ -1225,6 +1284,7 @@ ordersRouter.get("/orders/by-table/:tableId/active", requireAuth, async (req: Au
       grandTotalMinor: order.grandTotal.toString(),
       subtotalMinor: order.subtotal.toString(),
       taxTotalMinor: (order.taxTotal || 0n).toString(),
+      waiterId: order.waiterId || null,
       items: (order.orderItems || []).map((item: any) => ({
         id: item.id,
         menuItemId: item.menuItemId,
@@ -1249,6 +1309,11 @@ ordersRouter.get("/orders/:id/bill/by-seat", requireAuth, async (req: AuthedRequ
   try {
     const outletId = req.auth!.outletId;
     const orderId = req.params.id;
+
+    const access = await assertWaiterBillAccess(req, orderId, outletId);
+    if (!access.allowed) {
+      return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
+    }
 
     const result = await orderRepo.getBillBySeat(outletId, orderId);
     res.status(200).json(result);

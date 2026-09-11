@@ -157,7 +157,12 @@ export default function KitchenMonitor() {
 
       {/* Main body: live KDS board, or the historical KOT report table */}
       {isHistoryView ? (
-        <KotHistoryView onBackToBoard={() => router.push("/kitchen")} />
+        <KotHistoryView
+          onBackToBoard={() => router.push("/kitchen")}
+          onBackToPos={() => {
+            window.location.href = "/";
+          }}
+        />
       ) : (
         <KapMetaKotView
           initialTickets={mappedTickets}

@@ -40,12 +40,16 @@ interface DiningTable {
   kitchenStage?: "QUEUED" | "COOKING" | "READY" | "SERVED" | null;
   orderStatus?: string | null;
   currentOrderId?: string | null;
+  waiterId?: string | null;
+  waiterName?: string | null;
   mergeGroupId?: string | null;
   mergePrimaryTableId?: string | null;
   mergedWith?: string[];
   isMergePrimary?: boolean;
   currentOrder?: {
     id: string;
+    waiterId?: string | null;
+    waiterName?: string | null;
     kots?: { id: string; ticketNumber: string; status: string }[];
   } | null;
 }
@@ -530,6 +534,8 @@ export default function WaiterDashboard() {
           if (!live) status = "VACANT";
           else if (tbl.status === "PRINTED" || tbl.status === "BILLING" || tbl.status === "PAID") status = "BILLING";
           else status = "OCCUPIED";
+          const waiterId = tbl.waiterId || tbl.currentOrder?.waiterId || null;
+          const waiterName = tbl.waiterName || tbl.currentOrder?.waiterName || null;
           return {
             id: tbl.id,
             tableNumber: tbl.tableNumber,
@@ -540,12 +546,19 @@ export default function WaiterDashboard() {
             kitchenStage: tbl.kitchenStage || null,
             orderStatus: tbl.currentOrder?.status || null,
             currentOrderId: tbl.currentOrder?.id || tbl.activeOrderId || null,
+            waiterId,
+            waiterName,
             mergeGroupId: tbl.mergeGroupId || null,
             mergePrimaryTableId: tbl.mergePrimaryTableId || null,
             mergedWith: Array.isArray(tbl.mergedWith) ? tbl.mergedWith : [],
             isMergePrimary: !!tbl.isMergePrimary,
             currentOrder: tbl.currentOrder
-              ? { id: tbl.currentOrder.id, kots: tbl.currentOrder.kots || [] }
+              ? {
+                  id: tbl.currentOrder.id,
+                  waiterId: tbl.currentOrder.waiterId || waiterId,
+                  waiterName: tbl.currentOrder.waiterName || waiterName,
+                  kots: tbl.currentOrder.kots || [],
+                }
               : null,
           };
         });
@@ -810,13 +823,24 @@ export default function WaiterDashboard() {
   // Unique sections list
   const sections = useMemo(() => {
     const s = Array.from(new Set(tables.map((t) => t.section))).filter(Boolean) as string[];
-    return ["All", ...s];
-  }, [tables]);
+    const myTablesCount = tables.filter((t) => {
+      const wId = t.currentOrder?.waiterId || t.waiterId;
+      return wId && wId === me?.userId;
+    }).length;
+    const myTabLabel = myTablesCount > 0 ? `⭐ My Tables (${myTablesCount})` : "⭐ My Tables";
+    return ["All", myTabLabel, ...s];
+  }, [tables, me?.userId]);
 
   // Filtered tables
   const filteredTables = useMemo(() => {
+    if (selectedSection.startsWith("⭐ My Tables")) {
+      return tables.filter((t) => {
+        const wId = t.currentOrder?.waiterId || t.waiterId;
+        return wId && wId === me?.userId;
+      });
+    }
     return tables.filter((t) => selectedSection === "All" || t.section === selectedSection);
-  }, [tables, selectedSection]);
+  }, [tables, selectedSection, me?.userId]);
 
   // Filtered menu
   const filteredMenu = useMemo(() => {
@@ -1086,6 +1110,14 @@ export default function WaiterDashboard() {
   };
 
   const handleVacateTable = async (table: DiningTable) => {
+    // Waiter isolation check
+    const tableWaiterId = table.currentOrder?.waiterId || table.waiterId;
+    if (tableWaiterId && me?.userId && tableWaiterId !== me.userId) {
+      const captainName = table.currentOrder?.waiterName || table.waiterName || "another captain";
+      showPickupNotification(`⚠️ Table ${table.tableNumber} belongs to Captain ${captainName}. You cannot vacate another captain's table.`);
+      return;
+    }
+
     const totalDue = table.currentOrder ? Number((table.currentOrder as any).grandTotalPaise || (table.currentOrder as any).grandTotalMinor || (table.currentOrder as any).totalAmount || 0) : 0;
     if (totalDue > 0) {
       alert(`⚠️ Table ${table.tableNumber} has an unpaid running order of ₹${totalDue.toFixed(2)}!\n\nPlease click "Bill" to collect payment before vacating.`);
@@ -1304,6 +1336,14 @@ export default function WaiterDashboard() {
 
   // Bill & payment
   const openBill = async (table: DiningTable) => {
+    // Waiter isolation: a captain can only take bills for tables they own
+    const tableWaiterId = table.currentOrder?.waiterId || table.waiterId;
+    if (tableWaiterId && me?.userId && tableWaiterId !== me.userId) {
+      const captainName = table.currentOrder?.waiterName || table.waiterName || "another captain";
+      showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${captainName}. You can only take bills for your own tables.`);
+      return;
+    }
+
     const hasPendingKots = myKots.some((kot) => {
       const matchTable = kot.tableNumber && table.tableNumber &&
         kot.tableNumber.trim().toLowerCase() === table.tableNumber.trim().toLowerCase();
@@ -1445,6 +1485,13 @@ export default function WaiterDashboard() {
 
   const submitPayment = async (overrideAmountMinor?: number, seatNumber?: number) => {
     if (!bill) return;
+
+    // Waiter isolation check
+    const tableWaiterId = billTable?.currentOrder?.waiterId || billTable?.waiterId;
+    if (tableWaiterId && me?.userId && tableWaiterId !== me.userId) {
+      showPickupNotification("⚠️ Payment blocked: This table belongs to another captain. You can only take payments for your own tables.");
+      return;
+    }
 
     // Option 2 (Strict Flow): Prevent payment and settlement if food is still unserved in kitchen
     const pendingKots = myKots.filter((kot) => {
@@ -1617,6 +1664,11 @@ export default function WaiterDashboard() {
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-blue-400 text-xs tracking-wider">KAPMETA CAPTAIN</span>
               <span className="text-[10px] bg-amber-500/20 text-amber-400 font-bold px-1.5 py-0.5 rounded">cp4</span>
+              {me?.name && (
+                <span className="text-[11px] bg-indigo-950 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                  👤 {me.name}
+                </span>
+              )}
             </div>
             <div className="text-[11px] text-slate-400 font-medium">{me?.outlet?.name || "Hotel kapila"}</div>
           </div>
@@ -2181,7 +2233,7 @@ export default function WaiterDashboard() {
                       key={section}
                       onClick={() => setSelectedSection(section)}
                       className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
-                        selectedSection === section
+                        (selectedSection.startsWith("⭐ My Tables") && section.startsWith("⭐ My Tables")) || selectedSection === section
                           ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                           : "bg-slate-800 text-slate-400 hover:text-slate-200"
                       }`}
@@ -2229,6 +2281,12 @@ export default function WaiterDashboard() {
                     );
                     const isAllServed = table.kitchenStage === "SERVED" && !hasPendingKots && !tableOrderKots;
 
+                    const orderWaiterId = table.currentOrder?.waiterId || table.waiterId;
+                    const orderWaiterName = table.currentOrder?.waiterName || table.waiterName;
+                    const hasActiveWaiter = Boolean(orderWaiterId);
+                    const isMyTable = !hasActiveWaiter || (me?.userId ? orderWaiterId === me.userId : true);
+                    const isOtherWaitersTable = hasActiveWaiter && (me?.userId ? orderWaiterId !== me.userId : false);
+
                     return (
                       <div
                         key={table.id}
@@ -2254,6 +2312,24 @@ export default function WaiterDashboard() {
                             <span className="text-[10px] text-indigo-300 mt-0.5 block font-medium">
                               Merged {table.mergedWith.join(" + ")}
                             </span>
+                          )}
+                          {(table.status === "OCCUPIED" || table.status === "BILLING") && (
+                            <div className="mt-1.5 flex items-center gap-1">
+                              {isOtherWaitersTable ? (
+                                <span
+                                  className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-950/60 border border-amber-800/50 px-2 py-0.5 rounded-md truncate max-w-full"
+                                  title={`Assigned Captain: ${orderWaiterName || "Another Captain"}`}
+                                >
+                                  <span>🧑‍🍳</span>
+                                  <span className="truncate">{orderWaiterName || "Captain"}</span>
+                                </span>
+                              ) : hasActiveWaiter ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-300 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-md">
+                                  <span>⭐</span>
+                                  <span>My Table</span>
+                                </span>
+                              ) : null}
+                            </div>
                           )}
                         </div>
 
@@ -2319,16 +2395,30 @@ export default function WaiterDashboard() {
                                     Transfer
                                   </button>
                                   <button
-                                    onClick={() => openBill(table)}
-                                    disabled={!isAllServed}
-                                    title={!isAllServed ? "Food is still being prepared in kitchen. Must be served before billing." : "Open & Settle Bill"}
+                                    onClick={() => {
+                                      if (isOtherWaitersTable) {
+                                        showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${orderWaiterName || "another captain"}. You cannot take their bill.`);
+                                        return;
+                                      }
+                                      openBill(table);
+                                    }}
+                                    disabled={!isAllServed || isOtherWaitersTable}
+                                    title={
+                                      isOtherWaitersTable
+                                        ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot bill this table.`
+                                        : !isAllServed
+                                        ? "Food is still being prepared in kitchen. Must be served before billing."
+                                        : "Open & Settle Bill"
+                                    }
                                     className={`flex-1 rounded-lg py-1.5 text-[10px] font-semibold transition-all ${
-                                      !isAllServed
+                                      isOtherWaitersTable
+                                        ? "bg-slate-800/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
+                                        : !isAllServed
                                         ? "bg-slate-800/80 text-slate-500 cursor-not-allowed border border-slate-700/50"
                                         : "bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-600/20"
                                     }`}
                                   >
-                                    Bill
+                                    {isOtherWaitersTable ? "🔒 Bill" : "Bill"}
                                   </button>
                                   <button
                                     onClick={() => handleVacateTable(table)}
@@ -2341,10 +2431,26 @@ export default function WaiterDashboard() {
                             )}
                             {table.status === "BILLING" && (
                               <button
-                                onClick={() => openBill(table)}
-                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all"
+                                onClick={() => {
+                                  if (isOtherWaitersTable) {
+                                    showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${orderWaiterName || "another captain"}. You cannot settle their bill.`);
+                                    return;
+                                  }
+                                  openBill(table);
+                                }}
+                                disabled={isOtherWaitersTable}
+                                title={
+                                  isOtherWaitersTable
+                                    ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot settle this bill.`
+                                    : "Pay & Vacate"
+                                }
+                                className={`w-full rounded-lg py-1.5 text-xs font-semibold transition-all ${
+                                  isOtherWaitersTable
+                                    ? "bg-slate-800/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
+                                    : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm shadow-indigo-600/20"
+                                }`}
                               >
-                                Pay & Vacate
+                                {isOtherWaitersTable ? `🔒 Bill (${orderWaiterName || "Captain"})` : "Pay & Vacate"}
                               </button>
                             )}
                             {table.status === "DIRTY" && (
@@ -2554,7 +2660,15 @@ export default function WaiterDashboard() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center pb-3 mb-3 border-b border-slate-800 flex-shrink-0">
-              <h2 className="font-bold text-lg text-slate-100">Bill — Table {billTable.tableNumber}</h2>
+              <div>
+                <h2 className="font-bold text-lg text-slate-100">Bill — Table {billTable.tableNumber}</h2>
+                <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+                  <span>🧑‍🍳 Captain:</span>
+                  <span className="font-medium text-emerald-400">
+                    {billTable.currentOrder?.waiterName || billTable.waiterName || me?.name || "Assigned Captain"}
+                  </span>
+                </div>
+              </div>
               <button
                 onClick={() => setBillTable(null)}
                 className="text-slate-400 hover:text-slate-200 text-xl font-bold w-8 h-8 rounded-lg hover:bg-slate-800 flex items-center justify-center transition"

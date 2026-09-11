@@ -28,13 +28,14 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
     return;
   }
 
-  const outletId = claims.outletIds[0];
+  const outletId = (Array.isArray(claims.outletIds) && claims.outletIds[0]) || (claims as any).outletId;
   if (!outletId) {
     res.status(403).json({ error: "token carries no outlet grant" });
     return;
   }
 
-  req.auth = { userId: claims.sub, outletId };
+  const userId = claims.sub || (claims as any).userId;
+  req.auth = { userId, outletId };
   next();
 }
 
