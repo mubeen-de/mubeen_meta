@@ -70,7 +70,6 @@ export default function KapMetaKotView({
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"ORDER_VIEW" | "KOT_VIEW">("KOT_VIEW");
   const [viewStyle, setViewStyle] = useState<"NEW" | "OLD">("OLD");
-  const [checkedItemMap, setCheckedItemMap] = useState<Record<string, boolean>>({});
   const [tickets, setTickets] = useState<KotCardData[]>(initialTickets);
   const [elapsedMap, setElapsedMap] = useState<Record<string, number>>(() => {
     const map: Record<string, number> = {};
@@ -99,14 +98,6 @@ export default function KapMetaKotView({
     } catch {
       // ignore
     }
-  };
-
-  const toggleItemChecked = (ticketId: string, itemKey: string | number) => {
-    const key = `${ticketId}-${itemKey}`;
-    setCheckedItemMap((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
   };
 
   // Search & Filter state
@@ -599,23 +590,14 @@ export default function KapMetaKotView({
                       </span>
                     </div>
 
-                    {/* Interactive Items Checklist */}
+                    {/* Items List */}
                     <div className="kds-items-list">
-                      {card.items.map((it, idx) => {
-                        const isChecked = !!checkedItemMap[`${card.id}-${it.id || idx}`];
-                        return (
-                          <div
-                            key={it.id || idx}
-                            className={`kds-item-row ${isChecked ? "is-checked" : ""}`}
-                            onClick={() => toggleItemChecked(card.id, it.id || idx)}
-                            title="Click to check off dish when plated"
-                          >
-                            <div className="kds-check-box">{isChecked ? "✓" : ""}</div>
-                            <span className="kds-item-name">{it.name}</span>
-                            <span className="kds-item-qty">×{it.quantity}</span>
-                          </div>
-                        );
-                      })}
+                      {card.items.map((it, idx) => (
+                        <div key={it.id || idx} className="kds-item-row">
+                          <span className="kds-item-name">{it.name}</span>
+                          <span className="kds-item-qty">×{it.quantity}</span>
+                        </div>
+                      ))}
                     </div>
 
                     {/* Action Buttons */}
@@ -1208,41 +1190,10 @@ export default function KapMetaKotView({
         .kds-item-row {
           display: flex;
           align-items: center;
-          gap: 8px;
+          justify-content: space-between;
           padding: 4px 6px;
           border-radius: 4px;
-          cursor: pointer;
-          transition: background 0.1s;
-        }
-
-        .kds-item-row:hover {
-          background: #f8fafc;
-        }
-
-        .kds-item-row.is-checked {
-          background: #f0fdf4;
-          text-decoration: line-through;
-          color: #94a3b8;
-        }
-
-        .kds-check-box {
-          width: 16px;
-          height: 16px;
-          border: 1.5px solid #94a3b8;
-          border-radius: 3px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 11px;
-          font-weight: 800;
-          color: #16a34a;
-          background: #ffffff;
-          flex-shrink: 0;
-        }
-
-        .kds-item-row.is-checked .kds-check-box {
-          border-color: #16a34a;
-          background: #dcfce7;
+          border-bottom: 1px dashed #f1f5f9;
         }
 
         .kds-item-name {
@@ -1256,6 +1207,8 @@ export default function KapMetaKotView({
           font-size: 0.8125rem;
           font-weight: 800;
           color: #0f172a;
+          min-width: 24px;
+          text-align: right;
         }
 
         .kds-card-footer {
