@@ -2247,26 +2247,26 @@ export default function WaiterDashboard() {
                 {/* Tables Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {filteredTables.map((table) => {
-                    let statusColor = "border-emerald-500/20 bg-emerald-950/20 text-emerald-400";
+                    let statusColor = "border-emerald-500/30 bg-emerald-950/25 text-emerald-400";
                     let badgeLabel = "Vacant";
 
                     if (table.status === "BILLING") {
-                      statusColor = "border-blue-500/20 bg-blue-950/20 text-blue-400";
+                      statusColor = "border-indigo-500/35 bg-indigo-950/30 text-indigo-300";
                       badgeLabel = "Billing";
                     } else if (table.status === "DIRTY") {
-                      statusColor = "border-amber-500/50 bg-amber-950/40 text-amber-300";
+                      statusColor = "border-amber-600/40 bg-amber-950/35 text-amber-400";
                       badgeLabel = "🧹 Needs Cleaning";
                     } else if (table.status === "OCCUPIED" && table.kitchenStage === "READY") {
-                      statusColor = "border-amber-500/30 bg-amber-950/30 text-amber-300";
+                      statusColor = "border-amber-500/35 bg-amber-950/30 text-amber-300";
                       badgeLabel = "Ready";
                     } else if (table.status === "OCCUPIED" && table.kitchenStage === "SERVED") {
-                      statusColor = "border-emerald-500/30 bg-emerald-950/30 text-emerald-300";
+                      statusColor = "border-cyan-500/30 bg-cyan-950/25 text-cyan-300";
                       badgeLabel = "Served · Running";
                     } else if (table.status === "OCCUPIED" && (table.kitchenStage === "QUEUED" || table.kitchenStage === "COOKING")) {
-                      statusColor = "border-rose-500/20 bg-rose-950/20 text-rose-400";
+                      statusColor = "border-rose-500/30 bg-rose-950/25 text-rose-400";
                       badgeLabel = table.kitchenStage === "COOKING" ? "Cooking" : "In kitchen";
                     } else if (table.status === "OCCUPIED") {
-                      statusColor = "border-rose-500/20 bg-rose-950/20 text-rose-400";
+                      statusColor = "border-sky-500/30 bg-sky-950/25 text-sky-400";
                       badgeLabel = "Running";
                     }
 
