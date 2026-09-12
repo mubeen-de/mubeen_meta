@@ -257,7 +257,14 @@ adminRouter.get(
         prisma.diningTable.count({ where: { outletId, isActive: true, status: "VACANT" } }),
         prisma.diningTable.count({ where: { outletId, isActive: true, status: { in: ["BILLING", "PRINTED"] } } }),
         prisma.order.findMany({
-          where: { outletId, status: { in: ["DRAFT", "PLACED", "CONFIRMED", "IN_PREPARATION", "READY", "SERVED"] } },
+          where: {
+            outletId,
+            status: { notIn: ["PAID", "SETTLED", "COMPLETED", "CANCELLED", "FAILED"] },
+            OR: [
+              { diningTable: { status: { in: ["OCCUPIED", "BILLING"] } } },
+              { createdAt: { gte: todayStart } },
+            ],
+          },
           select: { id: true, grandTotal: true, orderNumber: true, orderType: true, status: true, diningTableId: true },
         }),
         prisma.order.findMany({
