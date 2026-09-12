@@ -119,11 +119,11 @@ export async function settleOrderCommand(
     const dissolved = order.diningTableId
       ? await dissolveMergeGroupForTable(prisma, outletId, order.diningTableId)
       : { ids: [] as string[], numbers: [] as string[] };
-    if (dissolved.ids.length === 0 && order.table_number) {
-      await prisma.diningTable.updateMany({
-        where: { outletId, tableNumber: order.table_number },
+    if (order.diningTableId) {
+      await prisma.diningTable.update({
+        where: { id: order.diningTableId },
         data: { status: "VACANT", mergeGroupId: null, mergePrimaryTableId: null },
-      });
+      }).catch(() => undefined);
     }
     const bom = await deductBomStockForOrder(orderId, outletId, prisma, userId, "ORDER_SETTLED");
     await enqueueOutbox(prisma, outletId, "order.settled", {
@@ -253,11 +253,11 @@ export async function settleOrderCommand(
   const dissolved = order.diningTableId
     ? await dissolveMergeGroupForTable(prisma, outletId, order.diningTableId)
     : { ids: [] as string[], numbers: [] as string[] };
-  if (dissolved.ids.length === 0 && order.table_number) {
-    await prisma.diningTable.updateMany({
-      where: { outletId, tableNumber: order.table_number },
+  if (order.diningTableId) {
+    await prisma.diningTable.update({
+      where: { id: order.diningTableId },
       data: { status: "VACANT", mergeGroupId: null, mergePrimaryTableId: null },
-    });
+    }).catch(() => undefined);
   }
 
   const bom = await deductBomStockForOrder(orderId, outletId, prisma, userId, "ORDER_SETTLED");

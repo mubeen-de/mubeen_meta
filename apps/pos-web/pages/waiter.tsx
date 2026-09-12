@@ -1111,8 +1111,9 @@ export default function WaiterDashboard() {
 
   const handleVacateTable = async (table: DiningTable) => {
     // Waiter isolation check
+    const isManagerOrAdmin = me?.roles?.some((r: string) => ["ADMIN", "SUPER_ADMIN", "MANAGER", "CASHIER"].includes(r));
     const tableWaiterId = table.currentOrder?.waiterId || table.waiterId;
-    if (tableWaiterId && me?.userId && tableWaiterId !== me.userId) {
+    if (!isManagerOrAdmin && tableWaiterId && me?.userId && tableWaiterId !== me.userId) {
       const captainName = table.currentOrder?.waiterName || table.waiterName || "another captain";
       showPickupNotification(`⚠️ Table ${table.tableNumber} belongs to Captain ${captainName}. You cannot vacate another captain's table.`);
       return;
@@ -2284,8 +2285,8 @@ export default function WaiterDashboard() {
                     const orderWaiterId = table.currentOrder?.waiterId || table.waiterId;
                     const orderWaiterName = table.currentOrder?.waiterName || table.waiterName;
                     const hasActiveWaiter = Boolean(orderWaiterId);
-                    const isMyTable = !hasActiveWaiter || (me?.userId ? orderWaiterId === me.userId : true);
-                    const isOtherWaitersTable = hasActiveWaiter && (me?.userId ? orderWaiterId !== me.userId : false);
+                    const isManagerOrAdmin = me?.roles?.some((r: string) => ["ADMIN", "SUPER_ADMIN", "MANAGER", "CASHIER"].includes(r));
+                    const isOtherWaitersTable = !isManagerOrAdmin && hasActiveWaiter && (me?.userId ? orderWaiterId !== me.userId : false);
 
                     return (
                       <div

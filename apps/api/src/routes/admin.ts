@@ -336,13 +336,15 @@ adminRouter.get(
       const totalAgents = agentTelemetryRows.length > 0 ? agentTelemetryRows.length : 8;
       const onlineAgents = agentTelemetryRows.length > 0 ? agentTelemetryRows.filter((a) => a.status === "ONLINE").length : 8;
 
+      const computedVacantTables = Math.max(0, totalTables - occupiedTables - billingTables);
+
       res.status(200).json({
         outletId,
         serverTime: new Date().toISOString(),
         pos: {
           totalTables,
           occupiedTables,
-          vacantTables,
+          vacantTables: computedVacantTables,
           billingTables,
           occupancyPercent: totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0,
         },
