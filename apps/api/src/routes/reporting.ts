@@ -505,16 +505,20 @@ router.get("/invoices", requireAuth, requirePermission("report.read"), async (re
     };
 
     if (fromDate || toDate) {
-      where.createdAt = {
+      const dateRange: any = {
         ...(fromDate ? { gte: fromDate } : {}),
         ...(toDate ? { lte: toDate } : {}),
       };
+      where.OR = [
+        { settledAt: dateRange },
+        { AND: [{ settledAt: null }, { createdAt: dateRange }] },
+      ];
     }
 
     const orders = await prisma.order.findMany({
       where,
       take: limit,
-      orderBy: { orderNumber: "desc" },
+      orderBy: [{ settledAt: "desc" }, { createdAt: "desc" }],
       include: {
         diningTable: {
           select: {

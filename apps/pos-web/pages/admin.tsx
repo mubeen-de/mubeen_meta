@@ -3,6 +3,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { authedFetch, useAuthGuard } from "../lib/auth";
+import { useKapmetaSocket } from "../lib/useKapmetaSocket";
 import Nav from "../components/Nav";
 import KapMetaHeader from "../components/KapMetaHeader";
 import QuickLinks from "../components/QuickLinks";
@@ -960,6 +961,22 @@ export default function AdminDashboard() {
     }, 10000);
     return () => clearInterval(dInterval);
   }, [authLoading]);
+
+  useKapmetaSocket(
+    (payload) => {
+      // Instantly refresh operations pulse and agents on any real-time floor/settlement event
+      fetchDailyOperations();
+      fetchAgentTelemetry();
+      if (payload.topic === "finance.order_settled" || payload.topic === "order.status_updated") {
+        fetchReports();
+      }
+      if (activeTab === "audit") {
+        fetchAuditLogs();
+      }
+    },
+    !authLoading,
+    "admin-dashboard"
+  );
 
   useEffect(() => {
     if (authLoading) return;

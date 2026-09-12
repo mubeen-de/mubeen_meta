@@ -21,6 +21,39 @@ function mapCustomerResponse(c: any) {
   };
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function getTenantCondition(outletId: string) {
+  const outlet = await prisma.outlet.findUnique({
+    where: { id: outletId },
+    select: { organizationId: true },
+  });
+  const organizationId = outlet?.organizationId;
+  if (organizationId) {
+    return {
+      organizationId,
+      filter: {
+        OR: [
+          { organization_id: organizationId },
+          { outletId },
+        ],
+      },
+    };
+  }
+  return {
+    organizationId: null,
+    filter: { outletId },
+  };
+}
+
+function getLookupCondition(rawParam: string) {
+  const trimmed = rawParam.trim();
+  if (UUID_REGEX.test(trimmed)) {
+    return { id: trimmed };
+  }
+  return { phone: trimmed };
+}
+
 // Create Customer
 crmRouter.post("/customers", requireAuth, requirePermission("crm.write"), async (req: AuthedRequest, res) => {
   let firstName = req.body.firstName;
@@ -41,11 +74,8 @@ crmRouter.post("/customers", requireAuth, requirePermission("crm.write"), async 
 
   try {
     const outletId = req.auth!.outletId;
-    const outlet = await prisma.outlet.findUnique({
-      where: { id: outletId },
-      select: { organizationId: true },
-    });
-    const organization_id = outlet?.organizationId || "11111111-1111-1111-1111-111111111111";
+    const { organizationId } = await getTenantCondition(outletId);
+    const organization_id = organizationId || "00000000-0000-0000-0000-000000000000";
 
     const customer = await prisma.customer.create({
       data: {
@@ -83,25 +113,31 @@ crmRouter.get("/customers", requireAuth, requirePermission("crm.read"), async (r
   try {
     const { search, limit, offset } = req.query;
     const outletId = req.auth!.outletId;
+    const { filter: tenantFilter } = await getTenantCondition(outletId);
 
     const take = limit ? Math.min(Number(limit), 100) : 25;
     const skip = offset ? Number(offset) : 0;
 
-    const where: any = {
-      outletId,
-      isActive: true,
-    };
+    const conditions: any[] = [
+      { isActive: true },
+      tenantFilter,
+    ];
 
-    if (typeof search === "string" && search.trim().length > 0) {
-      const q = search.trim();
-      where.OR = [
-        { name: { contains: q, mode: "insensitive" } },
-        { firstName: { contains: q, mode: "insensitive" } },
-        { lastName: { contains: q, mode: "insensitive" } },
-        { phone: { contains: q } },
-        { email: { contains: q, mode: "insensitive" } },
-      ];
+    const searchParam = (search || req.query.q || req.query.phone || "") as string;
+    if (typeof searchParam === "string" && searchParam.trim().length > 0) {
+      const q = searchParam.trim();
+      conditions.push({
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { firstName: { contains: q, mode: "insensitive" } },
+          { lastName: { contains: q, mode: "insensitive" } },
+          { phone: { contains: q } },
+          { email: { contains: q, mode: "insensitive" } },
+        ],
+      });
     }
+
+    const where = { AND: conditions };
 
     const [customers, total] = await Promise.all([
       prisma.customer.findMany({
@@ -125,14 +161,20 @@ crmRouter.get("/customers", requireAuth, requirePermission("crm.read"), async (r
   }
 });
 
-// Get Customer by ID
+// Get Customer by ID or Phone
 crmRouter.get("/customers/:id", requireAuth, requirePermission("crm.read"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
+    const { filter: tenantFilter } = await getTenantCondition(outletId);
+    const lookupCond = getLookupCondition(req.params.id);
+
     const customer = await prisma.customer.findFirst({
       where: {
-        id: req.params.id,
-        outletId,
+        AND: [
+          lookupCond,
+          tenantFilter,
+          { isActive: true },
+        ],
       },
     });
 
@@ -151,18 +193,23 @@ crmRouter.get("/customers/:id", requireAuth, requirePermission("crm.read"), asyn
 crmRouter.post("/customers/:id/anonymize", requireAuth, requirePermission("crm.anonymize"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
-    // TSK-008k: this write used to run unscoped — any authed user could
-    // anonymize a customer belonging to another outlet by guessing an id.
-    // Confirm tenancy before mutating, same guard as PATCH/DELETE below.
+    const { filter: tenantFilter } = await getTenantCondition(outletId);
+    const lookupCond = getLookupCondition(req.params.id);
+
     const existing = await prisma.customer.findFirst({
-      where: { id: req.params.id, outletId },
+      where: {
+        AND: [
+          lookupCond,
+          tenantFilter,
+        ],
+      },
     });
     if (!existing) {
       res.status(404).json({ error: "Customer not found" });
       return;
     }
     const customer = await prisma.customer.update({
-      where: { id: req.params.id },
+      where: { id: existing.id },
       data: {
         name: "Anonymized Customer",
         firstName: "Anonymized",
@@ -188,10 +235,17 @@ crmRouter.post("/loyalty/redeem", requireAuth, requirePermission("crm.write"), a
 
   try {
     const outletId = req.auth!.outletId;
+    const { filter: tenantFilter } = await getTenantCondition(outletId);
     const pts = Number(points);
+    const lookupCond = getLookupCondition(String(customerId));
 
     const customer = await prisma.customer.findFirst({
-      where: { id: customerId, outletId },
+      where: {
+        AND: [
+          lookupCond,
+          tenantFilter,
+        ],
+      },
     });
 
     if (!customer) {
@@ -203,14 +257,14 @@ crmRouter.post("/loyalty/redeem", requireAuth, requirePermission("crm.write"), a
     }
 
     const updatedCustomer = await prisma.customer.update({
-      where: { id: customerId },
+      where: { id: customer.id },
       data: {
         loyaltyPoints: { decrement: pts },
       },
     });
 
     await (prisma as any).loyalty_accounts.updateMany({
-      where: { customer_id: customerId },
+      where: { customer_id: customer.id },
       data: {
         balance: { decrement: pts },
         updated_at: new Date(),
@@ -228,8 +282,16 @@ crmRouter.post("/loyalty/redeem", requireAuth, requirePermission("crm.write"), a
 crmRouter.patch("/customers/:id", requireAuth, requirePermission("crm.write"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
+    const { filter: tenantFilter } = await getTenantCondition(outletId);
+    const lookupCond = getLookupCondition(req.params.id);
+
     const existing = await prisma.customer.findFirst({
-      where: { id: req.params.id, outletId },
+      where: {
+        AND: [
+          lookupCond,
+          tenantFilter,
+        ],
+      },
     });
 
     if (!existing) {
@@ -278,8 +340,16 @@ crmRouter.patch("/customers/:id", requireAuth, requirePermission("crm.write"), a
 crmRouter.delete("/customers/:id", requireAuth, requirePermission("crm.write"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
+    const { filter: tenantFilter } = await getTenantCondition(outletId);
+    const lookupCond = getLookupCondition(req.params.id);
+
     const existing = await prisma.customer.findFirst({
-      where: { id: req.params.id, outletId },
+      where: {
+        AND: [
+          lookupCond,
+          tenantFilter,
+        ],
+      },
     });
 
     if (!existing) {

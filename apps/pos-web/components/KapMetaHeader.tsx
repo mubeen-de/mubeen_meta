@@ -6,7 +6,7 @@ import QuickSearchModal from "./QuickSearchModal";
 import ItemToggleModal from "./ItemToggleModal";
 import HoldOrdersDrawer from "./HoldOrdersDrawer";
 import AdvanceOrderAlertBanner from "./AdvanceOrderAlertBanner";
-import { filterSidebarGroups } from "./Nav";
+import { filterSidebarGroups, drawerGroupIcon } from "./Nav";
 
 export interface KapMetaHeaderProps {
   outletName?: string;
@@ -16,111 +16,6 @@ export interface KapMetaHeaderProps {
   onModeChange?: (mode: "DINE_IN" | "DELIVERY" | "PICKUP") => void;
   heldOrdersCount?: number;
   onOpenHoldDrawer?: () => void;
-}
-
-
-
-
-// Icon per SIDEBAR_GROUPS group id. The drawer is the only surface that draws
-// icons, so they live here rather than in Nav.tsx's data.
-function drawerGroupIcon(id: string): JSX.Element {
-  const common = {
-    width: 22,
-    height: 22,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "#ffffff",
-    strokeWidth: 2,
-    "aria-hidden": true,
-  } as const;
-
-  switch (id) {
-    case "dashboard":
-      return (
-        <svg {...common}>
-          <line x1="4" y1="21" x2="4" y2="14" />
-          <line x1="4" y1="10" x2="4" y2="3" />
-          <line x1="12" y1="21" x2="12" y2="12" />
-          <line x1="12" y1="8" x2="12" y2="3" />
-          <line x1="20" y1="21" x2="20" y2="16" />
-          <line x1="20" y1="12" x2="20" y2="3" />
-          <line x1="1" y1="14" x2="7" y2="14" />
-          <line x1="9" y1="8" x2="15" y2="8" />
-          <line x1="17" y1="16" x2="23" y2="16" />
-        </svg>
-      );
-    case "daily-operations":
-      return (
-        <svg {...common}>
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-        </svg>
-      );
-    case "menu":
-      return (
-        <svg {...common}>
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-        </svg>
-      );
-    case "inventory":
-      return (
-        <svg {...common}>
-          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-          <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-          <line x1="12" y1="22.08" x2="12" y2="12" />
-        </svg>
-      );
-    case "marketing":
-      return (
-        <svg {...common}>
-          <path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z" />
-          <path d="M16 8a5 5 0 0 1 0 8" />
-        </svg>
-      );
-    case "finance":
-      return (
-        <svg {...common}>
-          <line x1="12" y1="1" x2="12" y2="23" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </svg>
-      );
-    case "reports":
-      return (
-        <svg {...common}>
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
-      );
-    case "management":
-      return (
-        <svg {...common}>
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
-      );
-    case "crm":
-      return (
-        <svg {...common}>
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      );
-    case "aggregator-center":
-      return (
-        <svg {...common}>
-          <path d="M4.93 19.07A10 10 0 0 1 12 16a10 10 0 0 1 7.07 3.07M1.39 15.54A15 15 0 0 1 12 11a15 15 0 0 1 10.61 4.54M8.46 22.54A5 5 0 0 1 12 21a5 5 0 0 1 3.54 1.54" />
-          <circle cx="12" cy="11" r="1.5" fill="#ffffff" />
-        </svg>
-      );
-    default:
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="9" />
-        </svg>
-      );
-  }
 }
 
 export default function KapMetaHeader({

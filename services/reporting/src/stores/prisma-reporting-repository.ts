@@ -29,7 +29,10 @@ export class PrismaReportingRepository implements ReportingRepository {
       where: {
         outletId,
         status: "COMPLETED",
-        createdAt: { gte: range.fromDate, lte: range.toDate },
+        OR: [
+          { settledAt: { gte: range.fromDate, lte: range.toDate } },
+          { AND: [{ settledAt: null }, { createdAt: { gte: range.fromDate, lte: range.toDate } }] },
+        ],
       },
       select: { status: true, grandTotal: true },
     });
@@ -46,7 +49,10 @@ export class PrismaReportingRepository implements ReportingRepository {
         outletId,
         order: {
           status: "COMPLETED",
-          createdAt: { gte: range.fromDate, lte: range.toDate },
+          OR: [
+            { settledAt: { gte: range.fromDate, lte: range.toDate } },
+            { AND: [{ settledAt: null }, { createdAt: { gte: range.fromDate, lte: range.toDate } }] },
+          ],
         },
       },
       select: {
@@ -83,7 +89,10 @@ export class PrismaReportingRepository implements ReportingRepository {
       where: {
         outletId,
         status: "COMPLETED",
-        createdAt: { gte: range.fromDate, lte: range.toDate },
+        OR: [
+          { settledAt: { gte: range.fromDate, lte: range.toDate } },
+          { AND: [{ settledAt: null }, { createdAt: { gte: range.fromDate, lte: range.toDate } }] },
+        ],
       },
       select: { orderType: true, status: true, grandTotal: true },
     });
@@ -320,7 +329,10 @@ export class PrismaReportingRepository implements ReportingRepository {
         outletId,
         status: "COMPLETED",
         waiterId: { not: null },
-        createdAt: { gte: range.fromDate, lte: range.toDate },
+        OR: [
+          { settledAt: { gte: range.fromDate, lte: range.toDate } },
+          { AND: [{ settledAt: null }, { createdAt: { gte: range.fromDate, lte: range.toDate } }] },
+        ],
       },
       select: { waiterId: true, grandTotal: true, covers: true } as any,
     })) as unknown as Array<{ waiterId: string | null; grandTotal: bigint; covers: number | null }>;

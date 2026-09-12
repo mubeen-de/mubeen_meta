@@ -110,6 +110,8 @@ export default function CrmPage() {
         setNewEmail("");
         setNewBirthDate("");
         setCreateLoading(false);
+        // Refresh customer directory immediately so newly created customer shows up
+        loadDirectory(0);
       })
       .catch((err) => {
         setCreateError(err instanceof Error ? err.message : "Failed to create customer");
@@ -136,6 +138,7 @@ export default function CrmPage() {
         setCustomer(data);
         setRedeemPoints("");
         setRedeemLoading(false);
+        loadDirectory(directoryOffset);
       })
       .catch((err) => {
         setRedeemError(err instanceof Error ? err.message : "Failed to redeem points");
@@ -143,12 +146,13 @@ export default function CrmPage() {
       });
   };
 
-  const loadDirectory = (offset: number) => {
+  const loadDirectory = (offset: number, searchOverride?: string) => {
     setDirectoryLoading(true);
     setDirectoryError(null);
     setDirectoryLoaded(true);
+    const searchVal = searchOverride !== undefined ? searchOverride : directorySearch;
     const params = new URLSearchParams();
-    if (directorySearch.trim()) params.set("search", directorySearch.trim());
+    if (searchVal.trim()) params.set("search", searchVal.trim());
     params.set("limit", String(directoryLimit));
     params.set("offset", String(offset));
     authedFetch(`/crm/customers?${params.toString()}`)
@@ -245,7 +249,7 @@ export default function CrmPage() {
               <div className="panel-header">
                 <div>
                   <h3>Find a Customer</h3>
-                  <p className="panel-sub">From GET /customers/:id</p>
+                  <p className="panel-sub">From GET /customers/:id — search by UUID or Phone</p>
                 </div>
               </div>
               <form
@@ -258,7 +262,7 @@ export default function CrmPage() {
                 <input
                   type="text"
                   className="text-input"
-                  placeholder="Customer ID (UUID)"
+                  placeholder="Customer ID (UUID) or Phone Number"
                   value={lookupId}
                   onChange={(e) => setLookupId(e.target.value)}
                 />
@@ -418,11 +422,25 @@ export default function CrmPage() {
                   </div>
                 )}
                 {createSuccess && (
-                  <div className="not-available-box success">
-                    <p>
-                      Created customer <strong>{createSuccess.firstName} {createSuccess.lastName ?? ""}</strong> with
-                      ID <code>{createSuccess.id}</code>. Use the lookup above to view it.
-                    </p>
+                  <div className="not-available-box success" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+                    <div>
+                      <p>
+                        Created customer <strong>{createSuccess.firstName} {createSuccess.lastName ?? ""}</strong> with
+                        ID <code>{createSuccess.id}</code>.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="export-btn"
+                      style={{ padding: "6px 14px", fontSize: "0.85rem" }}
+                      onClick={() => {
+                        setLookupId(createSuccess.id);
+                        runLookup(createSuccess.id);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    >
+                      View in Lookup ↗
+                    </button>
                   </div>
                 )}
               </section>
@@ -466,6 +484,19 @@ export default function CrmPage() {
                 <button type="submit" className="export-btn" disabled={directoryLoading}>
                   {directoryLoading ? "Searching..." : "Search"}
                 </button>
+                {directorySearch && (
+                  <button
+                    type="button"
+                    className="export-btn"
+                    style={{ background: "#475569" }}
+                    onClick={() => {
+                      setDirectorySearch("");
+                      loadDirectory(0, "");
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
               </form>
 
               {directoryError && (

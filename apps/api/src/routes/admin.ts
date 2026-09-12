@@ -240,6 +240,8 @@ adminRouter.get(
         vacantTables,
         billingTables,
         activeOrders,
+        settledTodayOrders,
+        todayInvoices,
         allTodayOrders,
         onlineOrders,
         queuedKots,
@@ -253,10 +255,25 @@ adminRouter.get(
         prisma.diningTable.count({ where: { outletId, isActive: true } }),
         prisma.diningTable.count({ where: { outletId, isActive: true, status: "OCCUPIED" } }),
         prisma.diningTable.count({ where: { outletId, isActive: true, status: "VACANT" } }),
-        prisma.diningTable.count({ where: { outletId, isActive: true, status: "BILLING" } }),
+        prisma.diningTable.count({ where: { outletId, isActive: true, status: { in: ["BILLING", "PRINTED"] } } }),
         prisma.order.findMany({
           where: { outletId, status: { in: ["DRAFT", "PLACED", "CONFIRMED", "IN_PREPARATION", "READY", "SERVED"] } },
           select: { id: true, grandTotal: true, orderNumber: true, orderType: true, status: true, diningTableId: true },
+        }),
+        prisma.order.findMany({
+          where: {
+            outletId,
+            status: { in: ["PAID", "SETTLED", "COMPLETED"] },
+            OR: [
+              { settledAt: { gte: todayStart } },
+              { AND: [{ settledAt: null }, { createdAt: { gte: todayStart } }] },
+            ],
+          },
+          select: { id: true, grandTotal: true, status: true, orderType: true },
+        }),
+        prisma.invoice.findMany({
+          where: { outletId, createdAt: { gte: todayStart } },
+          select: { id: true, orderId: true, amount: true },
         }),
         prisma.order.findMany({
           where: { outletId, createdAt: { gte: todayStart } },
@@ -282,15 +299,37 @@ adminRouter.get(
         prisma.userRole.count({
           where: {
             outletId,
-            role: { code: "WAITER" },
+            role: { name: { contains: "WAITER", mode: "insensitive" } },
           },
         }).catch(() => 0),
         prisma.$queryRawUnsafe<any[]>(`SELECT id, status FROM agent_telemetry`).catch(() => []),
       ]);
 
       const liveSalesPaise = activeOrders.reduce((acc, o) => acc + BigInt(o.grandTotal || 0), BigInt(0));
-      const settledTodayOrders = allTodayOrders.filter((o) => o.status === "PAID" || o.status === "SETTLED" || o.status === "COMPLETED");
-      const settledSalesPaise = settledTodayOrders.reduce((acc, o) => acc + BigInt(o.grandTotal || 0), BigInt(0));
+
+      // Build deduplicated map of settled orders and invoices today
+      const settledOrderMap = new Map<string, bigint>();
+      for (const ord of settledTodayOrders) {
+        settledOrderMap.set(ord.id, BigInt(ord.grandTotal || 0));
+      }
+      for (const inv of todayInvoices) {
+        if (inv.orderId && !settledOrderMap.has(inv.orderId)) {
+          settledOrderMap.set(inv.orderId, BigInt(inv.amount || 0));
+        } else if (!inv.orderId) {
+          settledOrderMap.set(inv.id, BigInt(inv.amount || 0));
+        }
+      }
+
+      const settledCount = settledOrderMap.size;
+      let settledSalesPaise = 0n;
+      for (const amt of settledOrderMap.values()) {
+        settledSalesPaise += amt;
+      }
+
+      const allTodayOrderIds = new Set<string>();
+      allTodayOrders.forEach((o) => allTodayOrderIds.add(o.id));
+      settledOrderMap.forEach((_, id) => allTodayOrderIds.add(id));
+      const allTodayCount = allTodayOrderIds.size;
 
       // Dynamic calculation of active waiters on floor
       const activeWaiters = activeWaiterSessions > 0 ? activeWaiterSessions : Math.max(1, totalWaiterUsers);
@@ -314,8 +353,8 @@ adminRouter.get(
         },
         orders: {
           liveCount: activeOrders.length,
-          allTodayCount: allTodayOrders.length,
-          settledCount: settledTodayOrders.length,
+          allTodayCount,
+          settledCount,
           onlineCount: onlineOrders,
           liveSalesMinor: liveSalesPaise.toString(),
           settledSalesMinor: settledSalesPaise.toString(),
