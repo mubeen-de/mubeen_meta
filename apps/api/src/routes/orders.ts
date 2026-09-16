@@ -551,18 +551,35 @@ async function loadOnlineOrderColumns(orderIds: string[]): Promise<Map<string, a
         id: true,
         channel: true,
         externalOrderId: true,
-        customerName: true,
-        customerPhone: true,
         riderName: true,
         riderPhone: true,
-        otp: true,
+        customerOtp: true,
+        customerId: true,
         receivedAt: true,
         acceptedAt: true,
       },
     });
-    for (const r of rows) map.set(r.id, r);
+
+    const customerIds = rows.map((r: any) => r.customerId).filter(Boolean);
+    const customers = customerIds.length > 0
+      ? await prisma.customer.findMany({
+          where: { id: { in: customerIds } },
+          select: { id: true, name: true, firstName: true, lastName: true, phone: true },
+        }).catch(() => [])
+      : [];
+    const custMap = new Map((customers as any[]).map((c) => [c.id, c]));
+
+    for (const r of rows) {
+      const cust: any = r.customerId ? custMap.get(r.customerId) : null;
+      map.set(r.id, {
+        ...r,
+        otp: r.customerOtp,
+        customerName: cust?.name || (cust ? `${cust.firstName || ""} ${cust.lastName || ""}`.trim() : null),
+        customerPhone: cust?.phone || null,
+      });
+    }
   } catch {
-    // Columns not in the generated client yet.
+    // Fallback if columns not loaded
   }
   return map;
 }
