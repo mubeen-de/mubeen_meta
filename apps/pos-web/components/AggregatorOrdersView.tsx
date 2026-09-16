@@ -9,6 +9,7 @@ import {
   minorToMajor,
   statusTone,
 } from "./orders-shared";
+import SimulateAggregatorModal from "./SimulateAggregatorModal";
 
 /**
  * One row of `GET /orders/online`. Every field below is served by the API —
@@ -111,6 +112,7 @@ export default function AggregatorOrdersView({ onViewOrder }: AggregatorOrdersVi
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSimulateOpen, setIsSimulateOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -249,14 +251,35 @@ export default function AggregatorOrdersView({ onViewOrder }: AggregatorOrdersVi
           </div>
         </div>
 
-        <button
-          type="button"
-          className="btn-secondary"
-          onClick={() => router.push("/integrations")}
-        >
-          <IconHelp />
-          <span>Aggregator Help Center</span>
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            type="button"
+            id="btn-simulate-order"
+            className="btn-primary"
+            style={{
+              background: "linear-gradient(135deg, #fc8019 0%, #e23744 100%)",
+              border: "none",
+              color: "#fff",
+              fontWeight: 700,
+              boxShadow: "0 2px 8px rgba(252, 128, 25, 0.25)",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            onClick={() => setIsSimulateOpen(true)}
+          >
+            <span>⚡ Simulate Customer Order</span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => router.push("/integrations")}
+          >
+            <IconHelp />
+            <span>Aggregator Help Center</span>
+          </button>
+        </div>
       </header>
 
       <section className="filter-card">
@@ -900,6 +923,14 @@ export default function AggregatorOrdersView({ onViewOrder }: AggregatorOrdersVi
           }
         }
       `}</style>
+      <SimulateAggregatorModal
+        isOpen={isSimulateOpen}
+        initialChannel={channelTab === "ZOMATO" ? "ZOMATO" : "SWIGGY"}
+        onClose={() => setIsSimulateOpen(false)}
+        onOrderCreated={() => {
+          load();
+        }}
+      />
     </div>
   );
 }

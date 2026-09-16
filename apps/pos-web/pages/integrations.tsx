@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import { authedFetch, useAuthGuard, getApiBase } from "../lib/auth";
 import Nav from "../components/Nav";
+import SimulateAggregatorModal from "../components/SimulateAggregatorModal";
 
 interface ChannelAccount {
   id: string;
@@ -31,6 +32,7 @@ export default function Integrations() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [copiedChannel, setCopiedChannel] = useState<string | null>(null);
+  const [simulatingChannel, setSimulatingChannel] = useState<"SWIGGY" | "ZOMATO" | null>(null);
 
   const fetchAccounts = async () => {
     try {
@@ -199,6 +201,26 @@ export default function Integrations() {
 
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
+                      type="button"
+                      id={`simulate-order-${ch.code.toLowerCase()}`}
+                      onClick={() => setSimulatingChannel(ch.code as "SWIGGY" | "ZOMATO")}
+                      style={{
+                        padding: "8px 14px",
+                        borderRadius: 9999,
+                        border: `1px solid ${ch.color}`,
+                        background: "rgba(255,255,255,0.9)",
+                        color: ch.color,
+                        fontWeight: 700,
+                        fontSize: "0.8rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      ⚡ Simulate Customer Order
+                    </button>
+                    <button
                       onClick={() => openConnect(ch.code)}
                       style={{
                         flex: 1,
@@ -317,6 +339,14 @@ export default function Integrations() {
             </div>
           </div>
         </div>
+      )}
+
+      {simulatingChannel && (
+        <SimulateAggregatorModal
+          isOpen={Boolean(simulatingChannel)}
+          initialChannel={simulatingChannel}
+          onClose={() => setSimulatingChannel(null)}
+        />
       )}
     </div>
   );
