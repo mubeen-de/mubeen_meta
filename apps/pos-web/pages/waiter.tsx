@@ -2245,49 +2245,49 @@ export default function WaiterDashboard() {
                 </div>
 
                 {/* Tables Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-y-6 gap-x-4 pt-2 pb-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {filteredTables.map((table) => {
-                    let tableStyle = "border-emerald-500/40 bg-gradient-to-b from-slate-900/95 via-emerald-950/20 to-slate-900/95 shadow-[0_10px_25px_-5px_rgba(16,185,129,0.18)]";
-                    let chairStyle = "bg-slate-800/80 border-slate-700/60 shadow-sm";
-                    let badgeStyle = "bg-emerald-950/70 text-emerald-300 border-emerald-500/40";
-                    let statusDotPulse = "bg-emerald-400";
+                    let statusColor = "border-emerald-500/30 bg-emerald-950/20 text-emerald-400";
+                    let accentTopBar = "bg-emerald-500";
+                    let seatDotColor = "bg-emerald-500/60";
+                    let badgeStyle = "bg-emerald-950/40 border-emerald-500/30 text-emerald-300";
                     let badgeLabel = "Vacant";
 
                     if (table.status === "BILLING") {
-                      tableStyle = "border-indigo-400/60 bg-gradient-to-b from-slate-900/95 via-indigo-950/30 to-slate-900/95 shadow-[0_10px_25px_-5px_rgba(99,102,241,0.25)]";
-                      chairStyle = "bg-indigo-950/70 border-indigo-500/50 shadow-[0_0_8px_rgba(99,102,241,0.2)]";
-                      badgeStyle = "bg-indigo-950/80 text-indigo-300 border-indigo-500/50";
-                      statusDotPulse = "bg-indigo-400 animate-pulse";
+                      statusColor = "border-indigo-500/35 bg-indigo-950/25 text-indigo-300";
+                      accentTopBar = "bg-indigo-500";
+                      seatDotColor = "bg-indigo-400/60";
+                      badgeStyle = "bg-indigo-950/40 border-indigo-500/35 text-indigo-300";
                       badgeLabel = "Billing";
                     } else if (table.status === "DIRTY") {
-                      tableStyle = "border-amber-600/50 border-dashed bg-gradient-to-b from-slate-900/95 via-amber-950/25 to-slate-900/95 shadow-[0_10px_25px_-5px_rgba(217,119,6,0.15)]";
-                      chairStyle = "bg-amber-950/50 border-amber-600/40 shadow-sm";
-                      badgeStyle = "bg-amber-950/70 text-amber-400 border-amber-600/40";
-                      statusDotPulse = "bg-amber-500";
+                      statusColor = "border-amber-600/40 bg-amber-950/20 text-amber-400 border-dashed";
+                      accentTopBar = "bg-amber-500";
+                      seatDotColor = "bg-amber-500/60";
+                      badgeStyle = "bg-amber-950/40 border-amber-600/40 text-amber-400";
                       badgeLabel = "🧹 Needs Cleaning";
                     } else if (table.status === "OCCUPIED" && table.kitchenStage === "READY") {
-                      tableStyle = "border-amber-400/70 bg-gradient-to-b from-slate-900/95 via-amber-950/35 to-slate-900/95 shadow-[0_0_24px_rgba(245,158,11,0.28)] ring-1 ring-amber-400/50";
-                      chairStyle = "bg-amber-950/70 border-amber-500/50 shadow-[0_0_8px_rgba(245,158,11,0.2)]";
-                      badgeStyle = "bg-amber-950/80 text-amber-300 border-amber-500/60";
-                      statusDotPulse = "bg-amber-400 animate-ping";
+                      statusColor = "border-amber-500/40 bg-amber-950/25 text-amber-300";
+                      accentTopBar = "bg-amber-400";
+                      seatDotColor = "bg-amber-400/70";
+                      badgeStyle = "bg-amber-950/50 border-amber-500/40 text-amber-300";
                       badgeLabel = "Ready";
                     } else if (table.status === "OCCUPIED" && table.kitchenStage === "SERVED") {
-                      tableStyle = "border-cyan-500/50 bg-gradient-to-b from-slate-900/95 via-cyan-950/25 to-slate-900/95 shadow-[0_10px_25px_-5px_rgba(6,182,212,0.2)]";
-                      chairStyle = "bg-cyan-950/70 border-cyan-500/50 shadow-[0_0_8px_rgba(6,182,212,0.2)]";
-                      badgeStyle = "bg-cyan-950/80 text-cyan-300 border-cyan-500/50";
-                      statusDotPulse = "bg-cyan-400";
+                      statusColor = "border-cyan-500/30 bg-cyan-950/20 text-cyan-300";
+                      accentTopBar = "bg-cyan-500";
+                      seatDotColor = "bg-cyan-400/60";
+                      badgeStyle = "bg-cyan-950/40 border-cyan-500/30 text-cyan-300";
                       badgeLabel = "Served · Running";
                     } else if (table.status === "OCCUPIED" && (table.kitchenStage === "QUEUED" || table.kitchenStage === "COOKING")) {
-                      tableStyle = "border-rose-500/50 bg-gradient-to-b from-slate-900/95 via-rose-950/25 to-slate-900/95 shadow-[0_10px_25px_-5px_rgba(244,63,94,0.2)]";
-                      chairStyle = "bg-rose-950/70 border-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.2)]";
-                      badgeStyle = "bg-rose-950/80 text-rose-300 border-rose-500/50";
-                      statusDotPulse = "bg-rose-400 animate-pulse";
+                      statusColor = "border-rose-500/30 bg-rose-950/20 text-rose-400";
+                      accentTopBar = "bg-rose-500";
+                      seatDotColor = "bg-rose-400/60";
+                      badgeStyle = "bg-rose-950/40 border-rose-500/30 text-rose-300";
                       badgeLabel = table.kitchenStage === "COOKING" ? "Cooking" : "In kitchen";
                     } else if (table.status === "OCCUPIED") {
-                      tableStyle = "border-sky-500/50 bg-gradient-to-b from-slate-900/95 via-sky-950/25 to-slate-900/95 shadow-[0_10px_25px_-5px_rgba(14,165,233,0.2)]";
-                      chairStyle = "bg-sky-950/70 border-sky-500/50 shadow-[0_0_8px_rgba(14,165,233,0.2)]";
-                      badgeStyle = "bg-sky-950/80 text-sky-300 border-sky-500/50";
-                      statusDotPulse = "bg-sky-400";
+                      statusColor = "border-sky-500/30 bg-sky-950/20 text-sky-400";
+                      accentTopBar = "bg-sky-500";
+                      seatDotColor = "bg-sky-400/60";
+                      badgeStyle = "bg-sky-950/40 border-sky-500/30 text-sky-300";
                       badgeLabel = "Running";
                     }
 
@@ -2309,10 +2309,6 @@ export default function WaiterDashboard() {
                     const isManagerOrAdmin = me?.roles?.some((r: string) => ["ADMIN", "SUPER_ADMIN", "MANAGER", "CASHIER"].includes(r));
                     const isOtherWaitersTable = !isManagerOrAdmin && hasActiveWaiter && (me?.userId ? orderWaiterId !== me.userId : false);
 
-                    const cap = Number(table.capacity) || 4;
-                    const chairCountTop = Math.max(1, Math.min(Math.ceil(cap / 2), 4));
-                    const chairCountBottom = Math.max(1, Math.min(Math.floor(cap / 2), 4));
-
                     return (
                       <div
                         key={table.id}
@@ -2322,235 +2318,189 @@ export default function WaiterDashboard() {
                         onClick={() => {
                           if (mergeMode) toggleMergeSource(table.id);
                         }}
-                        className={`flex flex-col relative transition-all duration-300 group ${
-                          isMergeSelected ? "scale-[1.02]" : "hover:-translate-y-1"
+                        className={`border rounded-2xl p-4 flex flex-col justify-between h-auto min-h-36 transition-all duration-200 relative overflow-hidden group ${statusColor} ${
+                          isMergeSelected ? "ring-2 ring-indigo-400" : "hover:border-slate-500/40"
                         }`}
                       >
-                        {/* Top Chairs / Seats attached to table */}
-                        <div className="flex justify-around px-6 sm:px-8 -mb-2.5 z-0 relative pointer-events-none">
-                          {Array.from({ length: chairCountTop }).map((_, i) => (
-                            <div
-                              key={`seat-top-${i}`}
-                              className={`w-8 sm:w-10 h-3 rounded-t-lg border-t border-x transition-all duration-300 ${chairStyle}`}
-                            />
-                          ))}
-                        </div>
+                        {/* Table Top Accent Bar */}
+                        <div className={`absolute top-0 left-0 right-0 h-1 ${accentTopBar}`} />
 
-                        {/* Dining Table Top */}
-                        <div
-                          className={`relative z-10 border-2 rounded-2xl p-4 flex flex-col justify-between h-auto min-h-[175px] transition-all duration-300 overflow-hidden shadow-xl ${tableStyle} ${
-                            isMergeSelected ? "ring-2 ring-indigo-400 ring-offset-2 ring-offset-slate-950" : ""
-                          }`}
-                        >
-                          {/* Subtle tableware centerpiece watermark */}
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.035] select-none text-7xl font-sans">
-                            🍽️
+                        <div>
+                          {/* Table Header: Name & Status */}
+                          <div className="flex justify-between items-start pt-0.5">
+                            <span className="text-xl font-bold tracking-tight text-slate-100">{table.tableNumber}</span>
+                            <span className={`text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full border ${badgeStyle}`}>
+                              {badgeLabel}
+                            </span>
                           </div>
 
-                          <div>
-                            {/* Table Plaque & Status Plate */}
-                            <div className="flex justify-between items-start gap-2 relative z-10">
-                              <div className="flex items-center gap-1.5 bg-slate-950/80 border border-slate-700/60 px-2.5 py-1 rounded-xl shadow-inner">
-                                <span className="text-[11px] opacity-75">🍽️</span>
-                                <span className="text-lg font-black tracking-tight text-white">{table.tableNumber}</span>
-                              </div>
-                              <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 rounded-full border shadow-sm ${badgeStyle}`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${statusDotPulse}`} />
-                                <span>{badgeLabel}</span>
-                              </span>
-                            </div>
+                          {/* Table Capacity & Seat Dots */}
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1">
+                            <span>Capacity: {table.capacity} Pax</span>
+                            <span className="text-slate-600">•</span>
+                            <span className="inline-flex items-center gap-0.5" title={`${table.capacity} Seats`}>
+                              {Array.from({ length: Math.min(Number(table.capacity) || 4, 8) }).map((_, i) => (
+                                <span key={i} className={`w-1.5 h-1.5 rounded-full ${seatDotColor}`} />
+                              ))}
+                            </span>
+                          </div>
 
-                            {/* Capacity & Waiter Assignment */}
-                            <div className="flex flex-wrap items-center gap-1.5 mt-2.5 relative z-10">
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-300 bg-slate-950/60 border border-slate-800/80 px-2 py-0.5 rounded-lg shadow-sm">
-                                <span>🪑</span>
-                                <span>Capacity: {table.capacity} Pax</span>
-                              </span>
+                          {table.mergedWith && table.mergedWith.length > 1 && (
+                            <span className="text-[10px] text-indigo-300 mt-0.5 block font-medium">
+                              Merged {table.mergedWith.join(" + ")}
+                            </span>
+                          )}
 
-                              {table.mergedWith && table.mergedWith.length > 1 && (
-                                <span className="inline-flex items-center gap-1 text-[10px] text-indigo-300 bg-indigo-950/70 border border-indigo-700/60 px-2 py-0.5 rounded-lg font-semibold">
-                                  <span>🔗</span>
-                                  <span>Merged {table.mergedWith.join(" + ")}</span>
+                          {(table.status === "OCCUPIED" || table.status === "BILLING") && (
+                            <div className="mt-1.5 flex items-center gap-1">
+                              {isOtherWaitersTable ? (
+                                <span
+                                  className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-950/60 border border-amber-800/50 px-2 py-0.5 rounded-md truncate max-w-full"
+                                  title={`Assigned Captain: ${orderWaiterName || "Another Captain"}`}
+                                >
+                                  <span>🧑‍🍳</span>
+                                  <span className="truncate">{orderWaiterName || "Captain"}</span>
                                 </span>
-                              )}
-
-                              {(table.status === "OCCUPIED" || table.status === "BILLING") && (
-                                <>
-                                  {isOtherWaitersTable ? (
-                                    <span
-                                      className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-300 bg-amber-950/70 border border-amber-800/60 px-2 py-0.5 rounded-lg truncate max-w-full shadow-sm"
-                                      title={`Assigned Captain: ${orderWaiterName || "Another Captain"}`}
-                                    >
-                                      <span>🧑‍🍳</span>
-                                      <span className="truncate">{orderWaiterName || "Captain"}</span>
-                                    </span>
-                                  ) : hasActiveWaiter ? (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-300 bg-emerald-950/70 border border-emerald-800/60 px-2 py-0.5 rounded-lg shadow-sm">
-                                      <span>⭐</span>
-                                      <span>My Table</span>
-                                    </span>
-                                  ) : null}
-                                </>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Table Action Controls */}
-                          {mergeMode ? (
-                            <div className="mt-auto pt-3 z-10 flex flex-col gap-1">
-                              <span className="text-[10px] text-center text-indigo-300 font-medium">
-                                {isMergeSelected ? "✓ Selected (Source)" : "Tap to select / target"}
-                              </span>
-                              {mergeSourceIds.length > 0 && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    completeMerge(table.id);
-                                  }}
-                                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2 text-[11px] font-bold transition-all shadow-md active:scale-95"
-                                >
-                                  Merge into Table {table.tableNumber}
-                                </button>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="flex flex-col gap-1.5 mt-auto pt-3 z-10">
-                              {table.status === "VACANT" && transferFromTable && (
-                                <button
-                                  onClick={() => completeTransfer(table.id)}
-                                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2 text-xs font-bold transition-all shadow-md active:scale-95"
-                                >
-                                  Move {transferFromTable.tableNumber} Here
-                                </button>
-                              )}
-                              {table.status === "VACANT" && !transferFromTable && (
-                                <button
-                                  onClick={() => openNewOrder(table)}
-                                  className="new-order-btn w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl py-2 text-xs font-bold transition-all shadow-md shadow-emerald-900/30 flex items-center justify-center gap-1.5 active:scale-95"
-                                >
-                                  <span>＋</span>
-                                  <span>New Order</span>
-                                </button>
-                              )}
-                              {table.status === "OCCUPIED" && (
-                                <>
-                                  {table.kitchenStage === "READY" && (
-                                    <button
-                                      onClick={() => serveTable(table)}
-                                      className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-xl py-2 text-xs font-bold transition-all shadow-md shadow-emerald-900/40 flex items-center justify-center gap-1.5 active:scale-95 animate-pulse"
-                                    >
-                                      <span>🛎️</span>
-                                      <span>Serve</span>
-                                    </button>
-                                  )}
-                                  <button
-                                    onClick={() => {
-                                      setCoversCount(table.capacity || 2);
-                                      openManageTable(table);
-                                    }}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2 text-xs font-bold transition-all shadow-md shadow-indigo-900/30 flex items-center justify-center gap-1.5 active:scale-95"
-                                  >
-                                    {table.kitchenStage === "SERVED" ? (
-                                      <>
-                                        <span>➕</span>
-                                        <span>Add next / Running</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <span>📝</span>
-                                        <span>Manage Order</span>
-                                      </>
-                                    )}
-                                  </button>
-                                  <div className="flex gap-1.5 bg-slate-950/40 p-1 rounded-xl border border-slate-800/60">
-                                    <button
-                                      onClick={() => startTransfer(table)}
-                                      className="flex-1 bg-slate-800/90 hover:bg-slate-700 text-slate-300 rounded-lg py-1.5 text-[10px] font-bold transition-all active:scale-95"
-                                    >
-                                      Transfer
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        if (isOtherWaitersTable) {
-                                          showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${orderWaiterName || "another captain"}. You cannot take their bill.`);
-                                          return;
-                                        }
-                                        openBill(table);
-                                      }}
-                                      disabled={!isAllServed || isOtherWaitersTable}
-                                      title={
-                                        isOtherWaitersTable
-                                          ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot bill this table.`
-                                          : !isAllServed
-                                          ? "Food is still being prepared in kitchen. Must be served before billing."
-                                          : "Open & Settle Bill"
-                                      }
-                                      className={`flex-1 rounded-lg py-1.5 text-[10px] font-bold transition-all active:scale-95 ${
-                                        isOtherWaitersTable
-                                          ? "bg-slate-800/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
-                                          : !isAllServed
-                                          ? "bg-slate-800/80 text-slate-500 cursor-not-allowed border border-slate-700/50"
-                                          : "bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-600/30"
-                                      }`}
-                                    >
-                                      {isOtherWaitersTable ? "🔒 Bill" : "Bill"}
-                                    </button>
-                                    <button
-                                      onClick={() => handleVacateTable(table)}
-                                      className="flex-1 bg-slate-800/90 hover:bg-rose-900/60 hover:text-rose-200 text-slate-300 rounded-lg py-1.5 text-[10px] font-bold transition-all active:scale-95"
-                                    >
-                                      Vacate
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                              {table.status === "BILLING" && (
-                                <button
-                                  onClick={() => {
-                                    if (isOtherWaitersTable) {
-                                      showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${orderWaiterName || "another captain"}. You cannot settle their bill.`);
-                                      return;
-                                    }
-                                    openBill(table);
-                                  }}
-                                  disabled={isOtherWaitersTable}
-                                  title={
-                                    isOtherWaitersTable
-                                      ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot settle this bill.`
-                                      : "Pay & Vacate"
-                                  }
-                                  className={`w-full rounded-xl py-2 text-xs font-bold transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 ${
-                                    isOtherWaitersTable
-                                      ? "bg-slate-800/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
-                                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-900/40"
-                                  }`}
-                                >
-                                  <span>🧾</span>
-                                  <span>{isOtherWaitersTable ? `🔒 Bill (${orderWaiterName || "Captain"})` : "Pay & Vacate"}</span>
-                                </button>
-                              )}
-                              {table.status === "DIRTY" && (
-                                <button
-                                  onClick={() => updateTableStatus(table.id, "VACANT")}
-                                  className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white rounded-xl py-2 text-xs font-bold transition-all shadow-md shadow-amber-900/40 flex items-center justify-center gap-1.5 active:scale-95"
-                                >
-                                  <span>✨</span>
-                                  <span>Mark Clean & Ready</span>
-                                </button>
-                              )}
+                              ) : hasActiveWaiter ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-300 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-md">
+                                  <span>★</span>
+                                  <span>My Table</span>
+                                </span>
+                              ) : null}
                             </div>
                           )}
                         </div>
 
-                        {/* Bottom Chairs / Seats attached to table */}
-                        <div className="flex justify-around px-6 sm:px-8 -mt-2.5 z-0 relative pointer-events-none">
-                          {Array.from({ length: chairCountBottom }).map((_, i) => (
-                            <div
-                              key={`seat-bottom-${i}`}
-                              className={`w-8 sm:w-10 h-3 rounded-b-lg border-b border-x transition-all duration-300 ${chairStyle}`}
-                            />
-                          ))}
-                        </div>
+                        {mergeMode ? (
+                          <div className="mt-auto pt-3 z-10 flex flex-col gap-1">
+                            <span className="text-[10px] text-center text-indigo-300 font-medium">
+                              {isMergeSelected ? "✓ Selected (Source)" : "Tap to select / target"}
+                            </span>
+                            {mergeSourceIds.length > 0 && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  completeMerge(table.id);
+                                }}
+                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg py-1.5 text-[11px] font-bold transition-all shadow-md"
+                              >
+                                Merge into Table {table.tableNumber}
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-1.5 mt-auto pt-3 z-10">
+                            {table.status === "VACANT" && transferFromTable && (
+                              <button
+                                onClick={() => completeTransfer(table.id)}
+                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all"
+                              >
+                                Move {transferFromTable.tableNumber} Here
+                              </button>
+                            )}
+                            {table.status === "VACANT" && !transferFromTable && (
+                              <button
+                                onClick={() => openNewOrder(table)}
+                                className="new-order-btn w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all shadow-sm active:scale-95"
+                              >
+                                + New Order
+                              </button>
+                            )}
+                            {table.status === "OCCUPIED" && (
+                              <>
+                                {table.kitchenStage === "READY" && (
+                                  <button
+                                    onClick={() => serveTable(table)}
+                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all shadow-sm active:scale-95"
+                                  >
+                                    Serve
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    setCoversCount(table.capacity || 2);
+                                    openManageTable(table);
+                                  }}
+                                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all shadow-sm active:scale-95"
+                                >
+                                  {table.kitchenStage === "SERVED" ? "Add next / Running" : "Manage Order"}
+                                </button>
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => startTransfer(table)}
+                                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg py-1.5 text-[10px] font-semibold transition-all active:scale-95"
+                                  >
+                                    Transfer
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (isOtherWaitersTable) {
+                                        showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${orderWaiterName || "another captain"}. You cannot take their bill.`);
+                                        return;
+                                      }
+                                      openBill(table);
+                                    }}
+                                    disabled={!isAllServed || isOtherWaitersTable}
+                                    title={
+                                      isOtherWaitersTable
+                                        ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot bill this table.`
+                                        : !isAllServed
+                                        ? "Food is still being prepared in kitchen. Must be served before billing."
+                                        : "Open & Settle Bill"
+                                    }
+                                    className={`flex-1 rounded-lg py-1.5 text-[10px] font-semibold transition-all active:scale-95 ${
+                                      isOtherWaitersTable
+                                        ? "bg-slate-800/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
+                                        : !isAllServed
+                                        ? "bg-slate-800/80 text-slate-500 cursor-not-allowed border border-slate-700/50"
+                                        : "bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-600/20"
+                                    }`}
+                                  >
+                                    {isOtherWaitersTable ? "🔒 Bill" : "Bill"}
+                                  </button>
+                                  <button
+                                    onClick={() => handleVacateTable(table)}
+                                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg py-1.5 text-[10px] font-semibold transition-all active:scale-95"
+                                  >
+                                    Vacate
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                            {table.status === "BILLING" && (
+                              <button
+                                onClick={() => {
+                                  if (isOtherWaitersTable) {
+                                    showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${orderWaiterName || "another captain"}. You cannot settle their bill.`);
+                                    return;
+                                  }
+                                  openBill(table);
+                                }}
+                                disabled={isOtherWaitersTable}
+                                title={
+                                  isOtherWaitersTable
+                                    ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot settle this bill.`
+                                    : "Pay & Vacate"
+                                }
+                                className={`w-full rounded-lg py-1.5 text-xs font-semibold transition-all shadow-sm active:scale-95 ${
+                                  isOtherWaitersTable
+                                    ? "bg-slate-800/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
+                                    : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm shadow-indigo-600/20"
+                                }`}
+                              >
+                                {isOtherWaitersTable ? `🔒 Bill (${orderWaiterName || "Captain"})` : "Pay & Vacate"}
+                              </button>
+                            )}
+                            {table.status === "DIRTY" && (
+                              <button
+                                onClick={() => updateTableStatus(table.id, "VACANT")}
+                                className="w-full bg-amber-600 hover:bg-amber-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all shadow-sm active:scale-95"
+                              >
+                                ✨ Mark Clean & Ready
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
