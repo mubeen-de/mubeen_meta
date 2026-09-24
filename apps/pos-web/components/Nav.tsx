@@ -621,7 +621,7 @@ export default function Nav({ variant = "pill" }: NavProps): JSX.Element | null 
             min-width: 260px;
             max-width: 260px;
             background: #3e3e3e;
-            height: 100vh;
+            height: 100%;
             position: sticky;
             top: 0;
             display: flex;

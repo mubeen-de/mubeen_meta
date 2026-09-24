@@ -18,6 +18,7 @@ import { getRevenueTrend, PrismaOrderRepository } from "@kapmeta/orders";
 import { requireAuth, requirePermission, type AuthedRequest } from "../middleware/require-auth";
 
 const router = Router();
+const REPORT_PERMISSIONS = ["report.read", "report.financial.read", "users.manage", "users.read", "kot.read", "order.read", "menu.read"];
 
 function parseRange(req: AuthedRequest): { fromDate: Date; toDate: Date } {
   const fromDate = req.query.fromDate ?? req.query.startDate;
@@ -32,7 +33,7 @@ function parseRange(req: AuthedRequest): { fromDate: Date; toDate: Date } {
   return { fromDate: start, toDate: end };
 }
 
-router.get("/revenue-trend", requireAuth, requirePermission("report.read"), async (req: AuthedRequest, res) => {
+router.get("/revenue-trend", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     const orderRepo = new PrismaOrderRepository(prisma);
@@ -44,7 +45,7 @@ router.get("/revenue-trend", requireAuth, requirePermission("report.read"), asyn
   }
 });
 
-router.get("/sales-summary", requireAuth, requirePermission("report.read"), async (req: AuthedRequest, res) => {
+router.get("/sales-summary", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     const outletId = req.auth!.outletId;
@@ -63,7 +64,7 @@ router.get("/sales-summary", requireAuth, requirePermission("report.read"), asyn
   }
 });
 
-router.get("/tax-breakdown", requireAuth, requirePermission("report.read"), async (req: AuthedRequest, res) => {
+router.get("/tax-breakdown", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     const outletId = req.auth!.outletId;
@@ -87,7 +88,7 @@ router.get("/tax-breakdown", requireAuth, requirePermission("report.read"), asyn
   }
 });
 
-router.get("/item-performance", requireAuth, requirePermission("report.read"), async (req: AuthedRequest, res) => {
+router.get("/item-performance", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     if (!range) {
@@ -123,7 +124,7 @@ router.get("/item-performance", requireAuth, requirePermission("report.read"), a
   }
 });
 
-router.get("/payment-breakdown", requireAuth, requirePermission("report.read"), async (req: AuthedRequest, res) => {
+router.get("/payment-breakdown", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     if (!range) {
@@ -146,7 +147,7 @@ router.get("/payment-breakdown", requireAuth, requirePermission("report.read"), 
   }
 });
 
-router.get("/channel-breakdown", requireAuth, requirePermission("report.read"), async (req: AuthedRequest, res) => {
+router.get("/channel-breakdown", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     if (!range) {
@@ -168,7 +169,7 @@ router.get("/channel-breakdown", requireAuth, requirePermission("report.read"), 
   }
 });
 
-router.get("/table-turnaround", requireAuth, requirePermission("report.read"), async (req: AuthedRequest, res) => {
+router.get("/table-turnaround", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     if (!range) {
@@ -187,7 +188,7 @@ router.get("/table-turnaround", requireAuth, requirePermission("report.read"), a
   }
 });
 
-router.get("/staff-performance", requireAuth, requirePermission("report.financial.read"), async (req: AuthedRequest, res) => {
+router.get("/staff-performance", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     if (!range) {
@@ -242,7 +243,7 @@ router.get("/staff-performance", requireAuth, requirePermission("report.financia
   }
 });
 
-router.get("/table-utilization", requireAuth, requirePermission("report.read"), async (req: AuthedRequest, res) => {
+router.get("/table-utilization", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     if (!range) {
@@ -265,7 +266,7 @@ router.get("/table-utilization", requireAuth, requirePermission("report.read"), 
   }
 });
 
-router.get("/leakage-report", requireAuth, requirePermission("report.financial.read"), async (req: AuthedRequest, res) => {
+router.get("/leakage-report", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     if (!range) {
@@ -288,7 +289,7 @@ router.get("/leakage-report", requireAuth, requirePermission("report.financial.r
   }
 });
 
-router.get("/customer-insights", requireAuth, requirePermission("report.read"), async (req: AuthedRequest, res) => {
+router.get("/customer-insights", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     const outletId = req.auth!.outletId;
@@ -296,9 +297,8 @@ router.get("/customer-insights", requireAuth, requirePermission("report.read"), 
     const orders = await prisma.order.findMany({
       where: {
         outletId,
-        status: "COMPLETED",
+        status: { notIn: ["CANCELLED", "FAILED"] },
         customerId: { not: null },
-        createdAt: { gte: range.fromDate, lte: range.toDate },
       },
       select: { customerId: true, grandTotal: true, createdAt: true },
     });
@@ -321,36 +321,51 @@ router.get("/customer-insights", requireAuth, requirePermission("report.read"), 
       }
     }
 
-    const totalUniqueCustomers = byCustomer.size;
-    const repeatCustomers = Array.from(byCustomer.values()).filter((a) => a.orderCount > 1).length;
+    // Fetch all customers for the outlet or enterprise
+    const allCustomers = await prisma.customer.findMany({
+      select: {
+        id: true,
+        name: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        email: true,
+        loyaltyPoints: true,
+        createdAt: true,
+        isActive: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const customersWithSales = allCustomers.map((c) => {
+      const agg = byCustomer.get(c.id);
+      const totalSpendMinor = agg?.totalSpendMinor ?? 0n;
+      const orderCount = agg?.orderCount ?? 0;
+      const avgAovMinor = orderCount > 0 ? totalSpendMinor / BigInt(orderCount) : 0n;
+      const name = c.name || [c.firstName, c.lastName].filter(Boolean).join(" ") || "Customer";
+
+      return {
+        customerId: c.id,
+        name,
+        phone: c.phone || "—",
+        email: c.email || "—",
+        loyaltyPoints: c.loyaltyPoints ?? 0,
+        totalSpendMinor: String(totalSpendMinor),
+        orderCount,
+        averageOrderValueMinor: String(avgAovMinor),
+        lastVisitAt: agg?.lastVisitAt ? agg.lastVisitAt.toISOString() : c.createdAt.toISOString(),
+        isActive: c.isActive,
+      };
+    });
+
+    // Sort by total spend descending
+    customersWithSales.sort((a, b) => Number(BigInt(b.totalSpendMinor) - BigInt(a.totalSpendMinor)));
+
+    const totalUniqueCustomers = customersWithSales.filter((c) => c.orderCount > 0).length;
+    const repeatCustomers = customersWithSales.filter((c) => c.orderCount > 1).length;
     const repeatCustomerRatePercent = totalUniqueCustomers === 0 ? 0 : (repeatCustomers / totalUniqueCustomers) * 100;
     const totalOrders = orders.length;
     const averageVisitFrequency = totalUniqueCustomers === 0 ? 0 : totalOrders / totalUniqueCustomers;
-
-    const topSpenderEntries = Array.from(byCustomer.entries())
-      .sort((a, b) => Number(b[1].totalSpendMinor) - Number(a[1].totalSpendMinor))
-      .slice(0, 20);
-
-    const customerRecords = topSpenderEntries.length > 0
-      ? await prisma.customer.findMany({
-          where: { id: { in: topSpenderEntries.map(([id]) => id) } },
-          select: { id: true, name: true, firstName: true, lastName: true, phone: true },
-        })
-      : [];
-    const customerById = new Map(customerRecords.map((c) => [c.id, c]));
-
-    const topSpenders = topSpenderEntries.map(([customerId, agg]) => {
-      const c = customerById.get(customerId);
-      const name = c?.name || [c?.firstName, c?.lastName].filter(Boolean).join(" ") || null;
-      return {
-        customerId,
-        name,
-        phone: c?.phone || null,
-        totalSpendMinor: String(agg.totalSpendMinor),
-        orderCount: agg.orderCount,
-        lastVisitAt: agg.lastVisitAt.toISOString(),
-      };
-    });
 
     res.status(200).json({
       outletId,
@@ -360,7 +375,8 @@ router.get("/customer-insights", requireAuth, requirePermission("report.read"), 
       repeatCustomers,
       repeatCustomerRatePercent: Number(repeatCustomerRatePercent.toFixed(2)),
       averageVisitFrequency: Number(averageVisitFrequency.toFixed(2)),
-      topSpenders,
+      topSpenders: customersWithSales.slice(0, 50),
+      allCustomers: customersWithSales,
     });
   } catch (err) {
     console.error(err);
@@ -368,7 +384,7 @@ router.get("/customer-insights", requireAuth, requirePermission("report.read"), 
   }
 });
 
-router.get("/discount-void-analysis", requireAuth, requirePermission("report.financial.read"), async (req: AuthedRequest, res) => {
+router.get("/discount-void-analysis", requireAuth, requirePermission(...REPORT_PERMISSIONS), async (req: AuthedRequest, res) => {
   try {
     const range = parseRange(req);
     const outletId = req.auth!.outletId;

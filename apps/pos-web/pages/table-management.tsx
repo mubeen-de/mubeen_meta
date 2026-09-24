@@ -197,7 +197,17 @@ export default function TableManagement() {
   };
 
   return (
-    <div className="table-management-root">
+    <div
+      className="table-management-root"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        width: "100vw",
+        overflow: "hidden",
+        background: "#f8fafc",
+      }}
+    >
       <Head>
         <title>Floor Plan & Table Management - KapMeta POS</title>
       </Head>
@@ -208,42 +218,70 @@ export default function TableManagement() {
         onNewOrder={() => router.push("/")}
       />
 
-      <div className="table-mgmt-main-layout">
+      <div
+        className="table-mgmt-main-layout"
+        style={{
+          display: "flex",
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
+        }}
+      >
         <Nav variant="sidebar" />
-        <div className="table-mgmt-content-pane">
+        <div
+          className="table-mgmt-content-pane"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            height: "100%",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {/* Sub-navigation tabs */}
           <div className="sub-tab-bar">
-        <button
-          className={`sub-tab ${activeTab === "VISUAL_FLOOR" ? "active" : ""}`}
-          onClick={() => setActiveTab("VISUAL_FLOOR")}
-        >
-          🪑 Visual Floor Matrix (POS Live View)
-        </button>
-        <button
-          className={`sub-tab ${activeTab === "TABLE_ADMIN" ? "active" : ""}`}
-          onClick={() => setActiveTab("TABLE_ADMIN")}
-        >
-          ⚙️ Table Configurations & Seeding
-        </button>
-        <button
-          className={`sub-tab ${activeTab === "STATION_SLA" ? "active" : ""}`}
-          onClick={() => setActiveTab("STATION_SLA")}
-        >
-          ⏱️ Kitchen Station SLAs
-        </button>
-      </div>
+            <button
+              className={`sub-tab ${activeTab === "VISUAL_FLOOR" ? "active" : ""}`}
+              onClick={() => setActiveTab("VISUAL_FLOOR")}
+            >
+              🪑 Visual Floor Matrix (POS Live View)
+            </button>
+            <button
+              className={`sub-tab ${activeTab === "TABLE_ADMIN" ? "active" : ""}`}
+              onClick={() => setActiveTab("TABLE_ADMIN")}
+            >
+              ⚙️ Table Configurations & Seeding
+            </button>
+            <button
+              className={`sub-tab ${activeTab === "STATION_SLA" ? "active" : ""}`}
+              onClick={() => setActiveTab("STATION_SLA")}
+            >
+              ⏱️ Kitchen Station SLAs
+            </button>
+          </div>
 
-      {activeTab === "VISUAL_FLOOR" ? (
-        <TableViewFloor
-          onSelectTable={(tbl) => {
-            router.push(`/?table=${encodeURIComponent(tbl.tableNumber)}&tableId=${tbl.id}`);
-          }}
-          onNavigateDelivery={() => router.push("/orders?tab=online")}
-          onNavigatePickup={() => router.push("/?mode=PICKUP")}
-        />
-      ) : activeTab === "TABLE_ADMIN" ? (
-        <div className="admin-content-container">
-          <div className="admin-header-row">
+          <div
+            className="table-mgmt-tab-body"
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              overflow: activeTab === "VISUAL_FLOOR" ? "hidden" : "auto",
+            }}
+          >
+            {activeTab === "VISUAL_FLOOR" ? (
+              <TableViewFloor
+                onSelectTable={(tbl) => {
+                  router.push(`/?table=${encodeURIComponent(tbl.tableNumber)}&tableId=${tbl.id}`);
+                }}
+                onNavigateDelivery={() => router.push("/orders?tab=online")}
+                onNavigatePickup={() => router.push("/?mode=PICKUP")}
+              />
+            ) : activeTab === "TABLE_ADMIN" ? (
+              <div className="admin-content-container">
+                <div className="admin-header-row">
             <div>
               <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800 }}>Table Management & Seeding</h2>
               <p style={{ margin: "4px 0 0 0", fontSize: "0.8125rem", color: "#64748b" }}>
@@ -349,12 +387,50 @@ export default function TableManagement() {
           </div>
         </div>
       )}
+          </div>
+        </div>
+      </div>
+
+      <style jsx global>{`
+        body {
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+        }
+      `}</style>
 
       <style jsx>{`
         .table-management-root {
-          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          width: 100vw;
+          overflow: hidden;
           background: #f8fafc;
           font-family: inherit;
+        }
+
+        .table-mgmt-main-layout {
+          display: flex;
+          flex: 1;
+          min-height: 0;
+          overflow: hidden;
+        }
+
+        .table-mgmt-content-pane {
+          flex: 1;
+          min-width: 0;
+          height: 100%;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .table-mgmt-tab-body {
+          flex: 1;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
         }
 
         .sub-tab-bar {
@@ -363,7 +439,9 @@ export default function TableManagement() {
           border-bottom: 1px solid #e2e8f0;
           padding: 0 16px;
           gap: 10px;
+          flex-shrink: 0;
         }
+
         .sub-tab {
           background: transparent;
           border: none;
@@ -372,23 +450,35 @@ export default function TableManagement() {
           font-weight: 700;
           color: #64748b;
           cursor: pointer;
+          white-space: nowrap;
+          transition: color 0.15s;
         }
+
+        .sub-tab:hover {
+          color: #0f172a;
+        }
+
         .sub-tab.active {
           color: #2563eb;
           box-shadow: inset 0 -2px 0 #2563eb;
         }
 
         .admin-content-container {
+          flex: 1;
+          overflow-y: auto;
           max-width: 1000px;
+          width: 100%;
           margin: 24px auto;
           padding: 0 16px;
         }
+
         .admin-header-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
           margin-bottom: 16px;
         }
+
         .btn-primary-add {
           background: #f97316;
           color: #ffffff;
@@ -398,6 +488,11 @@ export default function TableManagement() {
           font-weight: 700;
           font-size: 0.8125rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .btn-primary-add:hover {
+          background: #ea580c;
         }
 
         .tables-admin-table {
@@ -406,6 +501,7 @@ export default function TableManagement() {
           border-radius: 8px;
           overflow: hidden;
         }
+
         .table-row {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr 1fr 1fr 140px;
@@ -414,6 +510,7 @@ export default function TableManagement() {
           border-bottom: 1px solid #f1f5f9;
           font-size: 0.8125rem;
         }
+
         .table-head {
           background: #f1f5f9;
           font-weight: 800;
@@ -427,6 +524,7 @@ export default function TableManagement() {
           border-radius: 4px;
           font-size: 0.8125rem;
         }
+
         .status-badge {
           font-size: 0.6875rem;
           font-weight: 700;
@@ -434,6 +532,7 @@ export default function TableManagement() {
           border-radius: 4px;
           width: fit-content;
         }
+
         .status-vacant { background: #e2e8f0; color: #475569; }
         .status-occupied { background: #fef08a; color: #854d0e; }
         .status-billing { background: #bbf7d0; color: #166534; }
@@ -449,35 +548,12 @@ export default function TableManagement() {
           font-weight: 600;
           cursor: pointer;
         }
+
         .btn-edit-sm { background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; }
         .btn-save-sm { background: #22c55e; border: none; color: #fff; }
         .btn-cancel-sm { background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; }
         .btn-toggle-sm { background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; }
-
-        .table-management-root {
-          display: flex;
-          flex-direction: column;
-          height: 100vh;
-          width: 100vw;
-          overflow: hidden;
-          background: #f8fafc;
-        }
-        .table-mgmt-main-layout {
-          display: flex;
-          flex: 1;
-          min-height: 0;
-          overflow: hidden;
-        }
-        .table-mgmt-content-pane {
-          flex: 1;
-          min-width: 0;
-          height: 100%;
-          overflow: auto;
-          padding: 16px 20px;
-        }
       `}</style>
-        </div>
-      </div>
     </div>
   );
 }

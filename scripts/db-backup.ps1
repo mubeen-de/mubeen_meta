@@ -53,13 +53,26 @@ $startTime = [System.Diagnostics.Stopwatch]::StartNew()
 
 # 2. Run pg_dump
 try {
-    # Check if pg_dump is available in path
+    # Check if pg_dump is available in path or standard PostgreSQL directories
+    $pgDump = "pg_dump"
     if (-not (Get-Command pg_dump -ErrorAction SilentlyContinue)) {
+        if (Test-Path "C:\Program Files\PostgreSQL\16\bin\pg_dump.exe") {
+            $pgDump = "C:\Program Files\PostgreSQL\16\bin\pg_dump.exe"
+        } elseif (Test-Path "C:\Program Files\PostgreSQL\15\bin\pg_dump.exe") {
+            $pgDump = "C:\Program Files\PostgreSQL\15\bin\pg_dump.exe"
+        } elseif (Test-Path "C:\Program Files\PostgreSQL\14\bin\pg_dump.exe") {
+            $pgDump = "C:\Program Files\PostgreSQL\14\bin\pg_dump.exe"
+        } else {
+            $pgDump = $null
+        }
+    }
+
+    if (-not $pgDump) {
         Write-Host "[WARNING] pg_dump utility not found on PATH. Simulating backup..." -ForegroundColor Yellow
         # Simulate file generation for testing
         "/* Mock SQL pg_dump backup script for kapmeta */" | Out-File -FilePath $backupFile -Encoding utf8
     } else {
-        pg_dump -h $dbHost -p $dbPort -U $dbUser -F c -b -v -f $backupFile $dbName 2>&1 | Out-Null
+        & $pgDump -h $dbHost -p $dbPort -U $dbUser -F c -b -v -f $backupFile $dbName 2>&1 | Out-Null
     }
 
     $startTime.Stop()

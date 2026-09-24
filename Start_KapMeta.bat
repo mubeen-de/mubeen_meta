@@ -58,7 +58,10 @@ if not exist checkpoints\milestones mkdir checkpoints\milestones
 if not exist agents mkdir agents
 if not exist brain mkdir brain
 
-:: 3. Launch application runner and process orchestrator
+:: 3. Ensure PostgreSQL server is running on port 5432
+powershell -NoProfile -Command "if (!(Test-NetConnection -ComputerName 127.0.0.1 -Port 5432 -InformationLevel Quiet)) { Write-Host '[DATABASE] Starting PostgreSQL Server on port 5432...'; if (Test-Path 'C:\Program Files\PostgreSQL\16\bin\pg_ctl.exe') { & 'C:\Program Files\PostgreSQL\16\bin\pg_ctl.exe' start -D 'C:\Program Files\PostgreSQL\16\data' -w -t 10 } else { net start postgresql-x64-16 } }"
+
+:: 4. Launch application runner and process orchestrator
 echo [LAUNCH] Executing application runner and process orchestrator...
 node .\scripts\startup.js
 

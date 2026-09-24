@@ -7,6 +7,7 @@ const router = Router();
 
 // Gated on "users.manage" which is now seeded in seed_permissions.sql.
 const USER_MANAGEMENT_PERMISSION = "users.manage";
+const USER_READ_PERMISSIONS = [USER_MANAGEMENT_PERMISSION, "users.read", "report.read", "menu.read", "order.read", "kot.read"];
 
 const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 function isUuid(str?: string | null): boolean {
@@ -17,7 +18,7 @@ function isUuid(str?: string | null): boolean {
 router.get(
   "/outlets",
   requireAuth,
-  requirePermission(USER_MANAGEMENT_PERMISSION),
+  requirePermission(...USER_READ_PERMISSIONS),
   async (_req: AuthedRequest, res) => {
     try {
       const outlets = await prisma.outlet.findMany({
@@ -36,7 +37,7 @@ router.get(
 router.get(
   "/users",
   requireAuth,
-  requirePermission(USER_MANAGEMENT_PERMISSION),
+  requirePermission(...USER_READ_PERMISSIONS),
   async (req: AuthedRequest, res) => {
     try {
       const outletId = req.auth!.outletId;
@@ -89,7 +90,7 @@ router.get(
 router.get(
   "/roles",
   requireAuth,
-  requirePermission(USER_MANAGEMENT_PERMISSION),
+  requirePermission(...USER_READ_PERMISSIONS),
   async (_req: AuthedRequest, res) => {
     try {
       const roles = await prisma.role.findMany({
@@ -113,7 +114,7 @@ router.get(
 router.get(
   "/permissions",
   requireAuth,
-  requirePermission(USER_MANAGEMENT_PERMISSION),
+  requirePermission(...USER_READ_PERMISSIONS),
   async (_req: AuthedRequest, res) => {
     try {
       const permissions = await prisma.permission.findMany({

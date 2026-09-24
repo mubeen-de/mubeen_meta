@@ -790,7 +790,9 @@ export default function TableViewFloor({
         .table-view-container {
           display: flex;
           flex-direction: column;
-          height: calc(100vh - 48px);
+          flex: 1;
+          min-height: 0;
+          height: 100%;
           background: #f1f5f9;
           font-family: inherit;
         }
