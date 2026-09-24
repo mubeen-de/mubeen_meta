@@ -2247,48 +2247,41 @@ export default function WaiterDashboard() {
                 {/* Tables Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {filteredTables.map((table) => {
-                    let statusColor = "border-emerald-500/50 bg-emerald-950/20 text-emerald-400";
-                    let accentTopBar = "bg-emerald-500";
-                    let seatDotColor = "bg-emerald-500/60";
-                    let badgeStyle = "bg-emerald-950/40 border-emerald-500/30 text-emerald-300";
-                    let badgeLabel = "Vacant";
+                    let statusBorder = "border-emerald-500/60";
+                    let seatDotColor = "bg-emerald-400";
+                    let badgeStyle = "bg-[#062c20]/80 border-emerald-500/60 text-emerald-400";
+                    let badgeLabel = "VACANT";
 
                     if (table.status === "BILLING") {
-                      statusColor = "border-indigo-500/55 bg-indigo-950/25 text-indigo-300";
-                      accentTopBar = "bg-indigo-500";
-                      seatDotColor = "bg-indigo-400/60";
-                      badgeStyle = "bg-indigo-950/40 border-indigo-500/35 text-indigo-300";
-                      badgeLabel = "Billing";
+                      statusBorder = "border-indigo-400/70";
+                      seatDotColor = "bg-indigo-400";
+                      badgeStyle = "bg-[#1e1b4b]/80 border-indigo-500/60 text-indigo-300";
+                      badgeLabel = "BILLING";
                     } else if (table.status === "DIRTY") {
-                      statusColor = "border-amber-600/50 bg-amber-950/20 text-amber-400";
-                      accentTopBar = "bg-amber-500";
-                      seatDotColor = "bg-amber-500/60";
-                      badgeStyle = "bg-amber-950/40 border-amber-600/40 text-amber-400";
-                      badgeLabel = "🧹 Needs Cleaning";
+                      statusBorder = "border-amber-600/70";
+                      seatDotColor = "bg-amber-500";
+                      badgeStyle = "bg-[#331c04]/80 border-amber-600/60 text-amber-400";
+                      badgeLabel = "🧹 CLEANING";
                     } else if (table.status === "OCCUPIED" && table.kitchenStage === "READY") {
-                      statusColor = "border-amber-500/55 bg-amber-950/25 text-amber-300";
-                      accentTopBar = "bg-amber-400";
-                      seatDotColor = "bg-amber-400/70";
-                      badgeStyle = "bg-amber-950/50 border-amber-500/40 text-amber-300";
-                      badgeLabel = "Ready";
+                      statusBorder = "border-amber-400/70";
+                      seatDotColor = "bg-amber-400";
+                      badgeStyle = "bg-[#2d1b04]/80 border-amber-400/60 text-amber-300";
+                      badgeLabel = "READY";
                     } else if (table.status === "OCCUPIED" && table.kitchenStage === "SERVED") {
-                      statusColor = "border-cyan-500/50 bg-cyan-950/20 text-cyan-300";
-                      accentTopBar = "bg-cyan-500";
-                      seatDotColor = "bg-cyan-400/60";
-                      badgeStyle = "bg-cyan-950/40 border-cyan-500/30 text-cyan-300";
-                      badgeLabel = "Served · Running";
+                      statusBorder = "border-cyan-500/70";
+                      seatDotColor = "bg-cyan-400";
+                      badgeStyle = "bg-[#072438]/80 border-cyan-500/60 text-cyan-400";
+                      badgeLabel = "SERVED -\nRUNNING";
                     } else if (table.status === "OCCUPIED" && (table.kitchenStage === "QUEUED" || table.kitchenStage === "COOKING")) {
-                      statusColor = "border-rose-500/50 bg-rose-950/20 text-rose-400";
-                      accentTopBar = "bg-rose-500";
-                      seatDotColor = "bg-rose-400/60";
-                      badgeStyle = "bg-rose-950/40 border-rose-500/30 text-rose-300";
-                      badgeLabel = table.kitchenStage === "COOKING" ? "Cooking" : "In kitchen";
+                      statusBorder = "border-rose-500/70";
+                      seatDotColor = "bg-rose-400";
+                      badgeStyle = "bg-[#350a14]/80 border-rose-500/60 text-rose-300";
+                      badgeLabel = table.kitchenStage === "COOKING" ? "COOKING" : "IN KITCHEN";
                     } else if (table.status === "OCCUPIED") {
-                      statusColor = "border-sky-500/50 bg-sky-950/20 text-sky-400";
-                      accentTopBar = "bg-sky-500";
-                      seatDotColor = "bg-sky-400/60";
-                      badgeStyle = "bg-sky-950/40 border-sky-500/30 text-sky-300";
-                      badgeLabel = "Running";
+                      statusBorder = "border-sky-500/60";
+                      seatDotColor = "bg-sky-400";
+                      badgeStyle = "bg-[#082845]/80 border-sky-500/60 text-sky-300";
+                      badgeLabel = "RUNNING";
                     }
 
                     const isMergeSelected = mergeSourceIds.includes(table.id);
@@ -2318,52 +2311,49 @@ export default function WaiterDashboard() {
                         onClick={() => {
                           if (mergeMode) toggleMergeSource(table.id);
                         }}
-                        className={`border-2 border-dotted rounded-2xl p-4 flex flex-col justify-between h-auto min-h-36 transition-all duration-200 relative overflow-hidden group ${statusColor} ${
-                          isMergeSelected ? "ring-2 ring-indigo-400" : "hover:border-slate-400/60"
+                        className={`border-2 border-dotted rounded-2xl p-4 flex flex-col justify-between h-auto min-h-[220px] transition-all duration-200 relative overflow-hidden group bg-[#0e1626] ${statusBorder} ${
+                          isMergeSelected ? "ring-2 ring-indigo-400" : "hover:border-slate-300/80"
                         }`}
                       >
-                        {/* Table Top Accent Bar */}
-                        <div className={`absolute top-0 left-0 right-0 h-1 ${accentTopBar}`} />
-
                         <div>
                           {/* Table Header: Name & Status */}
-                          <div className="flex justify-between items-start pt-0.5">
-                            <span className="text-xl font-bold tracking-tight text-slate-100">{table.tableNumber}</span>
-                            <span className={`text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full border ${badgeStyle}`}>
+                          <div className="flex justify-between items-start gap-2">
+                            <span className="text-2xl font-bold tracking-tight text-white">{table.tableNumber}</span>
+                            <span className={`text-[10px] font-extrabold tracking-wider uppercase px-3 py-1 rounded-full border text-center leading-tight whitespace-pre-line ${badgeStyle}`}>
                               {badgeLabel}
                             </span>
                           </div>
 
                           {/* Table Capacity & Seat Dots */}
-                          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-1">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-1.5">
                             <span>Capacity: {table.capacity} Pax</span>
-                            <span className="text-slate-600">•</span>
-                            <span className="inline-flex items-center gap-0.5" title={`${table.capacity} Seats`}>
+                            <span className="text-slate-500">•</span>
+                            <span className="inline-flex items-center gap-1" title={`${table.capacity} Seats`}>
                               {Array.from({ length: Math.min(Number(table.capacity) || 4, 8) }).map((_, i) => (
-                                <span key={i} className={`w-1.5 h-1.5 rounded-full ${seatDotColor}`} />
+                                <span key={i} className={`w-2 h-2 rounded-full ${seatDotColor}`} />
                               ))}
                             </span>
                           </div>
 
                           {table.mergedWith && table.mergedWith.length > 1 && (
-                            <span className="text-[10px] text-indigo-300 mt-0.5 block font-medium">
+                            <span className="text-[10px] text-indigo-300 mt-1 block font-medium">
                               Merged {table.mergedWith.join(" + ")}
                             </span>
                           )}
 
                           {(table.status === "OCCUPIED" || table.status === "BILLING") && (
-                            <div className="mt-1.5 flex items-center gap-1">
+                            <div className="mt-2.5 flex items-center gap-1">
                               {isOtherWaitersTable ? (
                                 <span
-                                  className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-950/60 border border-amber-800/50 px-2 py-0.5 rounded-md truncate max-w-full"
+                                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-300 bg-amber-950/60 border border-amber-700/60 px-2.5 py-0.5 rounded-lg truncate max-w-full"
                                   title={`Assigned Captain: ${orderWaiterName || "Another Captain"}`}
                                 >
                                   <span>🧑‍🍳</span>
                                   <span className="truncate">{orderWaiterName || "Captain"}</span>
                                 </span>
                               ) : hasActiveWaiter ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-300 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-md">
-                                  <span>★</span>
+                                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-700/60 px-2.5 py-0.5 rounded-lg">
+                                  <span className="text-emerald-400">★</span>
                                   <span>My Table</span>
                                 </span>
                               ) : null}
@@ -2372,7 +2362,7 @@ export default function WaiterDashboard() {
                         </div>
 
                         {mergeMode ? (
-                          <div className="mt-auto pt-3 z-10 flex flex-col gap-1">
+                          <div className="mt-auto pt-3 z-10 flex flex-col gap-1.5">
                             <span className="text-[10px] text-center text-indigo-300 font-medium">
                               {isMergeSelected ? "✓ Selected (Source)" : "Tap to select / target"}
                             </span>
@@ -2382,18 +2372,18 @@ export default function WaiterDashboard() {
                                   e.stopPropagation();
                                   completeMerge(table.id);
                                 }}
-                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg py-1.5 text-[11px] font-bold transition-all shadow-md"
+                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2 text-xs font-bold transition-all shadow-md active:scale-95"
                               >
                                 Merge into Table {table.tableNumber}
                               </button>
                             )}
                           </div>
                         ) : (
-                          <div className="flex flex-col gap-1.5 mt-auto pt-3 z-10">
+                          <div className="flex flex-col gap-2 mt-auto pt-3 z-10">
                             {table.status === "VACANT" && transferFromTable && (
                               <button
                                 onClick={() => completeTransfer(table.id)}
-                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all"
+                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 text-sm font-semibold transition-all shadow active:scale-95"
                               >
                                 Move {transferFromTable.tableNumber} Here
                               </button>
@@ -2401,7 +2391,7 @@ export default function WaiterDashboard() {
                             {table.status === "VACANT" && !transferFromTable && (
                               <button
                                 onClick={() => openNewOrder(table)}
-                                className="new-order-btn w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all shadow-sm active:scale-95"
+                                className="new-order-btn w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-2.5 text-sm font-bold transition-all shadow-sm active:scale-95"
                               >
                                 + New Order
                               </button>
@@ -2411,7 +2401,7 @@ export default function WaiterDashboard() {
                                 {table.kitchenStage === "READY" && (
                                   <button
                                     onClick={() => serveTable(table)}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all shadow-sm active:scale-95"
+                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-2 text-xs font-bold transition-all shadow-sm active:scale-95 mb-0.5"
                                   >
                                     Serve
                                   </button>
@@ -2421,14 +2411,14 @@ export default function WaiterDashboard() {
                                     setCoversCount(table.capacity || 2);
                                     openManageTable(table);
                                   }}
-                                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all shadow-sm active:scale-95"
+                                  className="w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded-xl py-2.5 text-sm font-bold transition-all shadow active:scale-95 text-center"
                                 >
                                   {table.kitchenStage === "SERVED" ? "Add next / Running" : "Manage Order"}
                                 </button>
-                                <div className="flex gap-1">
+                                <div className="grid grid-cols-3 gap-1.5">
                                   <button
                                     onClick={() => startTransfer(table)}
-                                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg py-1.5 text-[10px] font-semibold transition-all active:scale-95"
+                                    className="bg-[#182232] hover:bg-slate-700 text-slate-300 rounded-xl py-2 text-xs font-semibold transition-all active:scale-95 text-center"
                                   >
                                     Transfer
                                   </button>
@@ -2448,19 +2438,19 @@ export default function WaiterDashboard() {
                                         ? "Food is still being prepared in kitchen. Must be served before billing."
                                         : "Open & Settle Bill"
                                     }
-                                    className={`flex-1 rounded-lg py-1.5 text-[10px] font-semibold transition-all active:scale-95 ${
+                                    className={`rounded-xl py-2 text-xs font-bold transition-all active:scale-95 text-center ${
                                       isOtherWaitersTable
-                                        ? "bg-slate-800/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
+                                        ? "bg-[#182232]/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
                                         : !isAllServed
-                                        ? "bg-slate-800/80 text-slate-500 cursor-not-allowed border border-slate-700/50"
-                                        : "bg-blue-600 hover:bg-blue-500 text-white shadow-sm shadow-blue-600/20"
+                                        ? "bg-[#182232]/80 text-slate-500 cursor-not-allowed border border-slate-700/50"
+                                        : "bg-[#0070f3] hover:bg-blue-500 text-white shadow-md shadow-blue-500/20"
                                     }`}
                                   >
                                     {isOtherWaitersTable ? "🔒 Bill" : "Bill"}
                                   </button>
                                   <button
                                     onClick={() => handleVacateTable(table)}
-                                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg py-1.5 text-[10px] font-semibold transition-all active:scale-95"
+                                    className="bg-[#182232] hover:bg-slate-700 text-slate-300 rounded-xl py-2 text-xs font-semibold transition-all active:scale-95 text-center"
                                   >
                                     Vacate
                                   </button>
@@ -2482,10 +2472,10 @@ export default function WaiterDashboard() {
                                     ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot settle this bill.`
                                     : "Pay & Vacate"
                                 }
-                                className={`w-full rounded-lg py-1.5 text-xs font-semibold transition-all shadow-sm active:scale-95 ${
+                                className={`w-full rounded-xl py-2.5 text-sm font-bold transition-all shadow active:scale-95 ${
                                   isOtherWaitersTable
-                                    ? "bg-slate-800/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
-                                    : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm shadow-indigo-600/20"
+                                    ? "bg-[#182232]/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
+                                    : "bg-[#4f46e5] hover:bg-[#4338ca] text-white shadow-indigo-600/20"
                                 }`}
                               >
                                 {isOtherWaitersTable ? `🔒 Bill (${orderWaiterName || "Captain"})` : "Pay & Vacate"}
@@ -2494,7 +2484,7 @@ export default function WaiterDashboard() {
                             {table.status === "DIRTY" && (
                               <button
                                 onClick={() => updateTableStatus(table.id, "VACANT")}
-                                className="w-full bg-amber-600 hover:bg-amber-500 text-white rounded-lg py-1.5 text-xs font-semibold transition-all shadow-sm active:scale-95"
+                                className="w-full bg-amber-600 hover:bg-amber-500 text-white rounded-xl py-2.5 text-sm font-bold transition-all shadow active:scale-95"
                               >
                                 ✨ Mark Clean & Ready
                               </button>
