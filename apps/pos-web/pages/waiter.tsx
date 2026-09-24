@@ -2247,44 +2247,44 @@ export default function WaiterDashboard() {
                 {/* Tables Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {filteredTables.map((table) => {
-                    let statusColor = "border-emerald-500/30 bg-emerald-950/20 text-emerald-400";
+                    let statusColor = "border-emerald-500/50 bg-emerald-950/20 text-emerald-400";
                     let accentTopBar = "bg-emerald-500";
                     let seatDotColor = "bg-emerald-500/60";
                     let badgeStyle = "bg-emerald-950/40 border-emerald-500/30 text-emerald-300";
                     let badgeLabel = "Vacant";
 
                     if (table.status === "BILLING") {
-                      statusColor = "border-indigo-500/35 bg-indigo-950/25 text-indigo-300";
+                      statusColor = "border-indigo-500/55 bg-indigo-950/25 text-indigo-300";
                       accentTopBar = "bg-indigo-500";
                       seatDotColor = "bg-indigo-400/60";
                       badgeStyle = "bg-indigo-950/40 border-indigo-500/35 text-indigo-300";
                       badgeLabel = "Billing";
                     } else if (table.status === "DIRTY") {
-                      statusColor = "border-amber-600/40 bg-amber-950/20 text-amber-400 border-dashed";
+                      statusColor = "border-amber-600/50 bg-amber-950/20 text-amber-400";
                       accentTopBar = "bg-amber-500";
                       seatDotColor = "bg-amber-500/60";
                       badgeStyle = "bg-amber-950/40 border-amber-600/40 text-amber-400";
                       badgeLabel = "🧹 Needs Cleaning";
                     } else if (table.status === "OCCUPIED" && table.kitchenStage === "READY") {
-                      statusColor = "border-amber-500/40 bg-amber-950/25 text-amber-300";
+                      statusColor = "border-amber-500/55 bg-amber-950/25 text-amber-300";
                       accentTopBar = "bg-amber-400";
                       seatDotColor = "bg-amber-400/70";
                       badgeStyle = "bg-amber-950/50 border-amber-500/40 text-amber-300";
                       badgeLabel = "Ready";
                     } else if (table.status === "OCCUPIED" && table.kitchenStage === "SERVED") {
-                      statusColor = "border-cyan-500/30 bg-cyan-950/20 text-cyan-300";
+                      statusColor = "border-cyan-500/50 bg-cyan-950/20 text-cyan-300";
                       accentTopBar = "bg-cyan-500";
                       seatDotColor = "bg-cyan-400/60";
                       badgeStyle = "bg-cyan-950/40 border-cyan-500/30 text-cyan-300";
                       badgeLabel = "Served · Running";
                     } else if (table.status === "OCCUPIED" && (table.kitchenStage === "QUEUED" || table.kitchenStage === "COOKING")) {
-                      statusColor = "border-rose-500/30 bg-rose-950/20 text-rose-400";
+                      statusColor = "border-rose-500/50 bg-rose-950/20 text-rose-400";
                       accentTopBar = "bg-rose-500";
                       seatDotColor = "bg-rose-400/60";
                       badgeStyle = "bg-rose-950/40 border-rose-500/30 text-rose-300";
                       badgeLabel = table.kitchenStage === "COOKING" ? "Cooking" : "In kitchen";
                     } else if (table.status === "OCCUPIED") {
-                      statusColor = "border-sky-500/30 bg-sky-950/20 text-sky-400";
+                      statusColor = "border-sky-500/50 bg-sky-950/20 text-sky-400";
                       accentTopBar = "bg-sky-500";
                       seatDotColor = "bg-sky-400/60";
                       badgeStyle = "bg-sky-950/40 border-sky-500/30 text-sky-300";
@@ -2318,8 +2318,8 @@ export default function WaiterDashboard() {
                         onClick={() => {
                           if (mergeMode) toggleMergeSource(table.id);
                         }}
-                        className={`border rounded-2xl p-4 flex flex-col justify-between h-auto min-h-36 transition-all duration-200 relative overflow-hidden group ${statusColor} ${
-                          isMergeSelected ? "ring-2 ring-indigo-400" : "hover:border-slate-500/40"
+                        className={`border-2 border-dotted rounded-2xl p-4 flex flex-col justify-between h-auto min-h-36 transition-all duration-200 relative overflow-hidden group ${statusColor} ${
+                          isMergeSelected ? "ring-2 ring-indigo-400" : "hover:border-slate-400/60"
                         }`}
                       >
                         {/* Table Top Accent Bar */}
