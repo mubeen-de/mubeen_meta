@@ -35,7 +35,8 @@ const NAV_LINKS: NavLinkDef[] = [
   { href: "/finance", permission: "report.read", topbarLabel: "Finance & Z-Report", pillLabel: "💰 Finance" },
   { href: "/crm", permission: "crm.read", topbarLabel: "Customers & Loyalty", pillLabel: "🎁 Customers" },
   { href: "/marketing", permission: "crm.write", topbarLabel: "Marketing Campaigns", pillLabel: "📣 Marketing" },
-  { href: "/user-management", permission: "users.manage", topbarLabel: "User & Role Management", pillLabel: "🧑‍💼 Users & Roles" },
+  { href: "/user-management", permission: "users.manage", topbarLabel: "User Management", pillLabel: "🧑‍💼 Users" },
+  { href: "/role-management", permission: "users.manage", topbarLabel: "Role Management", pillLabel: "🛡️ Roles" },
 ];
 
 export type NavVariant = "topbar" | "pill" | "sidebar";
@@ -153,7 +154,8 @@ export const SIDEBAR_GROUPS: SidebarGroupDef[] = [
       // alwaysVisible: these two were the "I can't find it" incidents this
       // session. They must stay reachable from the POS terminal drawer even
       // for roles without users.manage / settings.manage.
-      { href: "/user-management", permission: "users.manage", label: "User & Role Management", alwaysVisible: true },
+      { href: "/user-management", permission: "users.manage", label: "User Management", alwaysVisible: true },
+      { href: "/role-management", permission: "users.manage", label: "Role Management", alwaysVisible: true },
       { href: "/settings/company", permission: "settings.manage", label: "Company Details", alwaysVisible: true },
       // pages/table-management.tsx guards on menu.category.manage
       { href: "/table-management", permission: "menu.category.manage", label: "Table Management" },

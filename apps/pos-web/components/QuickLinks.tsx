@@ -17,7 +17,8 @@ const SUGGESTED_PAGES: { href: string; label: string }[] = [
   { href: "/admin", label: "Sales Analytics" },
   { href: "/finance", label: "Finance & Z-Report" },
   { href: "/crm", label: "Customers & Loyalty" },
-  { href: "/user-management", label: "User & Role Management" },
+  { href: "/user-management", label: "User Management" },
+  { href: "/role-management", label: "Role Management" },
 ];
 
 // Real response shape of GET/POST /quick-links (UserQuickLink rows scoped to

@@ -6,6 +6,7 @@ import MoveKotModal from "./MoveKotModal";
 import AddTableModal from "./AddTableModal";
 import A2aAgentStatusDrawer from "./A2aAgentStatusDrawer";
 import HeldOrdersDrawer, { HeldOrderData } from "./HeldOrdersDrawer";
+import { useChannelOperations } from "../lib/channelOperations";
 
 interface TableItem {
   id: string;
@@ -37,6 +38,7 @@ export default function TableViewFloor({
   onNavigatePickup,
 }: TableViewFloorProps) {
   const router = useRouter();
+  const { deliveryActive, takeawayActive } = useChannelOperations();
   const [tables, setTables] = useState<TableItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -435,24 +437,30 @@ export default function TableViewFloor({
 
           <button
             type="button"
-            className="btn-delivery-jump"
+            className={`btn-delivery-jump ${!deliveryActive ? "disabled-channel" : ""}`}
+            disabled={!deliveryActive}
+            title={!deliveryActive ? "Delivery is paused in Store Operations" : "Delivery"}
             onClick={() => {
+              if (!deliveryActive) return;
               if (onNavigateDelivery) onNavigateDelivery();
               else router.push("/orders?tab=online");
             }}
           >
-            Delivery
+            Delivery {!deliveryActive && "(Paused)"}
           </button>
 
           <button
             type="button"
-            className="btn-pickup-jump"
+            className={`btn-pickup-jump ${!takeawayActive ? "disabled-channel" : ""}`}
+            disabled={!takeawayActive}
+            title={!takeawayActive ? "Takeaway & Direct Pickup is paused in Store Operations" : "Pick Up"}
             onClick={() => {
+              if (!takeawayActive) return;
               if (onNavigatePickup) onNavigatePickup();
               else router.push("/?mode=PICKUP");
             }}
           >
-            Pick Up
+            Pick Up {!takeawayActive && "(Paused)"}
           </button>
         </div>
       </div>
@@ -980,6 +988,12 @@ export default function TableViewFloor({
           font-size: 0.75rem;
           font-weight: 700;
           cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .btn-delivery-jump:disabled, .btn-pickup-jump:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+          background: #94a3b8;
         }
 
         .floor-matrix-scroll {

@@ -673,13 +673,40 @@ export class PrismaOrderRepository implements OrderRepository {
         data: { isVoided: true, voidedBy: userId, voidReason: reasonCode },
       });
 
-      await tx.order.update({
-        where: { id: orderId },
-        data: {
-          subtotal: { decrement: item.subtotal },
-          grandTotal: { decrement: item.subtotal },
-        },
+      const remainingItems = await tx.orderItem.findMany({
+        where: { orderId, outletId, isVoided: false },
       });
+
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+      });
+
+      if (remainingItems.length === 0) {
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            subtotal: 0n,
+            taxTotal: 0n,
+            grandTotal: 0n,
+            status: "CANCELLED",
+          },
+        });
+      } else {
+        const remainingSubtotal = remainingItems.reduce((acc, it) => acc + (it.subtotal || 0n), 0n);
+        const originalSubtotal = (order?.subtotal || 1n) > 0n ? order!.subtotal : 1n;
+        const currentTax = order?.taxTotal || 0n;
+        const remainingTax = (currentTax * remainingSubtotal) / originalSubtotal;
+        const remainingGrandTotal = remainingSubtotal + remainingTax + (order?.tipTotal || 0n) + (order?.serviceChargeTotal || 0n) - (order?.discountTotal || 0n);
+
+        await tx.order.update({
+          where: { id: orderId },
+          data: {
+            subtotal: remainingSubtotal,
+            taxTotal: remainingTax,
+            grandTotal: remainingGrandTotal > 0n ? remainingGrandTotal : 0n,
+          },
+        });
+      }
 
       await writeAuditLog(tx, {
         outletId,

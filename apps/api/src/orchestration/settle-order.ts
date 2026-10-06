@@ -163,6 +163,20 @@ export async function settleOrderCommand(
     throw new Error(`Cannot settle order in status ${order.status}`);
   }
 
+  // Strict restaurant policy: When order has unserved KOTs in kitchen, cannot settle or accept payment
+  const unservedKots = await prisma.kOTTicket.findMany({
+    where: {
+      orderId,
+      outletId,
+      status: { in: ["QUEUED", "PREPARING", "READY"] },
+    },
+  });
+  if (unservedKots.length > 0) {
+    throw new Error(
+      `Cannot take payment or settle bill: Order has ${unservedKots.length} unserved KOT item(s) in kitchen. All items must be marked as served to table before payment can be accepted.`
+    );
+  }
+
   const isTakeaway = order.orderType === "PICKUP" || String(order.orderType) === "TAKEAWAY";
   const statusChain = isTakeaway ? TAKEAWAY_CHAIN : DINE_CHAIN;
   const terminal = new Set(["COMPLETED", "CANCELLED", "FAILED"]);

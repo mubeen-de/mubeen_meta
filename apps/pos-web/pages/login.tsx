@@ -3,6 +3,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { login, logout } from "../lib/auth";
 import CaptainPinLoginModal from "../components/CaptainPinLoginModal";
+import ForgotPasswordModal from "../components/ForgotPasswordModal";
 
 // Human-readable messages for LoginFailure["reason"] (packages/shared-types/auth.ts).
 const ERROR_MESSAGES: Record<string, string> = {
@@ -78,6 +79,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [activeRoleKey, setActiveRoleKey] = useState<string | null>(null);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false);
 
   const performLogin = async (eMail: string, pass: string, outId: string, targetPath = "/") => {
     setError(null);
@@ -174,7 +176,13 @@ export default function LoginPage() {
               <label className="field-label" htmlFor="password">
                 Password
               </label>
-              <span className="forgot-password">Forgot Password?</span>
+              <button
+                type="button"
+                className="forgot-password"
+                onClick={() => setIsForgotPasswordModalOpen(true)}
+              >
+                Forgot Password?
+              </button>
             </div>
             <div className="input-wrapper">
               <span className="input-icon">🔒</span>
@@ -262,6 +270,18 @@ export default function LoginPage() {
           router.push("/waiter");
         }}
         outletId={outletId}
+      />
+
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordModalOpen}
+        onClose={() => setIsForgotPasswordModalOpen(false)}
+        initialEmail={email}
+        initialOutletId={outletId}
+        onFillAndLogin={(fillEmail, fillPass) => {
+          setEmail(fillEmail);
+          setPassword(fillPass);
+          performLogin(fillEmail, fillPass, outletId, "/");
+        }}
       />
 
       <style jsx>{`
@@ -358,13 +378,18 @@ export default function LoginPage() {
         }
 
         .forgot-password {
+          background: transparent;
+          border: none;
+          padding: 0;
           font-size: 12px;
           font-weight: 600;
           color: #2563eb;
           cursor: pointer;
+          transition: color 0.15s ease;
         }
 
         .forgot-password:hover {
+          color: #1d4ed8;
           text-decoration: underline;
         }
 

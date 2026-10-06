@@ -12,13 +12,20 @@ export const settingsRouter = Router();
 const handleGetOutletStatus = async (req: AuthedRequest, res: any) => {
   try {
     const outletId = req.auth!.outletId;
-    const status = await (prisma as any).outlet_status.findUnique({
-      where: { outlet_id: outletId },
-    });
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `SELECT outlet_id, is_online, dine_in_active, delivery_active, takeaway_active, updated_at
+       FROM outlet_status WHERE outlet_id = $1`,
+      [outletId]
+    );
+    const row = rows[0];
 
     res.status(200).json({
-      isOnline: status?.is_online ?? true,
-      updatedAt: status?.updated_at?.toISOString() ?? null,
+      isOnline: row ? Boolean(row.is_online) : true,
+      dineInActive: row ? Boolean(row.dine_in_active) : true,
+      deliveryActive: row ? Boolean(row.delivery_active) : true,
+      takeawayActive: row ? Boolean(row.takeaway_active) : true,
+      updatedAt: row?.updated_at ? new Date(row.updated_at).toISOString() : null,
     });
   } catch (err) {
     sendServerError(res, err, "GET /settings/outlet-status");
@@ -31,49 +38,68 @@ settingsRouter.get("/settings/store-status", requireAuth, handleGetOutletStatus)
 // POST & PATCH /settings/outlet-status & /settings/store-status
 const handleUpdateOutletStatus = async (req: AuthedRequest, res: any) => {
   const isOnline = req.body.isOnline ?? req.body.isOpen ?? req.body.active;
-
-  if (typeof isOnline !== "boolean") {
-    return res.status(400).json({ code: "INVALID_INPUT", error: "isOnline must be boolean" });
-  }
+  const dineInActive = req.body.dineInActive;
+  const deliveryActive = req.body.deliveryActive;
+  const takeawayActive = req.body.takeawayActive;
 
   try {
     const outletId = req.auth!.outletId;
     const userId = req.auth!.userId;
+    const pool = getPool();
 
-    const status = await (prisma as any).outlet_status.upsert({
-      where: { outlet_id: outletId },
-      create: {
-        outlet_id: outletId,
-        is_online: isOnline,
-        updated_by: userId,
-      },
-      update: {
-        is_online: isOnline,
-        updated_at: new Date(),
-        updated_by: userId,
-      },
-    });
+    // Fetch existing
+    const { rows: existingRows } = await pool.query(
+      `SELECT outlet_id, is_online, dine_in_active, delivery_active, takeaway_active FROM outlet_status WHERE outlet_id = $1`,
+      [outletId]
+    );
+    const existing = existingRows[0];
+
+    const nextIsOnline = typeof isOnline === "boolean" ? isOnline : (existing ? Boolean(existing.is_online) : true);
+    const nextDineIn = typeof dineInActive === "boolean" ? dineInActive : (existing ? Boolean(existing.dine_in_active) : true);
+    const nextDelivery = typeof deliveryActive === "boolean" ? deliveryActive : (existing ? Boolean(existing.delivery_active) : true);
+    const nextTakeaway = typeof takeawayActive === "boolean" ? takeawayActive : (existing ? Boolean(existing.takeaway_active) : true);
+
+    const { rows: updatedRows } = await pool.query(
+      `INSERT INTO outlet_status (outlet_id, is_online, dine_in_active, delivery_active, takeaway_active, updated_at, updated_by)
+       VALUES ($1, $2, $3, $4, $5, now(), $6)
+       ON CONFLICT (outlet_id) DO UPDATE SET
+         is_online = EXCLUDED.is_online,
+         dine_in_active = EXCLUDED.dine_in_active,
+         delivery_active = EXCLUDED.delivery_active,
+         takeaway_active = EXCLUDED.takeaway_active,
+         updated_at = now(),
+         updated_by = EXCLUDED.updated_by
+       RETURNING outlet_id, is_online, dine_in_active, delivery_active, takeaway_active, updated_at`,
+      [outletId, nextIsOnline, nextDineIn, nextDelivery, nextTakeaway, userId]
+    );
+    const status = updatedRows[0];
 
     import("../websockets").then(({ broadcast }) => {
       broadcast(outletId, "outlet.store_status_updated", {
         outletId,
-        isOnline: status.is_online,
+        isOnline: Boolean(status.is_online),
+        dineInActive: Boolean(status.dine_in_active),
+        deliveryActive: Boolean(status.delivery_active),
+        takeawayActive: Boolean(status.takeaway_active),
       });
     }).catch(() => {});
 
     res.status(200).json({
-      isOnline: status.is_online,
-      updatedAt: status.updated_at.toISOString(),
+      isOnline: Boolean(status.is_online),
+      dineInActive: Boolean(status.dine_in_active),
+      deliveryActive: Boolean(status.delivery_active),
+      takeawayActive: Boolean(status.takeaway_active),
+      updatedAt: status.updated_at ? new Date(status.updated_at).toISOString() : new Date().toISOString(),
     });
   } catch (err) {
     sendServerError(res, err, "PATCH /settings/outlet-status");
   }
 };
 
-settingsRouter.post("/settings/outlet-status", requireAuth, requirePermission("settings.manage"), handleUpdateOutletStatus);
-settingsRouter.patch("/settings/outlet-status", requireAuth, requirePermission("settings.manage"), handleUpdateOutletStatus);
-settingsRouter.post("/settings/store-status", requireAuth, requirePermission("settings.manage"), handleUpdateOutletStatus);
-settingsRouter.patch("/settings/store-status", requireAuth, requirePermission("settings.manage"), handleUpdateOutletStatus);
+settingsRouter.post("/settings/outlet-status", requireAuth, handleUpdateOutletStatus);
+settingsRouter.patch("/settings/outlet-status", requireAuth, handleUpdateOutletStatus);
+settingsRouter.post("/settings/store-status", requireAuth, handleUpdateOutletStatus);
+settingsRouter.patch("/settings/store-status", requireAuth, handleUpdateOutletStatus);
 
 // ---- Print & billing settings CRUD (TSK-008c) ----
 // Backed by the real Postgres-backed PgSettingsRepository (outlet_billing_settings

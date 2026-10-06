@@ -44,7 +44,7 @@ const migrationLogPath = path.join(logDir, 'database', `migration-${currentDate}
 console.log('\x1b[36m[1/4] Verifying database schema and applying migrations...\x1b[0m');
 try {
   execSync(
-    'powershell.exe -NoProfile -Command "if (!(Test-NetConnection -ComputerName 127.0.0.1 -Port 5432 -InformationLevel Quiet)) { if (Test-Path \'C:\\Program Files\\PostgreSQL\\16\\bin\\pg_ctl.exe\') { & \'C:\\Program Files\\PostgreSQL\\16\\bin\\pg_ctl.exe\' start -D \'C:\\Program Files\\PostgreSQL\\16\\data\' -w -t 10 } }"',
+    'powershell.exe -NoProfile -Command "if (!(Test-NetConnection -ComputerName 127.0.0.1 -Port 5432 -InformationLevel Quiet)) { if (Test-Path \'C:\\Program Files\\PostgreSQL\\16\\data\\postmaster.pid\') { $p = (Get-Content \'C:\\Program Files\\PostgreSQL\\16\\data\\postmaster.pid\' -TotalCount 1); if (!(Get-Process -Id $p -ErrorAction SilentlyContinue)) { Remove-Item \'C:\\Program Files\\PostgreSQL\\16\\data\\postmaster.pid\' -Force } }; if (Test-Path \'C:\\Program Files\\PostgreSQL\\16\\bin\\pg_ctl.exe\') { & \'C:\\Program Files\\PostgreSQL\\16\\bin\\pg_ctl.exe\' start -D \'C:\\Program Files\\PostgreSQL\\16\\data\' -o \'-h localhost\' -w -t 60 } }"',
     { cwd: rootDir, stdio: 'ignore' }
   );
 } catch (_) {}

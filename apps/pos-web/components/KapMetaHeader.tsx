@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { authedFetch, fetchMe, logout, type MeResponse } from "../lib/auth";
+import { useChannelOperations } from "../lib/channelOperations";
 import QuickSearchModal from "./QuickSearchModal";
 import ItemToggleModal from "./ItemToggleModal";
 import HoldOrdersDrawer from "./HoldOrdersDrawer";
@@ -36,10 +37,16 @@ export default function KapMetaHeader({
   const [isHoldOpen, setIsHoldOpen] = useState(false);
   const [showStoreModal, setShowStoreModal] = useState(false);
   const [showAlertsModal, setShowAlertsModal] = useState(false);
-  const [isStoreOnline, setIsStoreOnline] = useState(true);
-  const [dineInActive, setDineInActive] = useState(true);
-  const [deliveryActive, setDeliveryActive] = useState(true);
-  const [takeawayActive, setTakeawayActive] = useState(true);
+  const {
+    isOnline: isStoreOnline,
+    dineInActive,
+    deliveryActive,
+    takeawayActive,
+    toggleStore: handleToggleStore,
+    toggleDineIn,
+    toggleDelivery,
+    toggleTakeaway,
+  } = useChannelOperations();
   const [liveViewActive, setLiveViewActive] = useState(true);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showMenuDrawer, setShowMenuDrawer] = useState(false);
@@ -153,15 +160,6 @@ export default function KapMetaHeader({
       .catch(() => {});
 
     fetchLiveNotifications();
-
-    authedFetch("/settings/store-status")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && typeof data.isOnline === "boolean") {
-          setIsStoreOnline(data.isOnline);
-        }
-      })
-      .catch(() => {});
   }, []);
 
   const unreadAlertsCount = notifications.filter((n) => !n.isRead).length;
@@ -169,20 +167,6 @@ export default function KapMetaHeader({
   const markAllAlertsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     authedFetch("/notifications/read-all", { method: "POST" }).catch(() => {});
-  };
-
-  const handleToggleStore = async () => {
-    const next = !isStoreOnline;
-    setIsStoreOnline(next);
-    try {
-      await authedFetch("/settings/store-status", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isOnline: next }),
-      });
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const dismissAlert = (id: string) => {
@@ -742,7 +726,7 @@ export default function KapMetaHeader({
                 <button
                   type="button"
                   className={`channel-pill-btn ${dineInActive ? "active" : "inactive"}`}
-                  onClick={() => setDineInActive(!dineInActive)}
+                  onClick={toggleDineIn}
                 >
                   {dineInActive ? "Active" : "Paused"}
                 </button>
@@ -759,7 +743,7 @@ export default function KapMetaHeader({
                 <button
                   type="button"
                   className={`channel-pill-btn ${deliveryActive ? "active" : "inactive"}`}
-                  onClick={() => setDeliveryActive(!deliveryActive)}
+                  onClick={toggleDelivery}
                 >
                   {deliveryActive ? "Active" : "Paused"}
                 </button>
@@ -776,7 +760,7 @@ export default function KapMetaHeader({
                 <button
                   type="button"
                   className={`channel-pill-btn ${takeawayActive ? "active" : "inactive"}`}
-                  onClick={() => setTakeawayActive(!takeawayActive)}
+                  onClick={toggleTakeaway}
                 >
                   {takeawayActive ? "Active" : "Paused"}
                 </button>

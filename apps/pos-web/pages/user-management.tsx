@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import { authedFetch, useAuthGuard } from "../lib/auth";
 import Nav from "../components/Nav";
 
@@ -105,12 +107,22 @@ export default function UserManagement() {
 
   const canManageUsers = Boolean(
     me?.roles?.some((r) =>
-      ["SUPER_ADMIN", "SUPERADMIN", "OWNER", "ADMIN"].includes(r.toUpperCase())
+      ["SUPER_ADMIN", "SUPERADMIN", "OWNER", "ADMIN", "OUTLET_MANAGER", "MANAGER"].includes(r.toUpperCase())
     ) || me?.permissions?.includes("users.manage")
   );
 
-  // Tab State: "users" or "reports"
-  const [activeTab, setActiveTab] = useState<"users" | "reports">("reports");
+  const router = useRouter();
+
+  // Tab State: "users" or "reports" (default to users)
+  const [activeTab, setActiveTab] = useState<"users" | "reports">("users");
+
+  useEffect(() => {
+    if (router.query.tab === "reports") {
+      setActiveTab("reports");
+    } else if (router.query.tab === "users") {
+      setActiveTab("users");
+    }
+  }, [router.query.tab]);
 
   // Users & Roles state
   const [users, setUsers] = useState<UserApi[]>([]);
@@ -768,10 +780,10 @@ export default function UserManagement() {
                 {/* Header Greeting & Tab Switcher */}
                 <section className="dashboard-greeting-row">
                   <div>
-                    <span className="breadcrumb-line">Management &gt; User &amp; Role Management &gt; Operations Analytics</span>
-                    <h1 className="greeting-title">User, Role &amp; Operations Reports</h1>
+                    <span className="breadcrumb-line">Management &gt; User Management</span>
+                    <h1 className="greeting-title">Staff &amp; User Accounts Management</h1>
                     <p className="greeting-subtitle">
-                      Inspect granular reports for every operational piece: Customer sales, top selling menu items, staff revenue performance, and role-based access with full View &amp; Download capabilities.
+                      Manage staff profiles, assign outlet roles, configure 4-digit PINs, and audit operational activity.
                     </p>
                   </div>
 
@@ -786,24 +798,47 @@ export default function UserManagement() {
                     <button className="export-action-btn" onClick={triggerPrint}>
                       🖨️ Print / PDF
                     </button>
+                    <Link
+                      href="/role-management"
+                      className="export-action-btn"
+                      style={{
+                        textDecoration: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        background: "#4f46e5",
+                        borderColor: "#6366f1",
+                        color: "#ffffff",
+                      }}
+                    >
+                      🛡️ Role Management →
+                    </Link>
                   </div>
                 </section>
 
                 {/* Primary Tab Navigation */}
                 <div className="tabs-header-container">
                   <button
+                    className={`tab-item-btn ${activeTab === "users" ? "active" : ""}`}
+                    onClick={() => setActiveTab("users")}
+                  >
+                    🧑‍💼 Staff &amp; User Accounts
+                    <span className="tab-pill">{users.length}</span>
+                  </button>
+                  <Link
+                    href="/role-management"
+                    className="tab-item-btn"
+                    style={{ textDecoration: "none" }}
+                  >
+                    🛡️ RBAC Roles &amp; Permissions
+                    <span className="tab-pill">{roles.length}</span>
+                  </Link>
+                  <button
                     className={`tab-item-btn ${activeTab === "reports" ? "active" : ""}`}
                     onClick={() => setActiveTab("reports")}
                   >
                     📊 Complete Operations Reports &amp; Analytics
                     <span className="tab-pill">Live</span>
-                  </button>
-                  <button
-                    className={`tab-item-btn ${activeTab === "users" ? "active" : ""}`}
-                    onClick={() => setActiveTab("users")}
-                  >
-                    🧑‍💼 User Accounts &amp; Roles Security
-                    <span className="tab-pill">{users.length}</span>
                   </button>
                 </div>
 
@@ -1468,6 +1503,27 @@ export default function UserManagement() {
                             <div>
                               <h3>Staff Accounts Directory</h3>
                               <p className="panel-sub">Real database staff records with outlet and role assignments</p>
+                              {!canManageUsers && (
+                                <div
+                                  style={{
+                                    background: "rgba(59, 130, 246, 0.12)",
+                                    border: "1px solid rgba(59, 130, 246, 0.3)",
+                                    borderRadius: "6px",
+                                    padding: "6px 12px",
+                                    marginTop: "6px",
+                                    fontSize: "0.82rem",
+                                    color: "#93c5fd",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                  }}
+                                >
+                                  <span>🔒</span>
+                                  <span>
+                                    <strong>Read-Only Mode:</strong> Adding staff requires Administrator privileges. Sign in as <strong>admin@hotelkapila.com</strong> to add or edit accounts.
+                                  </span>
+                                </div>
+                              )}
                             </div>
                             <div className="panel-actions">
                               <button
@@ -1490,7 +1546,7 @@ export default function UserManagement() {
                               >
                                 📥 Download Users CSV
                               </button>
-                              {canManageUsers && (
+                              {canManageUsers ? (
                                 <button
                                   className="add-user-btn"
                                   onClick={() => {
@@ -1499,6 +1555,24 @@ export default function UserManagement() {
                                   }}
                                 >
                                   + Add Staff Member
+                                </button>
+                              ) : (
+                                <button
+                                  className="add-user-btn"
+                                  style={{
+                                    background: "#334155",
+                                    borderColor: "#475569",
+                                    color: "#94a3b8",
+                                    cursor: "pointer",
+                                  }}
+                                  title="Admin account required to add new staff"
+                                  onClick={() => {
+                                    alert(
+                                      "Admin Access Required:\n\nAdding new staff members is restricted to Administrator accounts.\n\nPlease log out and sign in using the Admin account:\n• Email: admin@hotelkapila.com\n• Password: password123"
+                                    );
+                                  }}
+                                >
+                                  🔒 + Add Staff Member
                                 </button>
                               )}
                             </div>
@@ -1668,110 +1742,60 @@ export default function UserManagement() {
                           </div>
                         </section>
 
-                        {/* Roles & Permissions Table */}
-                        <section className="panel-card invoices-table-card">
-                          <div className="panel-header">
-                            <div>
-                              <h3>RBAC Roles &amp; Permission Schemes</h3>
-                              <p className="panel-sub">Role definitions mapped directly to granular RolePermission DB table</p>
+                        {/* Role Management Section Link & Quick Summary */}
+                        <section
+                          style={{
+                            marginTop: "20px",
+                            padding: "20px 24px",
+                            background: "#1e293b",
+                            borderRadius: "12px",
+                            border: "1px solid #334155",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                            gap: "16px",
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                              <span style={{ fontSize: "1.2rem" }}>🛡️</span>
+                              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#f8fafc" }}>
+                                RBAC Roles &amp; Permissions Management
+                              </h3>
+                              <span className="counter-pill">{roles.length} Roles Defined</span>
                             </div>
-                            <div className="panel-actions">
-                              <button
-                                className="btn-download csv"
-                                onClick={() =>
-                                  exportToCsv(
-                                    "RBAC_Roles_Matrix",
-                                    ["Role ID", "Role Name", "Description", "Assigned Users Count"],
-                                    roles.map((r) => {
-                                      const assignedCount = users.filter((u) => u.userRoles.some((ur) => ur.roleId === r.id)).length;
-                                      return [r.id, r.name, r.description || "", assignedCount];
-                                    })
-                                  )
-                                }
-                              >
-                                📥 Download Roles CSV
-                              </button>
-                              {canManageUsers && (
-                                <button className="add-user-btn" onClick={openCreateRole}>
-                                  + New Role
-                                </button>
-                              )}
-                            </div>
+                            <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.82rem", maxWidth: "680px", lineHeight: "1.5" }}>
+                              System roles and granular permission matrices are organized in the dedicated Role Management section. Create custom roles, toggle fine-grained permission flags, and audit assigned staff.
+                            </p>
                           </div>
-
-                          <div className="table-responsive">
-                            <table className="clean-table">
-                              <thead>
-                                <tr>
-                                  <th>Role Name</th>
-                                  <th>Description</th>
-                                  <th>Assigned Staff</th>
-                                  <th style={{ textAlign: "right" }}>Actions</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {roles.map((role) => {
-                                  const assignedCount = users.filter((u) => u.userRoles.some((ur) => ur.roleId === role.id)).length;
-                                  return (
-                                    <tr key={role.id}>
-                                      <td><strong>{role.name}</strong></td>
-                                      <td>{role.description || <span className="no-roles">—</span>}</td>
-                                      <td><span className="counter-pill">{assignedCount} users</span></td>
-                                      <td style={{ textAlign: "right" }}>
-                                        <div style={{ display: "inline-flex", gap: "6px" }}>
-                                          <button
-                                            className="btn-table-action view"
-                                            onClick={() => {
-                                              const assignedUsers = users
-                                                .filter((u) => u.userRoles.some((ur) => ur.roleId === role.id))
-                                                .map((u) => `${u.firstName} ${u.lastName} (${u.email})`);
-                                              setViewModalData({
-                                                title: `Role Matrix: ${role.name}`,
-                                                subtitle: `Role ID: ${role.id}`,
-                                                details: [
-                                                  { label: "Role Title", value: role.name },
-                                                  { label: "Role Description", value: role.description || "General RBAC Security Role" },
-                                                  { label: "Total Users Bound", value: `${assignedCount} users` },
-                                                  {
-                                                    label: "Assigned Staff List",
-                                                    value: assignedUsers.length > 0 ? (
-                                                      <ul style={{ paddingLeft: "18px", margin: "4px 0" }}>
-                                                        {assignedUsers.map((name, i) => (
-                                                          <li key={i}>{name}</li>
-                                                        ))}
-                                                      </ul>
-                                                    ) : (
-                                                      "No staff members currently assigned"
-                                                    ),
-                                                  },
-                                                ],
-                                              });
-                                            }}
-                                          >
-                                            👁️ View
-                                          </button>
-                                          {canManageUsers && (
-                                            <>
-                                              <button className="edit-btn" onClick={() => openEditRole(role)}>
-                                                ✏️ Edit
-                                              </button>
-                                              <button
-                                                className="delete-btn"
-                                                disabled={deletingRoleId === role.id || assignedCount > 0}
-                                                onClick={() => deleteRole(role.id)}
-                                                title={assignedCount > 0 ? "Revoke from all users first" : undefined}
-                                              >
-                                                🗑️
-                                              </button>
-                                            </>
-                                          )}
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+                          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                            {canManageUsers && (
+                              <button
+                                className="add-user-btn"
+                                onClick={openCreateRole}
+                                style={{ background: "#334155", border: "1px solid #475569" }}
+                              >
+                                + Quick Role
+                              </button>
+                            )}
+                            <Link
+                              href="/role-management"
+                              style={{
+                                background: "#4f46e5",
+                                color: "#ffffff",
+                                padding: "8px 18px",
+                                borderRadius: "8px",
+                                textDecoration: "none",
+                                fontWeight: 700,
+                                fontSize: "0.82rem",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                              }}
+                            >
+                              Open Role Management Page →
+                            </Link>
                           </div>
                         </section>
                       </>

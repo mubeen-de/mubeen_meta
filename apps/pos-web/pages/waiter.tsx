@@ -924,13 +924,14 @@ export default function WaiterDashboard() {
 
   const manageOrderTotal = useMemo(() => {
     if (!manageOrder) return 0;
-    if (manageOrder.grandTotalMinor) return Number(manageOrder.grandTotalMinor);
-    if (manageOrder.items && Array.isArray(manageOrder.items)) {
-      return manageOrder.items
-        .filter((i: any) => !i.isVoided)
-        .reduce((sum: number, i: any) => sum + Number(i.subtotalMinor || (Number(i.unitPriceMinor || 0) * (Number(i.quantity) || 1)) || 0), 0);
-    }
-    return 0;
+    const activeItems = (manageOrder.items && Array.isArray(manageOrder.items))
+      ? manageOrder.items.filter((i: any) => !i.isVoided)
+      : [];
+    if (activeItems.length === 0) return 0;
+    return activeItems.reduce(
+      (sum: number, i: any) => sum + Number(i.subtotalMinor || (Number(i.unitPriceMinor || 0) * (Number(i.quantity) || 1)) || 0),
+      0
+    );
   }, [manageOrder]);
 
   const cartTotal = useMemo(() => {
@@ -2119,7 +2120,7 @@ export default function WaiterDashboard() {
 
                   {/* Order Bill Summary */}
                   <div className="border-t border-slate-800 pt-3 flex flex-col gap-1.5">
-                    {manageOrder && (
+                    {manageOrder && manageOrderTotal > 0 && (
                       <div className="flex justify-between items-center text-xs text-slate-400">
                         <span>Running Order (Fired):</span>
                         <span className="font-semibold text-slate-200">₹{(manageOrderTotal / 100).toFixed(2)}</span>

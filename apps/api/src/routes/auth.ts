@@ -422,4 +422,53 @@ router.post("/verify-pin", requireAuth, async (req: AuthedRequest, res) => {
   }
 });
 
+// Self-service password recovery / reset request endpoint
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body as { email?: string; outletId?: string };
+    if (!email || typeof email !== "string") {
+      res.status(400).json({ error: "Email is required" });
+      return;
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: cleanEmail, mode: "insensitive" } },
+      include: { userRoles: { include: { role: true } } },
+    });
+
+    const isDemo = cleanEmail.endsWith("@hotelkapila.com");
+
+    if (!user) {
+      res.status(200).json({
+        ok: true,
+        isDemo,
+        defaultPassword: isDemo ? "password123" : undefined,
+        message: isDemo
+          ? "This is a platform demo account. Default password is 'password123'."
+          : "If an account exists with this email, a notification has been logged for your Outlet Manager.",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      ok: true,
+      isDemo,
+      defaultPassword: isDemo ? "password123" : undefined,
+      message: isDemo
+        ? "This is a platform demo account. Default password is 'password123'."
+        : "Password recovery request submitted. For POS terminal security, your Outlet Manager can also reset your credentials in User Management.",
+      user: {
+        email: user.email,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Staff Member",
+        role: user.userRoles?.[0]?.role?.name || "Staff",
+      },
+    });
+  } catch (err: any) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ error: "internal error" });
+  }
+});
+
 export const authRouter = router;
+

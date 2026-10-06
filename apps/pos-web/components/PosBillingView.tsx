@@ -16,6 +16,7 @@ import CustomerCrmModal, { CustomerData } from "./CustomerCrmModal";
 import PosDiscountModal from "./PosDiscountModal";
 import PosKeyboardShortcutsModal from "./PosKeyboardShortcutsModal";
 import { posAudio } from "../lib/posAudio";
+import { useChannelOperations } from "../lib/channelOperations";
 
 interface MenuItem {
   id: string;
@@ -62,7 +63,43 @@ export default function PosBillingView({
   onBackToTables,
 }: PosBillingViewProps) {
   const router = useRouter();
+  const {
+    isOnline: isStoreOnline,
+    dineInActive,
+    deliveryActive,
+    takeawayActive,
+  } = useChannelOperations();
+
   const [orderMode, setOrderMode] = useState<"DINE_IN" | "DELIVERY" | "PICKUP">(initialMode);
+
+  // If currently selected order mode gets paused in Store Operations, auto-switch to an active channel
+  useEffect(() => {
+    if (!takeawayActive && orderMode === "PICKUP") {
+      if (dineInActive) {
+        setOrderMode("DINE_IN");
+        setShowCustomerPanel(false);
+      } else if (deliveryActive) {
+        setOrderMode("DELIVERY");
+        setShowCustomerPanel(true);
+      }
+    } else if (!deliveryActive && orderMode === "DELIVERY") {
+      if (dineInActive) {
+        setOrderMode("DINE_IN");
+        setShowCustomerPanel(false);
+      } else if (takeawayActive) {
+        setOrderMode("PICKUP");
+        setShowCustomerPanel(true);
+      }
+    } else if (!dineInActive && orderMode === "DINE_IN") {
+      if (takeawayActive) {
+        setOrderMode("PICKUP");
+        setShowCustomerPanel(true);
+      } else if (deliveryActive) {
+        setOrderMode("DELIVERY");
+        setShowCustomerPanel(true);
+      }
+    }
+  }, [takeawayActive, deliveryActive, dineInActive, orderMode]);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [dietaryFilter, setDietaryFilter] = useState<DietaryFilter>("ALL");
@@ -93,6 +130,23 @@ export default function PosBillingView({
     createdAt: string;
     items: Array<{ id: string; name: string; quantity: number; status: string }>;
   }>>([]);
+  const [tableKitchenStage, setTableKitchenStage] = useState<string | null>(null);
+
+  // Strict restaurant rule: Customer cannot pay and cashier cannot collect bill amount while order is in KOT (unserved in kitchen)
+  const hasUnservedKots = useMemo(() => {
+    if (tableKots.length > 0) {
+      return tableKots.some((kot) =>
+        ["QUEUED", "KOT_CREATED", "PENDING", "PREPARING", "IN_PREPARATION", "COOKING", "READY"].includes(kot.status)
+      );
+    }
+    if (tableKitchenStage && ["QUEUED", "COOKING", "READY"].includes(tableKitchenStage)) {
+      return true;
+    }
+    if (runningItems.length > 0 && activeOrder?.status !== "SERVED" && activeOrder?.status !== "COMPLETED") {
+      return true;
+    }
+    return false;
+  }, [tableKots, tableKitchenStage, runningItems, activeOrder]);
 
   // Payment & Settlement
   const [paymentMethod, setPaymentMethod] = useState<string>("CASH");
@@ -472,6 +526,7 @@ export default function PosBillingView({
         if (matched) {
           setTableNumber(matched.tableNumber);
           setTableSection(matched.section || "Main Dining");
+          setTableKitchenStage(matched.kitchenStage || null);
 
           
           if (matched.activeOrderId) {
@@ -544,6 +599,7 @@ export default function PosBillingView({
               setActiveOrder(null);
               setRunningItems([]);
               setTableKots([]);
+              setTableKitchenStage(null);
             }
           }
         }
@@ -557,6 +613,7 @@ export default function PosBillingView({
     try {
       const res = await authedFetch(`/kitchen/kot/${kotId}/status`, {
         method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toStatus: "SERVED" }),
       });
       if (res.ok) {
@@ -572,9 +629,34 @@ export default function PosBillingView({
           )
         );
         await loadActiveTableOrder();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || "Failed to mark KOT served");
       }
     } catch (e) {
       console.error("Failed to serve KOT", e);
+    }
+  };
+
+  const handleServeAllKots = async () => {
+    try {
+      setProcessingOrder(true);
+      const unserved = tableKots.filter((k) => k.status !== "SERVED");
+      for (const kot of unserved) {
+        await authedFetch(`/kitchen/kot/${kot.id}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ toStatus: "SERVED" }),
+        });
+      }
+      if (initialTableId) {
+        await authedFetch(`/tables/${initialTableId}/serve`, { method: "POST" }).catch(() => {});
+      }
+      await loadActiveTableOrder();
+    } catch (e) {
+      console.error("Failed to serve all KOTs", e);
+    } finally {
+      setProcessingOrder(false);
     }
   };
 
@@ -801,6 +883,10 @@ export default function PosBillingView({
   const handlePrintAndEBill = async () => {
     if (cart.length === 0 && runningItems.length === 0) {
       alert("Please select items or open a running table to print bill.");
+      return;
+    }
+    if (hasUnservedKots) {
+      alert("⚠️ Cannot take bill amount: Order has active items in kitchen (KOT).\n\nCustomer cannot pay until all food items have been served to the table.");
       return;
     }
     setProcessingOrder(true);
@@ -1148,37 +1234,53 @@ export default function PosBillingView({
 
         {/* Column 3: Cart, Ticket & Settlement */}
         <div className="pos-cart-panel">
+          {/* Store Offline Warning Banner if paused */}
+          {!isStoreOnline && (
+            <div style={{ background: "#fef2f2", color: "#b91c1c", padding: "6px 10px", fontSize: "0.72rem", fontWeight: 700, textAlign: "center", borderBottom: "1px solid #fecaca" }}>
+              ⚠️ STORE IS PAUSED IN OPERATIONS CONTROL
+            </div>
+          )}
+
           {/* PetPooja Cart Mode Tabs (Dine In, Delivery, Pick Up) */}
           <div className="petpooja-cart-mode-tabs">
             <button
               type="button"
-              className={`petpooja-cart-tab ${orderMode === "DINE_IN" ? "active" : ""}`}
+              disabled={!dineInActive}
+              className={`petpooja-cart-tab ${orderMode === "DINE_IN" ? "active" : ""} ${!dineInActive ? "channel-paused" : ""}`}
               onClick={() => {
+                if (!dineInActive) return;
                 setOrderMode("DINE_IN");
                 setShowCustomerPanel(false);
               }}
+              title={!dineInActive ? "Dine-In Operations are paused in Store Operations" : "Dine In"}
             >
-              Dine In
+              Dine In {!dineInActive && <span className="tab-paused-tag">(Paused)</span>}
             </button>
             <button
               type="button"
-              className={`petpooja-cart-tab ${orderMode === "DELIVERY" ? "active" : ""}`}
+              disabled={!deliveryActive}
+              className={`petpooja-cart-tab ${orderMode === "DELIVERY" ? "active" : ""} ${!deliveryActive ? "channel-paused" : ""}`}
               onClick={() => {
+                if (!deliveryActive) return;
                 setOrderMode("DELIVERY");
                 setShowCustomerPanel(true);
               }}
+              title={!deliveryActive ? "Delivery is paused in Store Operations" : "Delivery"}
             >
-              Delivery
+              Delivery {!deliveryActive && <span className="tab-paused-tag">(Paused)</span>}
             </button>
             <button
               type="button"
-              className={`petpooja-cart-tab ${orderMode === "PICKUP" ? "active" : ""}`}
+              disabled={!takeawayActive}
+              className={`petpooja-cart-tab ${orderMode === "PICKUP" ? "active" : ""} ${!takeawayActive ? "channel-paused" : ""}`}
               onClick={() => {
+                if (!takeawayActive) return;
                 setOrderMode("PICKUP");
                 setShowCustomerPanel(true);
               }}
+              title={!takeawayActive ? "Takeaway & Direct Pickup is paused in Store Operations" : "Pick Up / Takeaway"}
             >
-              Pick Up
+              Pick Up {!takeawayActive && <span className="tab-paused-tag">(Paused)</span>}
             </button>
           </div>
 
@@ -1508,9 +1610,30 @@ export default function PosBillingView({
                 {/* 1. Multi-KOT Running / Dispatched Items with Real-time Stage Badges */}
                 {tableKots.length > 0 ? (
                   <div className="running-section-group">
-                    <div className="running-section-header">
+                    <div className="running-section-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span>🍳 RUNNING KOTS ({tableKots.length} Waves)</span>
-                      <span>₹{(runningSubtotalMinor / 100).toFixed(2)}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        {hasUnservedKots && (
+                          <button
+                            type="button"
+                            style={{
+                              background: "#10b981",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: "4px",
+                              padding: "2px 8px",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                            onClick={handleServeAllKots}
+                            title="Mark all running KOTs as served to table"
+                          >
+                            🍽️ Serve All
+                          </button>
+                        )}
+                        <span>₹{(runningSubtotalMinor / 100).toFixed(2)}</span>
+                      </div>
                     </div>
 
                     {tableKots.map((kot) => (
@@ -1542,14 +1665,23 @@ export default function PosBillingView({
                               </span>
                             )}
 
-                            {kot.status === "READY" && (
+                            {kot.status !== "SERVED" && (
                               <button
                                 type="button"
-                                style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: "4px", padding: "2px 6px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}
+                                style={{
+                                  background: kot.status === "READY" ? "#10b981" : "#4f46e5",
+                                  color: "#fff",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  padding: "2px 8px",
+                                  fontSize: "10px",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                }}
                                 onClick={() => handleServeKot(kot.id)}
-                                title="Mark this KOT served to table"
+                                title={`Mark KOT #${kot.ticketNumber} served to table`}
                               >
-                                🍽️ Serve
+                                🍽️ {kot.status === "READY" ? "Serve" : "Mark Served"}
                               </button>
                             )}
                           </div>
@@ -1695,46 +1827,77 @@ export default function PosBillingView({
                 </button>
               </div>
 
-              <div className="payment-pills-row">
-                <label className={`payment-pill ${paymentMethod === "CASH" ? "selected" : ""}`}>
+              {/* KOT Payment Locked Notice Banner */}
+              {hasUnservedKots && (
+                <div
+                  className="kot-locked-payment-banner"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.1))",
+                    border: "1px solid rgba(239, 68, 68, 0.4)",
+                    borderRadius: "8px",
+                    padding: "10px 12px",
+                    margin: "8px 0 12px",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "10px",
+                  }}
+                >
+                  <span style={{ fontSize: "1.25rem", lineHeight: 1 }}>🔒</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "0.8125rem", fontWeight: 800, color: "#f87171" }}>
+                      Payment Blocked — Order in KOT (Kitchen)
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "#fca5a5", marginTop: "2px", lineHeight: 1.3 }}>
+                      Food items are still being prepared in the kitchen. Customer cannot pay amount until all items are marked as served to table.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className={`payment-pills-row ${hasUnservedKots ? "payment-row-locked" : ""}`}>
+                <label className={`payment-pill ${paymentMethod === "CASH" ? "selected" : ""} ${hasUnservedKots ? "disabled-pill" : ""}`}>
                   <input
                     type="radio"
                     name="paymentMode"
                     value="CASH"
                     checked={paymentMethod === "CASH"}
+                    disabled={hasUnservedKots}
                     onChange={() => setPaymentMethod("CASH")}
                   />
                   <span>Cash</span>
                 </label>
 
-                <label className={`payment-pill ${paymentMethod === "CARD" ? "selected" : ""}`}>
+                <label className={`payment-pill ${paymentMethod === "CARD" ? "selected" : ""} ${hasUnservedKots ? "disabled-pill" : ""}`}>
                   <input
                     type="radio"
                     name="paymentMode"
                     value="CARD"
                     checked={paymentMethod === "CARD"}
+                    disabled={hasUnservedKots}
                     onChange={() => setPaymentMethod("CARD")}
                   />
                   <span>Card</span>
                 </label>
 
-                <label className={`payment-pill ${paymentMethod === "DUE" ? "selected" : ""}`}>
+                <label className={`payment-pill ${paymentMethod === "DUE" ? "selected" : ""} ${hasUnservedKots ? "disabled-pill" : ""}`}>
                   <input
                     type="radio"
                     name="paymentMode"
                     value="DUE"
                     checked={paymentMethod === "DUE"}
+                    disabled={hasUnservedKots}
                     onChange={() => setPaymentMethod("DUE")}
                   />
                   <span>Due</span>
                 </label>
 
-                <label className={`payment-pill ${isOtherSelected ? "selected" : ""}`}>
+                <label className={`payment-pill ${isOtherSelected ? "selected" : ""} ${hasUnservedKots ? "disabled-pill" : ""}`}>
                   <input
                     type="radio"
                     name="paymentMode"
                     value="OTHER"
                     checked={isOtherSelected}
+                    disabled={hasUnservedKots}
                     onChange={() => {
                       if (paymentMethod === "CASH" || paymentMethod === "CARD" || paymentMethod === "DUE") {
                         setPaymentMethod("OTHER");
@@ -1745,10 +1908,11 @@ export default function PosBillingView({
                   <span>{otherButtonLabel}</span>
                 </label>
 
-                <label className="paid-checkbox-label">
+                <label className={`paid-checkbox-label ${hasUnservedKots ? "disabled-pill" : ""}`}>
                   <input
                     type="checkbox"
                     checked={isPaidChecked}
+                    disabled={hasUnservedKots}
                     onChange={(e) => setIsPaidChecked(e.target.checked)}
                   />
                   <span>It's Paid</span>
@@ -1863,6 +2027,7 @@ export default function PosBillingView({
                       type="number"
                       placeholder={(grandTotalMinor / 100).toFixed(0)}
                       value={cashTendered}
+                      disabled={hasUnservedKots}
                       onChange={(e) => setCashTendered(e.target.value === "" ? "" : Number(e.target.value))}
                     />
                   </div>
@@ -1870,6 +2035,7 @@ export default function PosBillingView({
                     <button
                       type="button"
                       className="cash-chip exact"
+                      disabled={hasUnservedKots}
                       onClick={() => setCashTendered(Math.ceil(grandTotalMinor / 100))}
                     >
                       Exact (₹{Math.ceil(grandTotalMinor / 100)})
@@ -1881,6 +2047,7 @@ export default function PosBillingView({
                             key={denom}
                             type="button"
                             className="cash-chip"
+                            disabled={hasUnservedKots}
                             onClick={() => setCashTendered(denom)}
                           >
                             ₹{denom}
@@ -1916,11 +2083,20 @@ export default function PosBillingView({
 
               <button
                 type="button"
-                className="btn-print-ebill"
+                className={`btn-print-ebill ${hasUnservedKots ? "btn-payment-blocked" : ""}`}
                 onClick={handlePrintAndEBill}
-                disabled={processingOrder || (cart.length === 0 && runningItems.length === 0)}
+                disabled={processingOrder || (cart.length === 0 && runningItems.length === 0) || hasUnservedKots}
+                title={
+                  hasUnservedKots
+                    ? "⚠️ Cannot take bill amount: Order has items currently in kitchen (KOT). Food must be served to table first."
+                    : "Print & Settle E-Bill"
+                }
               >
-                {processingOrder ? "Printing..." : "Print & E-Bill"}
+                {processingOrder
+                  ? "Printing..."
+                  : hasUnservedKots
+                  ? "🔒 In KOT (Pay Blocked)"
+                  : "Print & E-Bill"}
               </button>
 
               <button
@@ -2494,6 +2670,18 @@ export default function PosBillingView({
           background: #1e293b;
           color: #ffffff;
           box-shadow: inset 0 -2px 0 #dc2626;
+        }
+        .petpooja-cart-tab.channel-paused {
+          opacity: 0.5;
+          cursor: not-allowed !important;
+          background: #f1f5f9 !important;
+          color: #94a3b8 !important;
+        }
+        .tab-paused-tag {
+          font-size: 0.65rem;
+          color: #dc2626;
+          font-weight: 700;
+          margin-left: 2px;
         }
 
         /* PetPooja Cart Sub-Bar */
@@ -3557,6 +3745,26 @@ export default function PosBillingView({
         .btn-print-ebill:disabled {
           opacity: 0.5;
           cursor: not-allowed;
+        }
+        .btn-print-ebill.btn-payment-blocked {
+          background: #475569 !important;
+          color: #94a3b8 !important;
+          border: 1px solid #64748b !important;
+          cursor: not-allowed !important;
+          opacity: 0.65 !important;
+        }
+        .payment-pill.disabled-pill {
+          opacity: 0.45 !important;
+          cursor: not-allowed !important;
+          pointer-events: none !important;
+        }
+        .paid-checkbox-label.disabled-pill {
+          opacity: 0.45 !important;
+          cursor: not-allowed !important;
+          pointer-events: none !important;
+        }
+        .payment-row-locked {
+          opacity: 0.6;
         }
         .btn-kot-print {
           background: #2563eb;

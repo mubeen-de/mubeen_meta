@@ -1001,6 +1001,20 @@ const handleRecordPayment = async (req: AuthedRequest, res: any) => {
       return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
     }
 
+    const unservedKots = await prisma.kOTTicket.findMany({
+      where: {
+        orderId: req.params.id,
+        outletId,
+        status: { in: ["QUEUED", "PREPARING", "READY"] },
+      },
+    });
+    if (unservedKots.length > 0) {
+      return res.status(400).json({
+        error: "CANNOT_PAY_IN_KOT",
+        message: "Cannot take payment: Order has active items in kitchen (KOT). Food must be served to table before payment can be accepted.",
+      });
+    }
+
     const payment = await orderRepo.recordPayment(
       outletId,
       req.params.id,
@@ -1650,6 +1664,20 @@ ordersRouter.post(
       const order = await prisma.order.findFirst({ where: { id: orderId, outletId } });
       if (!order) {
         return res.status(404).json({ error: "Order not found" });
+      }
+
+      const unservedKots = await prisma.kOTTicket.findMany({
+        where: {
+          orderId,
+          outletId,
+          status: { in: ["QUEUED", "PREPARING", "READY"] },
+        },
+      });
+      if (unservedKots.length > 0) {
+        return res.status(400).json({
+          error: "CANNOT_PAY_IN_KOT",
+          message: "Cannot take seat payment: Order has active items in kitchen (KOT). Food must be served to table before payment can be accepted.",
+        });
       }
 
       const seatBill = await (prisma as any).order_seat_bills.findFirst({
