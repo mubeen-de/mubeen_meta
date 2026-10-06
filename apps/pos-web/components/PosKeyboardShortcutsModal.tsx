@@ -61,7 +61,7 @@ export default function PosKeyboardShortcutsModal({
         .shortcuts-modal-backdrop {
           position: fixed;
           inset: 0;
-          background: rgba(15, 23, 42, 0.6);
+          background: rgba(11, 19, 43, 0.8);
           backdrop-filter: blur(4px);
           z-index: 100002;
           display: flex;
@@ -72,15 +72,18 @@ export default function PosKeyboardShortcutsModal({
         .shortcuts-modal-card {
           width: 520px;
           max-width: 92vw;
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
+          color: var(--text-primary, #f8fafc);
           border-radius: 12px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
           overflow: hidden;
         }
         .shortcuts-modal-header {
           padding: 16px 20px;
-          background: #0f172a;
-          color: #ffffff;
+          background: var(--bg-subtle, #070d1e);
+          border-bottom: 1px solid var(--border, #1e293b);
+          color: var(--text-primary, #f8fafc);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -89,16 +92,17 @@ export default function PosKeyboardShortcutsModal({
           margin: 0;
           font-size: 1rem;
           font-weight: 800;
+          color: var(--text-primary, #f8fafc);
         }
         .shortcuts-modal-header p {
           margin: 2px 0 0;
           font-size: 0.72rem;
-          color: #94a3b8;
+          color: var(--text-secondary, #94a3b8);
         }
         .btn-close-modal {
           background: transparent;
           border: none;
-          color: #94a3b8;
+          color: var(--text-secondary, #94a3b8);
           font-size: 1.2rem;
           cursor: pointer;
         }
@@ -116,22 +120,23 @@ export default function PosKeyboardShortcutsModal({
           gap: 14px;
           padding: 8px 10px;
           border-radius: 6px;
-          background: #f8fafc;
-          border: 1px solid #f1f5f9;
+          background: var(--bg-subtle, #070d1e);
+          border: 1px solid var(--border, #1e293b);
         }
         .shortcut-key-capsule kbd {
-          background: #1e293b;
+          background: var(--bg-elevated, #1e293b);
           color: #ffffff;
           padding: 4px 10px;
           border-radius: 6px;
           font-family: monospace;
           font-weight: 800;
           font-size: 0.8rem;
-          box-shadow: 0 2px 0 #0f172a;
+          box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
           white-space: nowrap;
           min-width: 70px;
           display: inline-block;
           text-align: center;
+          border: 1px solid var(--border-strong, #334155);
         }
         .shortcut-desc {
           flex: 1;
@@ -139,35 +144,40 @@ export default function PosKeyboardShortcutsModal({
           justify-content: space-between;
           align-items: center;
           font-size: 0.82rem;
-          color: #1e293b;
+          color: var(--text-primary, #f8fafc);
           font-weight: 600;
         }
         .shortcut-category {
           font-size: 0.68rem;
-          background: #e2e8f0;
-          color: #475569;
+          background: var(--bg-elevated, #1e293b);
+          color: var(--text-secondary, #94a3b8);
           padding: 1px 6px;
           border-radius: 4px;
+          border: 1px solid var(--border, #1e293b);
         }
         .shortcuts-footer {
           padding: 12px 20px;
-          background: #f8fafc;
-          border-top: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border-top: 1px solid var(--border, #1e293b);
           display: flex;
           justify-content: space-between;
           align-items: center;
           font-size: 0.72rem;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
         }
         .btn-got-it {
-          background: #10b981;
+          background: var(--btn-success-bg, #10b981);
           color: #ffffff;
-          border: none;
+          border: 1px solid #059669;
           padding: 6px 16px;
           border-radius: 6px;
           font-size: 0.75rem;
           font-weight: 800;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-got-it:hover {
+          background: var(--btn-success-hover, #059669);
         }
       `}</style>
     </div>

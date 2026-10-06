@@ -195,7 +195,7 @@ export default function PosDiscountModal({
         .discount-modal-backdrop {
           position: fixed;
           inset: 0;
-          background: rgba(15, 23, 42, 0.6);
+          background: rgba(11, 19, 43, 0.8);
           backdrop-filter: blur(4px);
           z-index: 100001;
           display: flex;
@@ -206,17 +206,19 @@ export default function PosDiscountModal({
         .discount-modal-card {
           width: 480px;
           max-width: 92vw;
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
+          color: var(--text-primary, #f8fafc);
           border-radius: 12px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
           display: flex;
           flex-direction: column;
           overflow: hidden;
         }
         .discount-modal-header {
           padding: 16px 20px;
-          background: #f8fafc;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border-bottom: 1px solid var(--border, #1e293b);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -225,17 +227,17 @@ export default function PosDiscountModal({
           margin: 0;
           font-size: 1rem;
           font-weight: 800;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
         .discount-modal-header p {
           margin: 2px 0 0;
           font-size: 0.72rem;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
         }
         .btn-close-modal {
           background: transparent;
           border: none;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
           font-size: 1.2rem;
           cursor: pointer;
         }
@@ -247,10 +249,10 @@ export default function PosDiscountModal({
         }
         .type-toggle-row {
           display: flex;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 8px;
           overflow: hidden;
-          background: #f1f5f9;
+          background: var(--bg-subtle, #070d1e);
         }
         .type-btn {
           flex: 1;
@@ -259,11 +261,12 @@ export default function PosDiscountModal({
           background: transparent;
           font-size: 0.82rem;
           font-weight: 700;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
+          transition: background 0.15s, color 0.15s;
         }
         .type-btn.active {
-          background: #2563eb;
+          background: var(--btn-primary-bg, #2563eb);
           color: #ffffff;
         }
         .preset-chips-group {
@@ -274,7 +277,7 @@ export default function PosDiscountModal({
         .preset-chips-group label {
           font-size: 0.75rem;
           font-weight: 700;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
         }
         .chips-row {
           display: flex;
@@ -283,18 +286,19 @@ export default function PosDiscountModal({
         }
         .chip-btn {
           padding: 6px 14px;
-          border: 1px solid #cbd5e1;
-          background: #ffffff;
+          border: 1px solid var(--border-strong, #334155);
+          background: var(--bg-elevated, #1e293b);
           border-radius: 6px;
           font-size: 0.8rem;
           font-weight: 700;
-          color: #1e293b;
+          color: var(--text-primary, #f8fafc);
           cursor: pointer;
           transition: all 0.12s;
         }
         .chip-btn:hover {
           border-color: #3b82f6;
-          background: #eff6ff;
+          background: rgba(37, 99, 235, 0.2);
+          color: #60a5fa;
         }
         .chip-btn.selected {
           background: #10b981;
@@ -307,13 +311,15 @@ export default function PosDiscountModal({
           gap: 6px;
           margin-top: 6px;
           font-size: 0.8rem;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
         }
         .custom-input-box input {
           width: 80px;
           padding: 5px 8px;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 6px;
+          background: var(--bg-subtle, #070d1e);
+          color: var(--text-primary, #f8fafc);
           font-size: 0.85rem;
           font-weight: 700;
         }
@@ -325,18 +331,19 @@ export default function PosDiscountModal({
         .reason-group label {
           font-size: 0.75rem;
           font-weight: 700;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
         }
         .reason-group select {
           padding: 8px 10px;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 6px;
           font-size: 0.82rem;
-          background: #ffffff;
+          background: var(--bg-subtle, #070d1e);
+          color: var(--text-primary, #f8fafc);
         }
         .calc-breakdown-card {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 8px;
           padding: 12px 14px;
           display: flex;
@@ -347,42 +354,46 @@ export default function PosDiscountModal({
         .breakdown-row {
           display: flex;
           justify-content: space-between;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
         }
         .breakdown-row.discount-row {
-          color: #059669;
+          color: #34d399;
           font-weight: 700;
         }
         .breakdown-divider {
           height: 1px;
-          background: #cbd5e1;
+          background: var(--border, #1e293b);
           margin: 6px 0;
         }
         .total-row {
           font-size: 0.95rem;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
         .final-total {
-          color: #047857;
+          color: #34d399;
           font-size: 1.1rem;
         }
         .discount-modal-footer {
           padding: 14px 20px;
-          background: #f8fafc;
-          border-top: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border-top: 1px solid var(--border, #1e293b);
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
         .btn-remove-discount {
-          background: #fef2f2;
-          color: #dc2626;
-          border: 1px solid #fecaca;
+          background: var(--btn-alert-bg, #dc2626);
+          color: var(--btn-alert-text, #ffffff);
+          border: 1px solid var(--btn-alert-border, #ef4444);
           padding: 6px 12px;
           border-radius: 6px;
           font-size: 0.75rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-remove-discount:hover {
+          background: var(--btn-alert-hover, #b91c1c);
         }
         .footer-right-actions {
           display: flex;
@@ -390,27 +401,32 @@ export default function PosDiscountModal({
           margin-left: auto;
         }
         .btn-cancel {
-          background: #f1f5f9;
-          border: none;
-          color: #475569;
+          background: var(--btn-cancel-bg, #334155);
+          color: var(--btn-cancel-text, #cbd5e1);
+          border: 1px solid var(--btn-cancel-border, #475569);
           padding: 8px 14px;
           border-radius: 6px;
           font-size: 0.78rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-cancel:hover {
+          background: var(--btn-cancel-hover, #475569);
         }
         .btn-apply-discount {
-          background: #10b981;
+          background: var(--btn-success-bg, #10b981);
           color: #ffffff;
-          border: none;
+          border: 1px solid #059669;
           padding: 8px 18px;
           border-radius: 6px;
           font-size: 0.82rem;
           font-weight: 800;
           cursor: pointer;
+          transition: background 0.15s;
         }
         .btn-apply-discount:hover {
-          background: #059669;
+          background: var(--btn-success-hover, #059669);
         }
       `}</style>
     </div>

@@ -467,13 +467,14 @@ export default function WaiterCashTipsCalculator({
         }
 
         .calc-modal-card {
-          background: #ffffff !important;
-          color: #0f172a !important;
+          background: var(--bg-card, #111c38) !important;
+          color: var(--text-primary, #f8fafc) !important;
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 16px;
           padding: 20px 24px;
           width: 95%;
           max-width: 820px;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
           max-height: 90vh;
           display: flex;
           flex-direction: column;
@@ -483,25 +484,26 @@ export default function WaiterCashTipsCalculator({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--border, #1e293b);
           padding-bottom: 12px;
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
         }
         .calc-header h3 {
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
         }
         .close-btn {
           background: transparent;
           border: none;
           font-size: 1.25rem;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
           padding: 4px 8px;
           border-radius: 6px;
+          transition: all 0.15s;
         }
         .close-btn:hover {
-          color: #0f172a;
-          background: #f1f5f9;
+          color: var(--text-primary, #f8fafc);
+          background: var(--bg-elevated, #1e293b);
         }
 
         .calc-content-scroll {
@@ -511,7 +513,7 @@ export default function WaiterCashTipsCalculator({
           display: flex;
           flex-direction: column;
           gap: 16px;
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
         }
 
         .sales-metrics-grid {
@@ -536,10 +538,10 @@ export default function WaiterCashTipsCalculator({
           font-weight: 900;
         }
 
-        .box-cash { background: #dcfce7; color: #166534 !important; }
-        .box-card { background: #dbeafe; color: #1e40af !important; }
-        .box-upi { background: #f3e8ff; color: #6b21a8 !important; }
-        .box-total { background: #f1f5f9; color: #0f172a !important; }
+        .box-cash { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399 !important; }
+        .box-card { background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa !important; }
+        .box-upi { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); color: #c084fc !important; }
+        .box-total { background: var(--bg-subtle, #070d1e); border: 1px solid var(--border, #1e293b); color: var(--text-primary, #f8fafc) !important; }
 
         .two-column-layout {
           display: grid;
@@ -547,17 +549,17 @@ export default function WaiterCashTipsCalculator({
           gap: 16px;
         }
         .column-pane {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 10px;
           padding: 14px;
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
         }
         .pane-title {
           margin: 0 0 10px 0;
           font-size: 0.8125rem;
           font-weight: 800;
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
@@ -573,39 +575,40 @@ export default function WaiterCashTipsCalculator({
           align-items: center;
           gap: 8px;
           font-size: 0.8125rem;
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
         }
         .denom-label {
           font-weight: 600;
-          color: #1e293b !important;
+          color: var(--text-secondary, #94a3b8) !important;
         }
         .denom-input {
           padding: 4px 6px;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 4px;
           text-align: center;
           font-weight: 700;
           font-size: 0.8125rem;
-          color: #0f172a !important;
-          background: #ffffff !important;
+          color: var(--text-primary, #f8fafc) !important;
+          background: var(--bg-subtle, #070d1e) !important;
         }
         .denom-subtotal {
           text-align: right;
           font-weight: 700;
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
         }
 
         .total-counted-banner {
           margin-top: 12px;
           padding: 8px 12px;
-          background: #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 6px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           font-size: 0.8125rem;
           font-weight: 700;
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
         }
 
         .reconcile-field-list {
@@ -613,34 +616,34 @@ export default function WaiterCashTipsCalculator({
           flex-direction: column;
           gap: 6px;
           font-size: 0.8125rem;
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
         }
         .reconcile-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          color: #1e293b !important;
+          color: var(--text-secondary, #94a3b8) !important;
         }
         .reconcile-row span {
-          color: #1e293b !important;
+          color: var(--text-secondary, #94a3b8) !important;
         }
         .reconcile-row strong {
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
         }
         .small-num-input {
           width: 80px;
           padding: 3px 6px;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 4px;
           text-align: right;
           font-weight: 700;
           font-size: 0.8125rem;
-          color: #0f172a !important;
-          background: #ffffff !important;
+          color: var(--text-primary, #f8fafc) !important;
+          background: var(--bg-subtle, #070d1e) !important;
         }
         .reconcile-divider {
           height: 1px;
-          background: #cbd5e1;
+          background: var(--border, #1e293b);
           margin: 6px 0;
         }
 
@@ -652,81 +655,85 @@ export default function WaiterCashTipsCalculator({
           font-weight: 800;
           text-align: center;
         }
-        .variance-banner.match { background: #dcfce7; color: #15803d !important; }
-        .variance-banner.overage { background: #eff6ff; color: #1d4ed8 !important; }
-        .variance-banner.shortage { background: #fee2e2; color: #b91c1c !important; }
+        .variance-banner.match { background: rgba(16, 185, 129, 0.2); color: #34d399 !important; border: 1px solid #059669; }
+        .variance-banner.overage { background: rgba(59, 130, 246, 0.2); color: #60a5fa !important; border: 1px solid #2563eb; }
+        .variance-banner.shortage { background: rgba(220, 38, 38, 0.2); color: #f87171 !important; border: 1px solid #dc2626; }
 
         .tips-calc-box {
           display: flex;
           flex-direction: column;
           gap: 6px;
           font-size: 0.8125rem;
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border: 1px solid var(--border, #1e293b);
           padding: 10px;
           border-radius: 8px;
-          color: #0f172a !important;
+          color: var(--text-primary, #f8fafc) !important;
         }
         .net-tip-banner {
           margin-top: 6px;
           padding: 8px;
-          background: #ecfdf5;
-          border: 1px solid #a7f3d0;
+          background: rgba(16, 185, 129, 0.15);
+          border: 1px solid rgba(16, 185, 129, 0.4);
           border-radius: 6px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           font-size: 0.8125rem;
           font-weight: 700;
-          color: #065f46 !important;
+          color: #34d399 !important;
         }
 
         .calc-footer {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid var(--border, #1e293b);
           padding-top: 14px;
         }
         .btn-print {
-          background: #f8fafc;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-normal-bg, #1e293b);
+          border: 1px solid var(--btn-normal-border, #334155);
           padding: 8px 14px;
           border-radius: 6px;
           font-size: 0.8125rem;
           font-weight: 600;
           cursor: pointer;
-          color: #0f172a !important;
+          color: var(--btn-normal-text, #94a3b8) !important;
+          transition: all 0.12s;
         }
         .btn-print:hover {
-          background: #e2e8f0;
+          background: var(--btn-normal-hover, #334155);
+          color: #f8fafc !important;
         }
         .btn-close {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-cancel-bg, #334155);
+          border: 1px solid var(--btn-cancel-border, #475569);
           padding: 8px 16px;
           border-radius: 6px;
           font-weight: 600;
           font-size: 0.8125rem;
           cursor: pointer;
-          color: #334155 !important;
+          color: var(--btn-cancel-text, #cbd5e1) !important;
+          transition: all 0.12s;
         }
         .btn-close:hover {
-          background: #e2e8f0;
-          color: #0f172a !important;
+          background: var(--btn-cancel-hover, #475569);
+          color: #f8fafc !important;
         }
         .btn-complete-shift {
-          background: #16a34a;
-          color: #ffffff !important;
-          border: none;
+          background: var(--btn-success-bg, #10b981);
+          color: var(--btn-success-text, #ffffff) !important;
+          border: 1px solid var(--btn-success-bg, #10b981);
           padding: 8px 18px;
           border-radius: 6px;
           font-weight: 700;
           font-size: 0.8125rem;
           cursor: pointer;
+          transition: all 0.12s;
         }
         .btn-complete-shift:hover {
-          background: #15803d;
+          background: var(--btn-success-hover, #059669);
         }
       `}</style>
     </div>

@@ -100,19 +100,22 @@ export default function LanServerDiscoveryModal({
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: rgba(15, 23, 42, 0.5);
+          background: rgba(11, 19, 43, 0.8);
+          backdrop-filter: blur(4px);
           z-index: 250;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .lan-modal-card {
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
+          color: var(--text-primary, #f8fafc);
           padding: 24px;
           border-radius: 12px;
           width: 90%;
           max-width: 460px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
         }
         .modal-header {
           display: flex;
@@ -124,47 +127,64 @@ export default function LanServerDiscoveryModal({
           border: none;
           font-size: 1.1rem;
           cursor: pointer;
+          color: var(--text-secondary, #94a3b8);
         }
         .input-field {
           width: 100%;
           padding: 9px 12px;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
+          background: var(--bg-subtle, #070d1e);
+          color: var(--text-primary, #f8fafc);
           border-radius: 6px;
           margin-top: 6px;
           font-size: 0.875rem;
           outline: none;
         }
         .input-field:focus {
-          border-color: #2563eb;
+          border-color: #3b82f6;
         }
         .btn-test {
-          background: #eff6ff;
-          color: #2563eb;
-          border: 1px solid #bfdbfe;
+          background: var(--btn-normal-bg, #1e293b);
+          color: var(--btn-normal-text, #94a3b8);
+          border: 1px solid var(--btn-normal-border, #334155);
           padding: 8px 14px;
           border-radius: 6px;
           font-weight: 600;
           font-size: 0.8125rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-test:hover {
+          background: var(--btn-normal-hover, #334155);
+          color: #f8fafc;
         }
         .btn-cancel {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-cancel-bg, #334155);
+          color: var(--btn-cancel-text, #cbd5e1);
+          border: 1px solid var(--btn-cancel-border, #475569);
           padding: 8px 16px;
           border-radius: 6px;
           font-weight: 600;
           font-size: 0.8125rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-cancel:hover {
+          background: var(--btn-cancel-hover, #475569);
         }
         .btn-save {
-          background: #2563eb;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-primary-bg, #2563eb);
+          color: var(--btn-primary-text, #ffffff);
+          border: 1px solid var(--btn-primary-border, #3b82f6);
           padding: 8px 18px;
           border-radius: 6px;
           font-weight: 600;
           font-size: 0.8125rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-save:hover {
+          background: var(--btn-primary-hover, #1d4ed8);
         }
       `}</style>
     </div>

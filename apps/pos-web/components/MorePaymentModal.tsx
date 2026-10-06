@@ -404,7 +404,8 @@ export default function MorePaymentModal({
         .kapmeta-more-modal-backdrop {
           position: fixed;
           inset: 0;
-          background: rgba(0, 0, 0, 0.45);
+          background: rgba(11, 19, 43, 0.8);
+          backdrop-filter: blur(4px);
           display: flex;
           align-items: flex-start;
           justify-content: flex-end;
@@ -423,11 +424,13 @@ export default function MorePaymentModal({
         }
 
         .kapmeta-more-modal-card {
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
+          color: var(--text-primary, #f8fafc);
           border-radius: 16px;
           width: 530px;
           max-width: 95vw;
-          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -451,14 +454,15 @@ export default function MorePaymentModal({
           align-items: center;
           justify-content: space-between;
           padding: 16px 20px 12px 22px;
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border-bottom: 1px solid var(--border, #1e293b);
         }
 
         .more-modal-title {
           margin: 0;
           font-size: 1.25rem;
           font-weight: 700;
-          color: #1e293b;
+          color: var(--text-primary, #f8fafc);
           font-family: inherit;
         }
 
@@ -466,7 +470,7 @@ export default function MorePaymentModal({
           background: transparent;
           border: none;
           font-size: 1.25rem;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
           padding: 4px 6px;
           line-height: 1;
@@ -478,13 +482,13 @@ export default function MorePaymentModal({
         }
 
         .more-modal-close-btn:hover {
-          background: #f1f5f9;
-          color: #0f172a;
+          background: var(--bg-subtle, #070d1e);
+          color: #ffffff;
         }
 
         /* Modal Content Area */
         .more-modal-content {
-          padding: 4px 20px 22px;
+          padding: 14px 20px 22px;
           display: flex;
           flex-direction: column;
           gap: 16px;
@@ -500,22 +504,23 @@ export default function MorePaymentModal({
         }
 
         .payment-grid-card {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 12px;
           height: 80px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: border-color 0.12s, box-shadow 0.12s, transform 0.08s;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+          transition: border-color 0.12s, box-shadow 0.12s, transform 0.08s, background 0.12s;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
           user-select: none;
         }
 
         .payment-grid-card:hover {
-          border-color: #94a3b8;
-          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+          border-color: #3b82f6;
+          background: rgba(37, 99, 235, 0.15);
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
         }
 
         .payment-grid-card:active {
@@ -523,14 +528,14 @@ export default function MorePaymentModal({
         }
 
         .payment-grid-card.is-active-method {
-          border-color: #22c55e;
-          background: #f0fdf4;
+          border-color: #10b981;
+          background: rgba(16, 185, 129, 0.15);
         }
 
         .payment-card-text {
           font-size: 0.9375rem;
           font-weight: 500;
-          color: #1e293b;
+          color: var(--text-primary, #f8fafc);
           text-align: center;
         }
 
@@ -556,22 +561,22 @@ export default function MorePaymentModal({
           display: flex;
           align-items: center;
           gap: 8px;
-          color: #1e293b;
+          color: var(--text-primary, #f8fafc);
         }
 
         .other-card-icon {
-          color: #334155;
+          color: var(--text-secondary, #94a3b8);
         }
 
         .other-header-title {
           font-size: 0.9375rem;
           font-weight: 700;
-          color: #1e293b;
+          color: var(--text-primary, #f8fafc);
         }
 
         .other-chevron-icon {
           font-size: 1.125rem;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
           font-weight: 700;
         }
 
@@ -586,22 +591,23 @@ export default function MorePaymentModal({
         }
 
         .other-grid-card {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 12px;
           height: 80px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: border-color 0.12s, box-shadow 0.12s, transform 0.08s;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+          transition: border-color 0.12s, box-shadow 0.12s, transform 0.08s, background 0.12s;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
           user-select: none;
         }
 
         .other-grid-card:hover {
-          border-color: #94a3b8;
-          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+          border-color: #3b82f6;
+          background: rgba(37, 99, 235, 0.15);
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
         }
 
         .other-grid-card:active {
@@ -610,37 +616,38 @@ export default function MorePaymentModal({
 
         /* Specific Highlight for UPI with crisp Green Border */
         .other-grid-card.upi-highlight-card {
-          border: 1.5px solid #22c55e;
-          background: #ffffff;
+          border: 1.5px solid #10b981;
+          background: var(--bg-elevated, #1e293b);
         }
 
         .other-grid-card.upi-highlight-card:hover {
-          border-color: #16a34a;
-          box-shadow: 0 2px 8px rgba(34, 197, 94, 0.18);
+          border-color: #059669;
+          box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
         }
 
         .other-card-text {
           font-size: 0.9375rem;
           font-weight: 500;
-          color: #1e293b;
+          color: var(--text-primary, #f8fafc);
           text-align: center;
         }
 
         .other-card-text.upi-green-text {
-          color: #16a34a;
+          color: #34d399;
           font-weight: 600;
         }
 
         .other-grid-card.selected-other {
-          background: #f0fdf4;
-          border-color: #16a34a;
+          background: rgba(16, 185, 129, 0.15);
+          border-color: #10b981;
         }
 
         /* Sub-Modal Dialogs (Room Service, UPI QR) */
         .sub-modal-backdrop {
           position: fixed;
           inset: 0;
-          background: rgba(0, 0, 0, 0.6);
+          background: rgba(11, 19, 43, 0.8);
+          backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -648,18 +655,21 @@ export default function MorePaymentModal({
         }
 
         .sub-modal-card {
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
+          color: var(--text-primary, #f8fafc);
           border-radius: 12px;
           width: 440px;
           max-width: 90vw;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
           overflow: hidden;
           animation: backdropFadeIn 0.12s ease-out;
         }
 
         .sub-modal-header {
           padding: 14px 18px;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--border, #1e293b);
+          background: var(--bg-subtle, #070d1e);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -669,14 +679,14 @@ export default function MorePaymentModal({
           margin: 0;
           font-size: 1rem;
           font-weight: 700;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         .sub-modal-close {
           background: transparent;
           border: none;
           font-size: 1.125rem;
-          color: #94a3b8;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
         }
 
@@ -695,7 +705,7 @@ export default function MorePaymentModal({
         .sub-modal-hint {
           margin: 0;
           font-size: 0.875rem;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
         }
 
         .sub-modal-field {
@@ -704,12 +714,14 @@ export default function MorePaymentModal({
           gap: 4px;
           font-size: 0.8125rem;
           font-weight: 600;
-          color: #334155;
+          color: var(--text-secondary, #94a3b8);
           text-align: left;
         }
 
         .sub-modal-input {
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
+          background: var(--bg-subtle, #070d1e);
+          color: var(--text-primary, #f8fafc);
           border-radius: 6px;
           padding: 8px 10px;
           font-size: 0.875rem;
@@ -719,12 +731,13 @@ export default function MorePaymentModal({
 
         .sub-modal-input:focus {
           border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
         }
 
         .sub-modal-footer {
           padding: 12px 18px;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid var(--border, #1e293b);
+          background: var(--bg-subtle, #070d1e);
           display: flex;
           align-items: center;
           justify-content: flex-end;
@@ -732,38 +745,40 @@ export default function MorePaymentModal({
         }
 
         .sub-modal-btn-cancel {
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-cancel-bg, #334155);
+          color: var(--btn-cancel-text, #cbd5e1);
+          border: 1px solid var(--btn-cancel-border, #475569);
           border-radius: 6px;
           padding: 8px 16px;
           font-size: 0.8125rem;
           font-weight: 600;
-          color: #475569;
           cursor: pointer;
+          transition: background 0.15s;
         }
 
         .sub-modal-btn-cancel:hover {
-          background: #f1f5f9;
+          background: var(--btn-cancel-hover, #475569);
         }
 
         .sub-modal-btn-confirm {
-          background: #dc2626;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-alert-bg, #dc2626);
+          color: var(--btn-alert-text, #ffffff);
+          border: 1px solid var(--btn-alert-border, #ef4444);
           border-radius: 6px;
           padding: 8px 18px;
           font-size: 0.8125rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.15s;
         }
 
         .sub-modal-btn-confirm:hover {
-          background: #b91c1c;
+          background: var(--btn-alert-hover, #b91c1c);
         }
 
         .upi-amount-banner {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 8px;
           padding: 8px 16px;
           display: flex;
@@ -775,36 +790,39 @@ export default function MorePaymentModal({
 
         .upi-amount-label {
           font-size: 0.875rem;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
           font-weight: 500;
         }
 
         .upi-amount-val {
           font-size: 1.25rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #34d399;
         }
 
         .upi-qr-box {
           background: #ffffff;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 10px;
           padding: 12px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
           margin: 6px 0;
         }
 
         .upi-vpa-text {
           font-size: 0.8125rem;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
         }
 
         .upi-green-btn {
-          background: #16a34a !important;
+          background: var(--btn-success-bg, #10b981) !important;
+          color: #ffffff !important;
+          border: 1px solid #059669 !important;
+          transition: background 0.15s;
         }
 
         .upi-green-btn:hover {
-          background: #15803d !important;
+          background: var(--btn-success-hover, #059669) !important;
         }
       `}</style>
     </div>

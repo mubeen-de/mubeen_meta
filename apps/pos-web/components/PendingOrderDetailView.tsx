@@ -90,16 +90,17 @@ export default function PendingOrderDetailView({
   if (!data) {
     return (
       <div className="kapmeta-pending-order-detail-root" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
-        <div style={{ textAlign: "center", padding: "40px", background: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", maxWidth: "450px" }}>
+        <div style={{ textAlign: "center", padding: "40px", background: "var(--bg-card, #111c38)", borderRadius: "12px", border: "1px solid var(--border, #1e293b)", maxWidth: "450px" }}>
           <span style={{ fontSize: "2.8rem" }}>📦</span>
-          <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#1e293b", margin: "16px 0 8px" }}>Order Not Found</h2>
-          <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: "20px" }}>
+          <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--text-primary, #f8fafc)", margin: "16px 0 8px" }}>Order Not Found</h2>
+          <p style={{ color: "var(--text-secondary, #94a3b8)", fontSize: "0.85rem", marginBottom: "20px" }}>
             The requested order could not be retrieved from the database.
           </p>
           <button
             type="button"
             onClick={handleBack}
-            style={{ background: "#4f46e5", color: "#ffffff", padding: "10px 20px", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700 }}
+            className="btn-primary"
+            style={{ padding: "10px 20px", borderRadius: "6px", cursor: "pointer", fontWeight: 700 }}
           >
             ← Back to Orders Register
           </button>
@@ -417,7 +418,7 @@ export default function PendingOrderDetailView({
           flex-direction: column;
           height: calc(100vh - 42px);
           width: 100vw;
-          background: #f8fafc;
+          background: var(--bg-base, #0b132b);
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
           user-select: none;
           overflow: hidden;
@@ -429,8 +430,8 @@ export default function PendingOrderDetailView({
           align-items: center;
           justify-content: space-between;
           padding: 10px 20px;
-          background: #ffffff;
-          border-bottom: 1.5px solid #e2e8f0;
+          background: var(--bg-card, #111c38);
+          border-bottom: 1.5px solid var(--border, #1e293b);
           box-sizing: border-box;
           min-height: 48px;
         }
@@ -439,24 +440,24 @@ export default function PendingOrderDetailView({
           margin: 0;
           font-size: 1.125rem;
           font-weight: 700;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         .btn-back-pill {
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-secondary-bg, #334155);
+          border: 1px solid var(--btn-secondary-border, #475569);
           border-radius: 6px;
           padding: 6px 16px;
           font-size: 0.8125rem;
           font-weight: 600;
-          color: #334155;
+          color: var(--btn-secondary-text, #f8fafc);
           cursor: pointer;
           transition: all 0.12s;
         }
 
         .btn-back-pill:hover {
-          background: #f1f5f9;
-          border-color: #94a3b8;
+          background: var(--btn-secondary-hover, #475569);
+          border-color: #64748b;
         }
 
         /* Scrollable Content Container */
@@ -471,11 +472,11 @@ export default function PendingOrderDetailView({
 
         /* Table Card Containers */
         .detail-table-card {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 8px;
           overflow: hidden;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
         }
 
         /* Meta Grid Tables */
@@ -486,16 +487,16 @@ export default function PendingOrderDetailView({
         }
 
         .meta-grid-table thead tr {
-          background: #f8fafc;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border-bottom: 1px solid var(--border, #1e293b);
         }
 
         .meta-grid-table th {
           padding: 12px 14px;
           font-size: 0.8125rem;
           font-weight: 700;
-          color: #475569;
-          border-right: 1px solid #f1f5f9;
+          color: var(--text-secondary, #94a3b8);
+          border-right: 1px solid var(--border, #1e293b);
           white-space: nowrap;
         }
 
@@ -506,8 +507,8 @@ export default function PendingOrderDetailView({
         .meta-grid-table td {
           padding: 14px 14px;
           font-size: 0.875rem;
-          color: #1e293b;
-          border-right: 1px solid #f1f5f9;
+          color: var(--text-primary, #f8fafc);
+          border-right: 1px solid var(--border, #1e293b);
           vertical-align: middle;
         }
 
@@ -518,7 +519,7 @@ export default function PendingOrderDetailView({
         .btn-call-customer-link {
           background: transparent;
           border: none;
-          color: #2563eb;
+          color: #38bdf8;
           font-size: 0.875rem;
           font-weight: 600;
           cursor: pointer;
@@ -530,7 +531,7 @@ export default function PendingOrderDetailView({
         }
 
         .btn-call-customer-link:hover {
-          color: #1d4ed8;
+          color: #7dd3fc;
         }
 
         .phone-icon {
@@ -540,7 +541,7 @@ export default function PendingOrderDetailView({
 
         .discount-bold-text {
           font-weight: 800;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         /* Items Table Section */
@@ -551,15 +552,15 @@ export default function PendingOrderDetailView({
 
         .items-card-header {
           padding: 12px 16px;
-          border-bottom: 1px solid #e2e8f0;
-          background: #ffffff;
+          border-bottom: 1px solid var(--border, #1e293b);
+          background: var(--bg-card, #111c38);
         }
 
         .items-card-title {
           margin: 0;
           font-size: 0.9375rem;
           font-weight: 700;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         .items-grid-table, .gst-grid-table, .tax-grid-table {
@@ -569,16 +570,16 @@ export default function PendingOrderDetailView({
         }
 
         .items-grid-table thead tr, .gst-grid-table thead tr, .tax-grid-table thead tr {
-          background: #f8fafc;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border-bottom: 1px solid var(--border, #1e293b);
         }
 
         .items-grid-table th, .gst-grid-table th, .tax-grid-table th {
           padding: 12px 16px;
           font-size: 0.8125rem;
           font-weight: 700;
-          color: #475569;
-          border-right: 1px solid #f1f5f9;
+          color: var(--text-secondary, #94a3b8);
+          border-right: 1px solid var(--border, #1e293b);
         }
 
         .items-grid-table th:last-child, .gst-grid-table th:last-child, .tax-grid-table th:last-child {
@@ -588,9 +589,9 @@ export default function PendingOrderDetailView({
         .items-grid-table td, .gst-grid-table td, .tax-grid-table td {
           padding: 14px 16px;
           font-size: 0.875rem;
-          color: #1e293b;
-          border-right: 1px solid #f1f5f9;
-          border-bottom: 1px solid #f8fafc;
+          color: var(--text-primary, #f8fafc);
+          border-right: 1px solid var(--border, #1e293b);
+          border-bottom: 1px solid var(--border, #1e293b);
         }
 
         .items-grid-table td:last-child, .gst-grid-table td:last-child, .tax-grid-table td:last-child {
@@ -718,11 +719,12 @@ export default function PendingOrderDetailView({
         }
 
         .call-modal-card {
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 12px;
           width: 420px;
           max-width: 90vw;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
           overflow: hidden;
         }
 
@@ -731,21 +733,21 @@ export default function PendingOrderDetailView({
           align-items: center;
           justify-content: space-between;
           padding: 14px 18px;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--border, #1e293b);
         }
 
         .call-modal-header h3 {
           margin: 0;
           font-size: 1rem;
           font-weight: 700;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         .call-close-x {
           background: transparent;
           border: none;
           font-size: 1.125rem;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
         }
 
@@ -766,7 +768,7 @@ export default function PendingOrderDetailView({
         .customer-name-heading {
           font-size: 1.25rem;
           font-weight: 800;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         .customer-channel-text {
@@ -778,14 +780,14 @@ export default function PendingOrderDetailView({
         .customer-phone-display {
           font-size: 1.125rem;
           font-weight: 700;
-          color: #2563eb;
+          color: #38bdf8;
           margin-top: 8px;
         }
 
         .call-hint-text {
           margin-top: 8px;
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
         }
 
         .call-modal-footer {
@@ -794,24 +796,30 @@ export default function PendingOrderDetailView({
           justify-content: flex-end;
           gap: 10px;
           padding: 12px 18px;
-          border-top: 1px solid #e2e8f0;
-          background: #f8fafc;
+          border-top: 1px solid var(--border, #1e293b);
+          background: var(--bg-subtle, #070d1e);
         }
 
         .btn-cancel-call {
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-cancel-bg, #334155);
+          border: 1px solid var(--btn-cancel-border, #475569);
           padding: 7px 16px;
           border-radius: 6px;
           font-size: 0.8125rem;
           font-weight: 600;
-          color: #475569;
+          color: var(--btn-cancel-text, #cbd5e1);
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-cancel-call:hover {
+          background: var(--btn-cancel-hover, #475569);
+          color: #f8fafc;
         }
 
         .btn-dial-now {
-          background: #2563eb;
-          color: #ffffff;
+          background: var(--btn-primary-bg, #2563eb);
+          color: var(--btn-primary-text, #ffffff);
+          border: 1px solid var(--btn-primary-border, #3b82f6);
           padding: 7px 18px;
           border-radius: 6px;
           font-size: 0.8125rem;
@@ -820,10 +828,11 @@ export default function PendingOrderDetailView({
           display: flex;
           align-items: center;
           gap: 6px;
+          transition: background 0.15s;
         }
 
         .btn-dial-now:hover {
-          background: #1d4ed8;
+          background: var(--btn-primary-hover, #1d4ed8);
         }
       `}</style>
     </div>

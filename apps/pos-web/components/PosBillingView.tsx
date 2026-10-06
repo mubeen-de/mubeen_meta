@@ -1637,11 +1637,11 @@ export default function PosBillingView({
                     </div>
 
                     {tableKots.map((kot) => (
-                      <div key={kot.id} className="kot-wave-card" style={{ marginBottom: "8px", background: "#f8fafc", borderRadius: "6px", padding: "6px 8px", border: "1px solid #e2e8f0" }}>
+                      <div key={kot.id} className="kot-wave-card" style={{ marginBottom: "8px", background: "var(--bg-subtle, #070d1e)", borderRadius: "6px", padding: "6px 8px", border: "1px solid var(--border, #1e293b)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", fontSize: "0.75rem" }}>
                           <div>
-                            <strong style={{ color: "#334155" }}>KOT #{kot.ticketNumber}</strong>
-                            <span style={{ color: "#94a3b8", marginLeft: "6px" }}>{new Date(kot.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                            <strong style={{ color: "var(--text-primary, #f8fafc)" }}>KOT #{kot.ticketNumber}</strong>
+                            <span style={{ color: "var(--text-muted, #94a3b8)", marginLeft: "6px" }}>{new Date(kot.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                             {kot.status === "SERVED" && (
@@ -2448,7 +2448,7 @@ export default function PosBillingView({
           flex-direction: column;
           height: calc(100vh - 56px);
           max-height: calc(100vh - 56px);
-          background: #f8fafc;
+          background: var(--bg-base, #0b132b);
           overflow: hidden;
         }
 
@@ -2457,8 +2457,8 @@ export default function PosBillingView({
           align-items: center;
           justify-content: space-between;
           padding: 6px 14px;
-          background: #ffffff;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-card, #111c38);
+          border-bottom: 1px solid var(--border, #1e293b);
           flex-shrink: 0;
         }
         .mode-tabs {
@@ -2472,12 +2472,13 @@ export default function PosBillingView({
           border-radius: 4px;
           font-size: 0.75rem;
           font-weight: 700;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
+          transition: all 0.15s;
         }
         .mode-tab.active {
-          background: #f1f5f9;
-          color: #dc2626;
+          background: var(--bg-elevated, #1e293b);
+          color: #f87171;
           box-shadow: inset 0 -2px 0 #dc2626;
         }
 
@@ -2487,9 +2488,9 @@ export default function PosBillingView({
           gap: 8px;
         }
         .btn-pos-crm-chip {
-          background: #f0fdf4;
-          color: #166534;
-          border: 1px solid #bbf7d0;
+          background: rgba(16, 185, 129, 0.15);
+          color: #34d399;
+          border: 1px solid rgba(16, 185, 129, 0.3);
           padding: 4px 10px;
           border-radius: 6px;
           font-size: 0.72rem;
@@ -2501,19 +2502,19 @@ export default function PosBillingView({
           transition: all 0.12s;
         }
         .btn-pos-crm-chip:hover {
-          background: #dcfce7;
+          background: rgba(16, 185, 129, 0.25);
         }
         .crm-pts-pill {
-          background: #16a34a;
+          background: #10b981;
           color: #ffffff;
           padding: 1px 5px;
           border-radius: 999px;
           font-size: 0.65rem;
         }
         .btn-pos-held-chip {
-          background: #fffbeb;
-          color: #92400e;
-          border: 1px solid #fde68a;
+          background: rgba(245, 158, 11, 0.15);
+          color: #fbbf24;
+          border: 1px solid rgba(245, 158, 11, 0.3);
           padding: 4px 10px;
           border-radius: 6px;
           font-size: 0.72rem;
@@ -2522,9 +2523,10 @@ export default function PosBillingView({
           align-items: center;
           gap: 6px;
           cursor: pointer;
+          transition: all 0.12s;
         }
         .btn-pos-held-chip:hover {
-          background: #fef3c7;
+          background: rgba(245, 158, 11, 0.25);
         }
         .held-badge {
           background: #d97706;
@@ -2535,9 +2537,9 @@ export default function PosBillingView({
           font-weight: 800;
         }
         .btn-pos-a2a-chip {
-          background: #0f172a;
-          color: #ffffff;
-          border: 1px solid #334155;
+          background: var(--bg-elevated, #1e293b);
+          color: var(--text-primary, #f8fafc);
+          border: 1px solid var(--border-strong, #334155);
           padding: 4px 10px;
           border-radius: 6px;
           font-size: 0.72rem;
@@ -2549,7 +2551,7 @@ export default function PosBillingView({
           transition: background 0.12s;
         }
         .btn-pos-a2a-chip:hover {
-          background: #1e293b;
+          background: var(--bg-card, #111c38);
         }
         .a2a-live-dot {
           width: 7px;
@@ -2559,32 +2561,35 @@ export default function PosBillingView({
           box-shadow: 0 0 5px #10b981;
         }
         .btn-pos-shortcuts-chip {
-          background: #f1f5f9;
-          color: #334155;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-normal-bg, #1e293b);
+          color: var(--btn-normal-text, #94a3b8);
+          border: 1px solid var(--btn-normal-border, #334155);
           padding: 4px 8px;
           border-radius: 6px;
           font-size: 0.72rem;
           font-weight: 700;
           cursor: pointer;
+          transition: all 0.12s;
         }
         .btn-pos-shortcuts-chip:hover {
-          background: #e2e8f0;
+          background: var(--btn-normal-hover, #334155);
+          color: #f8fafc;
         }
 
         .btn-back-tables {
-          background: transparent;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-secondary-bg, #334155);
+          border: 1px solid var(--btn-secondary-border, #475569);
           padding: 4px 12px;
           border-radius: 4px;
           font-size: 0.75rem;
           font-weight: 700;
-          color: #475569;
+          color: var(--btn-secondary-text, #f8fafc);
           cursor: pointer;
+          transition: all 0.12s;
         }
         .btn-back-tables:hover {
-          background: #f1f5f9;
-          color: #0f172a;
+          background: var(--btn-secondary-hover, #475569);
+          color: #ffffff;
         }
 
         .pos-main-grid {
@@ -2597,8 +2602,8 @@ export default function PosBillingView({
 
         /* Column 1: Categories */
         .pos-categories-sidebar {
-          background: #ffffff;
-          border-right: 1px solid #e2e8f0;
+          background: var(--bg-card, #111c38);
+          border-right: 1px solid var(--border, #1e293b);
           display: flex;
           flex-direction: column;
           height: 100%;
@@ -2610,8 +2615,8 @@ export default function PosBillingView({
         .pos-item-grid-panel {
           display: flex;
           flex-direction: column;
-          background: #f8fafc;
-          border-right: 1px solid #e2e8f0;
+          background: var(--bg-base, #0b132b);
+          border-right: 1px solid var(--border, #1e293b);
           height: 100%;
           min-height: 0;
           overflow: hidden;
@@ -2633,7 +2638,7 @@ export default function PosBillingView({
           position: relative;
           display: flex;
           flex-direction: column;
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
           height: 100%;
           min-height: 0;
           overflow: hidden;
@@ -2642,19 +2647,19 @@ export default function PosBillingView({
         /* PetPooja Cart Mode Tabs */
         .petpooja-cart-mode-tabs {
           display: flex;
-          background: #f1f5f9;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border-bottom: 1px solid var(--border, #1e293b);
           flex-shrink: 0;
         }
         .petpooja-cart-tab {
           flex: 1;
           padding: 8px 4px;
-          background: #e2e8f0;
+          background: var(--bg-elevated, #1e293b);
           border: none;
-          border-right: 1px solid #cbd5e1;
+          border-right: 1px solid var(--border, #1e293b);
           font-size: 0.75rem;
           font-weight: 700;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
           text-align: center;
           transition: all 0.15s ease;
@@ -2663,19 +2668,19 @@ export default function PosBillingView({
           border-right: none;
         }
         .petpooja-cart-tab:hover {
-          background: #cbd5e1;
-          color: #0f172a;
+          background: var(--bg-card, #111c38);
+          color: var(--text-primary, #f8fafc);
         }
         .petpooja-cart-tab.active {
-          background: #1e293b;
-          color: #ffffff;
+          background: var(--bg-card, #111c38);
+          color: var(--text-primary, #f8fafc);
           box-shadow: inset 0 -2px 0 #dc2626;
         }
         .petpooja-cart-tab.channel-paused {
           opacity: 0.5;
           cursor: not-allowed !important;
-          background: #f1f5f9 !important;
-          color: #94a3b8 !important;
+          background: var(--bg-subtle, #070d1e) !important;
+          color: var(--text-muted, #64748b) !important;
         }
         .tab-paused-tag {
           font-size: 0.65rem;
@@ -2690,8 +2695,8 @@ export default function PosBillingView({
           align-items: center;
           justify-content: space-between;
           padding: 6px 10px;
-          background: #ffffff;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-card, #111c38);
+          border-bottom: 1px solid var(--border, #1e293b);
           flex-shrink: 0;
         }
         .cart-sub-bar-left {
@@ -2704,9 +2709,9 @@ export default function PosBillingView({
           width: 32px;
           height: 32px;
           border-radius: 6px;
-          border: 1px solid #e2e8f0;
-          background: #f8fafc;
-          color: #475569;
+          border: 1px solid var(--border, #1e293b);
+          background: var(--bg-elevated, #1e293b);
+          color: var(--text-secondary, #94a3b8);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -2714,19 +2719,19 @@ export default function PosBillingView({
           transition: all 0.15s ease;
         }
         .cart-icon-btn:hover {
-          background: #f1f5f9;
-          color: #0f172a;
-          border-color: #cbd5e1;
+          background: var(--bg-card, #111c38);
+          color: var(--text-primary, #f8fafc);
+          border-color: var(--border-strong, #334155);
         }
         .cart-icon-btn.active {
-          background: #eff6ff;
-          color: #2563eb;
-          border-color: #93c5fd;
+          background: rgba(37, 99, 235, 0.2);
+          color: #60a5fa;
+          border-color: #3b82f6;
         }
         .cart-icon-btn.has-comment {
-          background: #fef2f2;
-          color: #dc2626;
-          border-color: #fca5a5;
+          background: rgba(220, 38, 38, 0.2);
+          color: #f87171;
+          border-color: #dc2626;
         }
         .icon-badge-dot {
           position: absolute;
@@ -2735,8 +2740,8 @@ export default function PosBillingView({
           width: 7px;
           height: 7px;
           border-radius: 50%;
-          background: #16a34a;
-          border: 1px solid #ffffff;
+          background: #10b981;
+          border: 1px solid var(--bg-card, #111c38);
         }
         .icon-badge-dot.comment-dot {
           background: #dc2626;
@@ -2748,17 +2753,19 @@ export default function PosBillingView({
           gap: 6px;
         }
         .waiter-tag-btn {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
-          color: #334155;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border, #1e293b);
+          color: var(--text-secondary, #94a3b8);
           padding: 2px 8px;
           border-radius: 4px;
           font-size: 0.72rem;
           font-weight: 700;
           cursor: pointer;
+          transition: all 0.12s;
         }
         .waiter-tag-btn:hover {
-          background: #e2e8f0;
+          background: var(--bg-card, #111c38);
+          color: var(--text-primary, #f8fafc);
         }
         .petpooja-mode-badge-wrap {
           display: flex;
@@ -2766,34 +2773,36 @@ export default function PosBillingView({
           gap: 6px;
         }
         .petpooja-mode-badge {
-          background: #fef08a;
-          color: #854d0e;
+          background: rgba(245, 158, 11, 0.2);
+          color: #fbbf24;
           font-size: 0.75rem;
           font-weight: 800;
           padding: 3px 8px;
           border-radius: 4px;
-          border: 1px solid #fde047;
+          border: 1px solid rgba(245, 158, 11, 0.4);
         }
         .captain-sub-chip {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
-          color: #334155;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border, #1e293b);
+          color: var(--text-secondary, #94a3b8);
           padding: 2px 6px;
           border-radius: 4px;
           font-size: 0.7rem;
           font-weight: 700;
           cursor: pointer;
+          transition: all 0.12s;
         }
         .captain-sub-chip:hover {
-          background: #e2e8f0;
+          background: var(--bg-card, #111c38);
+          color: var(--text-primary, #f8fafc);
         }
 
         /* Inline Customer Details Section (Screenshot 2) */
         .petpooja-customer-panel {
           display: flex;
           padding: 8px 10px;
-          background: #f8fafc;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border-bottom: 1px solid var(--border, #1e293b);
           gap: 8px;
           flex-shrink: 0;
         }
@@ -2812,24 +2821,24 @@ export default function PosBillingView({
           width: 52px;
           font-size: 0.7rem;
           font-weight: 700;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
           text-align: right;
           flex-shrink: 0;
         }
         .cust-input {
           flex: 1;
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 4px;
           padding: 3px 7px;
           font-size: 0.75rem;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
           outline: none;
           transition: border-color 0.12s;
         }
         .cust-input:focus {
           border-color: #3b82f6;
-          box-shadow: 0 0 0 1px #93c5fd;
+          box-shadow: 0 0 0 1px #3b82f6;
         }
 
         .customer-action-icons-col {
@@ -2839,7 +2848,7 @@ export default function PosBillingView({
           align-items: center;
           gap: 4px;
           padding-left: 4px;
-          border-left: 1px solid #e2e8f0;
+          border-left: 1px solid var(--border, #1e293b);
         }
         .cust-util-btn {
           width: 26px;
@@ -2847,35 +2856,35 @@ export default function PosBillingView({
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 4px;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
           transition: all 0.12s;
           padding: 0;
         }
         .cust-util-btn:hover {
-          background: #f1f5f9;
-          color: #0f172a;
-          border-color: #94a3b8;
+          background: var(--bg-card, #111c38);
+          color: var(--text-primary, #f8fafc);
+          border-color: #64748b;
         }
         .cust-util-btn.active {
-          background: #eff6ff;
-          color: #2563eb;
-          border-color: #60a5fa;
+          background: rgba(37, 99, 235, 0.2);
+          color: #60a5fa;
+          border-color: #3b82f6;
         }
         .cust-util-btn.has-discount {
-          background: #ecfdf5;
-          color: #059669;
-          border-color: #6ee7b7;
+          background: rgba(16, 185, 129, 0.2);
+          color: #34d399;
+          border-color: #10b981;
         }
         .btn-trash-cart {
-          color: #dc2626;
+          color: #f87171;
         }
         .btn-trash-cart:hover {
-          background: #fef2f2;
-          border-color: #f87171;
+          background: rgba(220, 38, 38, 0.2);
+          border-color: #dc2626;
         }
 
         /* Order Comments & Advance Banners */
@@ -3151,8 +3160,8 @@ export default function PosBillingView({
           align-items: center;
           justify-content: space-between;
           padding: 8px 12px;
-          border-bottom: 1px solid #e2e8f0;
-          background: #f8fafc;
+          border-bottom: 1px solid var(--border, #1e293b);
+          background: var(--bg-card, #111c38);
           flex-shrink: 0;
         }
         .table-badge-group {
@@ -3171,22 +3180,23 @@ export default function PosBillingView({
         .table-name-label {
           font-weight: 800;
           font-size: 0.9rem;
+          color: var(--text-primary, #f8fafc);
         }
         .section-badge {
           font-size: 0.6875rem;
-          background: #e2e8f0;
-          color: #475569;
+          background: var(--bg-elevated, #1e293b);
+          color: var(--text-secondary, #94a3b8);
           padding: 1px 6px;
           border-radius: 3px;
         }
         .live-running-badge {
           font-size: 0.6875rem;
-          background: #fef3c7;
-          color: #92400e;
+          background: rgba(245, 158, 11, 0.2);
+          color: #fbbf24;
           font-weight: 800;
           padding: 1px 6px;
           border-radius: 3px;
-          border: 1px solid #fde68a;
+          border: 1px solid rgba(245, 158, 11, 0.4);
         }
         .covers-waiter-group {
           display: flex;
@@ -3198,18 +3208,21 @@ export default function PosBillingView({
           align-items: center;
           gap: 4px;
           font-size: 0.75rem;
+          color: var(--text-secondary, #94a3b8);
         }
         .covers-input {
           width: 32px;
           padding: 2px;
           text-align: center;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 3px;
           font-size: 0.75rem;
+          background: var(--bg-subtle, #070d1e);
+          color: var(--text-primary, #f8fafc);
         }
         .waiter-tag {
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--text-muted, #64748b);
           display: flex;
           align-items: center;
           gap: 3px;
@@ -3219,11 +3232,11 @@ export default function PosBillingView({
           display: grid;
           grid-template-columns: 1.5fr 60px 65px 70px;
           padding: 6px 12px;
-          background: #f1f5f9;
+          background: var(--bg-subtle, #070d1e);
           font-size: 0.6875rem;
           font-weight: 800;
-          color: #64748b;
-          border-bottom: 1px solid #e2e8f0;
+          color: var(--text-secondary, #94a3b8);
+          border-bottom: 1px solid var(--border, #1e293b);
           flex-shrink: 0;
         }
         .col-price { text-align: right; }
@@ -3247,8 +3260,8 @@ export default function PosBillingView({
         }
 
         .running-section-group {
-          background: #fffbeb;
-          border-bottom: 2px solid #fef08a;
+          background: rgba(245, 158, 11, 0.08);
+          border-bottom: 2px solid rgba(245, 158, 11, 0.25);
         }
         .running-section-header {
           display: flex;
@@ -3256,11 +3269,11 @@ export default function PosBillingView({
           padding: 4px 12px;
           font-size: 0.6875rem;
           font-weight: 800;
-          color: #92400e;
-          background: #fef9c3;
+          color: #fbbf24;
+          background: rgba(245, 158, 11, 0.18);
         }
         .new-section-group {
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
         }
         .new-section-header {
           display: flex;
@@ -3268,8 +3281,8 @@ export default function PosBillingView({
           padding: 4px 12px;
           font-size: 0.6875rem;
           font-weight: 800;
-          color: #1e40af;
-          background: #eff6ff;
+          color: #60a5fa;
+          background: rgba(37, 99, 235, 0.18);
         }
 
         .cart-row {
@@ -3277,11 +3290,12 @@ export default function PosBillingView({
           grid-template-columns: 1.5fr 60px 65px 70px;
           align-items: center;
           padding: 8px 12px;
-          border-bottom: 1px solid #f1f5f9;
+          border-bottom: 1px solid var(--border, #1e293b);
           font-size: 0.8125rem;
+          color: var(--text-primary, #f8fafc);
         }
         .running-row {
-          background: #fffdf5;
+          background: rgba(245, 158, 11, 0.04);
         }
         .kot-tag {
           font-size: 0.625rem;
@@ -3307,6 +3321,7 @@ export default function PosBillingView({
           overflow: hidden;
           text-overflow: ellipsis;
           font-weight: 600;
+          color: var(--text-primary, #f8fafc);
         }
         .cart-col-check {
           text-align: center;
@@ -3320,8 +3335,9 @@ export default function PosBillingView({
         .qty-btn {
           width: 20px;
           height: 20px;
-          border: 1px solid #cbd5e1;
-          background: #f8fafc;
+          border: 1px solid var(--border-strong, #334155);
+          background: var(--bg-elevated, #1e293b);
+          color: var(--text-primary, #f8fafc);
           border-radius: 3px;
           cursor: pointer;
           display: flex;
@@ -3333,23 +3349,24 @@ export default function PosBillingView({
           font-weight: 700;
           min-width: 14px;
           text-align: center;
+          color: var(--text-primary, #f8fafc);
         }
         .cart-col-price {
           text-align: right;
           font-weight: 700;
-          color: #16a34a;
+          color: #34d399;
         }
 
         /* Settlement Footer (Strictly Pinned at Bottom) */
         .cart-settlement-footer {
           flex-shrink: 0;
-          border-top: 1px solid #e2e8f0;
-          background: #ffffff;
+          border-top: 1px solid var(--border, #1e293b);
+          background: var(--bg-card, #111c38);
           padding: 10px 12px;
           display: flex;
           flex-direction: column;
           gap: 8px;
-          box-shadow: 0 -2px 6px rgba(0,0,0,0.04);
+          box-shadow: 0 -2px 6px rgba(0,0,0,0.25);
         }
 
         .cart-financial-breakdown {
@@ -3357,36 +3374,37 @@ export default function PosBillingView({
           flex-direction: column;
           gap: 3px;
           padding: 6px 8px;
-          background: #f8fafc;
+          background: var(--bg-subtle, #070d1e);
           border-radius: 6px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--border, #1e293b);
           font-size: 0.75rem;
         }
         .fin-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
         }
         .fin-row.discount-row {
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
           font-weight: 600;
         }
         .btn-discount-trigger {
-          background: #eff6ff;
-          color: #2563eb;
-          border: 1px dashed #93c5fd;
+          background: rgba(37, 99, 235, 0.15);
+          color: #60a5fa;
+          border: 1px dashed #3b82f6;
           padding: 1px 6px;
           border-radius: 4px;
           font-size: 0.68rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.15s;
         }
         .btn-discount-trigger:hover {
-          background: #dbeafe;
+          background: rgba(37, 99, 235, 0.25);
         }
         .text-discount-applied {
-          color: #059669;
+          color: #34d399;
           font-weight: 700;
         }
 
@@ -3395,8 +3413,8 @@ export default function PosBillingView({
           flex-direction: column;
           gap: 6px;
           padding: 8px 10px;
-          background: #f0fdf4;
-          border: 1px solid #bbf7d0;
+          background: rgba(16, 185, 129, 0.12);
+          border: 1px solid rgba(16, 185, 129, 0.3);
           border-radius: 6px;
         }
         .cash-tender-inputs {
@@ -3408,13 +3426,13 @@ export default function PosBillingView({
         .cash-tender-label {
           font-size: 0.72rem;
           font-weight: 700;
-          color: #166534;
+          color: #34d399;
         }
         .cash-input-wrap {
           display: flex;
           align-items: center;
-          background: #ffffff;
-          border: 1.5px solid #86efac;
+          background: var(--bg-subtle, #070d1e);
+          border: 1.5px solid #16a34a;
           border-radius: 4px;
           padding: 2px 6px;
           font-size: 0.75rem;
@@ -3426,7 +3444,8 @@ export default function PosBillingView({
           outline: none;
           font-size: 0.8rem;
           font-weight: 700;
-          color: #0f172a;
+          background: transparent;
+          color: var(--text-primary, #f8fafc);
         }
         .cash-chips {
           display: flex;
@@ -3434,17 +3453,18 @@ export default function PosBillingView({
           flex-wrap: wrap;
         }
         .cash-chip {
-          background: #ffffff;
-          border: 1px solid #86efac;
-          color: #166534;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid #16a34a;
+          color: #4ade80;
           border-radius: 4px;
           padding: 2px 6px;
           font-size: 0.68rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.12s;
         }
         .cash-chip:hover {
-          background: #dcfce7;
+          background: rgba(22, 163, 74, 0.25);
         }
         .cash-chip.exact {
           background: #16a34a;
@@ -3456,17 +3476,17 @@ export default function PosBillingView({
           justify-content: space-between;
           align-items: center;
           font-size: 0.78rem;
-          color: #166534;
+          color: #34d399;
           padding-top: 4px;
-          border-top: 1px dashed #86efac;
+          border-top: 1px dashed rgba(16, 185, 129, 0.3);
         }
         .due-positive {
-          color: #047857;
+          color: #34d399;
           font-size: 0.95rem;
           font-weight: 900;
         }
         .due-exact {
-          color: #475569;
+          color: var(--text-muted, #64748b);
           font-weight: 700;
         }
 
@@ -3478,13 +3498,19 @@ export default function PosBillingView({
           gap: 6px;
         }
         .btn-split {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-normal-bg, #1e293b);
+          border: 1px solid var(--btn-normal-border, #334155);
+          color: var(--btn-normal-text, #94a3b8);
           padding: 4px 8px;
           border-radius: 4px;
           font-size: 0.6875rem;
           font-weight: 700;
           cursor: pointer;
+          transition: all 0.15s;
+        }
+        .btn-split:hover {
+          background: var(--btn-normal-hover, #334155);
+          color: #f8fafc;
         }
         .payment-pills-row {
           display: flex;
@@ -3501,12 +3527,13 @@ export default function PosBillingView({
           padding: 2px 6px;
           border-radius: 4px;
           border: 1px solid transparent;
-          transition: background-color 0.15s, border-color 0.15s;
+          color: var(--text-secondary, #94a3b8);
+          transition: background-color 0.15s, border-color 0.15s, color 0.15s;
         }
         .payment-pill.selected {
-          background: #eff6ff;
-          border-color: #93c5fd;
-          color: #1d4ed8;
+          background: rgba(37, 99, 235, 0.2);
+          border-color: #3b82f6;
+          color: #60a5fa;
           font-weight: 700;
         }
         .payment-pill input {
@@ -3518,7 +3545,7 @@ export default function PosBillingView({
           gap: 4px;
           font-size: 0.6875rem;
           font-weight: 700;
-          color: #2563eb;
+          color: #60a5fa;
           cursor: pointer;
         }
 
@@ -3528,20 +3555,20 @@ export default function PosBillingView({
           align-items: center;
           gap: 6px;
           padding: 4px 8px;
-          background: #f8fafc;
-          border: 1px dashed #cbd5e1;
+          background: var(--bg-subtle, #070d1e);
+          border: 1px dashed var(--border-strong, #334155);
           border-radius: 6px;
           margin-top: 4px;
         }
         .other-strip-label {
           font-size: 0.6875rem;
           font-weight: 700;
-          color: #64748b;
+          color: var(--text-muted, #64748b);
         }
         .other-sub-pill {
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
-          color: #1e293b;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border, #1e293b);
+          color: var(--text-secondary, #94a3b8);
           border-radius: 4px;
           padding: 2px 8px;
           font-size: 0.6875rem;
@@ -3551,24 +3578,24 @@ export default function PosBillingView({
         }
         .other-sub-pill:hover {
           border-color: #3b82f6;
-          background: #f0f9ff;
-          color: #0284c7;
+          background: rgba(37, 99, 235, 0.15);
+          color: #60a5fa;
         }
         .other-sub-pill.active {
-          background: #f0fdf4;
-          border-color: #22c55e;
-          color: #15803d;
+          background: rgba(16, 185, 129, 0.2);
+          border-color: #10b981;
+          color: #34d399;
           font-weight: 700;
         }
         .other-sub-pill.more-options-btn {
           margin-left: auto;
-          background: #ede9fe;
-          border-color: #c4b5fd;
-          color: #6d28d9;
+          background: rgba(139, 92, 246, 0.15);
+          border-color: rgba(139, 92, 246, 0.4);
+          color: #a78bfa;
           font-weight: 700;
         }
         .other-sub-pill.more-options-btn:hover {
-          background: #ddd6fe;
+          background: rgba(139, 92, 246, 0.25);
         }
 
         /* UPI Tender Strip */
@@ -3577,8 +3604,8 @@ export default function PosBillingView({
           align-items: center;
           justify-content: space-between;
           padding: 6px 10px;
-          background: #f0fdf4;
-          border: 1px solid #bbf7d0;
+          background: rgba(16, 185, 129, 0.12);
+          border: 1px solid rgba(16, 185, 129, 0.3);
           border-radius: 6px;
           margin-top: 4px;
           gap: 8px;
@@ -3598,33 +3625,34 @@ export default function PosBillingView({
         .upi-title {
           font-size: 0.6875rem;
           font-weight: 700;
-          color: #166534;
+          color: #34d399;
         }
         .upi-vpa-addr {
           font-size: 0.625rem;
           font-weight: 600;
-          color: #15803d;
+          color: #10b981;
         }
         .upi-utr-input-group {
           display: flex;
           align-items: center;
           gap: 4px;
           font-size: 0.6875rem;
-          color: #374151;
+          color: var(--text-secondary, #94a3b8);
         }
         .upi-utr-input-group label {
           font-size: 0.625rem;
           font-weight: 600;
-          color: #4b5563;
+          color: var(--text-muted, #64748b);
         }
         .upi-utr-input-group input {
-          border: 1px solid #86efac;
+          border: 1px solid rgba(16, 185, 129, 0.4);
           border-radius: 4px;
           padding: 2px 6px;
           font-size: 0.6875rem;
           width: 130px;
           outline: none;
-          background: #ffffff;
+          background: var(--bg-subtle, #070d1e);
+          color: var(--text-primary, #f8fafc);
         }
         .upi-utr-input-group input:focus {
           border-color: #16a34a;
@@ -3634,7 +3662,7 @@ export default function PosBillingView({
           gap: 4px;
         }
         .btn-upi-qr-view {
-          background: #16a34a;
+          background: var(--btn-success-bg, #10b981);
           color: #ffffff;
           border: none;
           border-radius: 4px;
@@ -3642,9 +3670,10 @@ export default function PosBillingView({
           font-size: 0.6875rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.15s;
         }
         .btn-upi-qr-view:hover {
-          background: #15803d;
+          background: var(--btn-success-hover, #059669);
         }
 
         /* Room Service Strip */
@@ -3653,8 +3682,8 @@ export default function PosBillingView({
           align-items: center;
           justify-content: space-between;
           padding: 6px 10px;
-          background: #fffbeb;
-          border: 1px solid #fde68a;
+          background: rgba(245, 158, 11, 0.12);
+          border: 1px solid rgba(245, 158, 11, 0.3);
           border-radius: 6px;
           margin-top: 4px;
           gap: 8px;
@@ -3674,15 +3703,15 @@ export default function PosBillingView({
         .room-title {
           font-size: 0.6875rem;
           font-weight: 700;
-          color: #92400e;
+          color: #fbbf24;
         }
         .room-meta {
           font-size: 0.625rem;
           font-weight: 600;
-          color: #b45309;
+          color: #f59e0b;
         }
         .btn-room-edit {
-          background: #f59e0b;
+          background: #d97706;
           color: #ffffff;
           border: none;
           border-radius: 4px;
@@ -3690,9 +3719,10 @@ export default function PosBillingView({
           font-size: 0.6875rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.15s;
         }
         .btn-room-edit:hover {
-          background: #d97706;
+          background: #b45309;
         }
 
         .total-display-badge {
@@ -3702,12 +3732,12 @@ export default function PosBillingView({
         }
         .total-label {
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--text-muted, #64748b);
         }
         .total-value {
           font-size: 1.125rem;
           font-weight: 900;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         .cart-cta-buttons {
@@ -3716,22 +3746,23 @@ export default function PosBillingView({
           gap: 8px;
         }
         .btn-hold-cart {
-          background: #fef3c7;
-          color: #92400e;
-          border: 1px solid #fde68a;
+          background: rgba(245, 158, 11, 0.15);
+          color: #fbbf24;
+          border: 1px solid rgba(245, 158, 11, 0.35);
           padding: 10px 6px;
           border-radius: 6px;
           font-size: 0.8125rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.15s;
         }
         .btn-hold-cart:hover {
-          background: #fde68a;
+          background: rgba(245, 158, 11, 0.25);
         }
         .btn-print-ebill {
-          background: #dc2626;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-alert-bg, #dc2626);
+          color: var(--btn-alert-text, #ffffff);
+          border: 1px solid var(--btn-alert-border, #ef4444);
           padding: 10px 12px;
           border-radius: 6px;
           font-size: 0.875rem;
@@ -3740,7 +3771,7 @@ export default function PosBillingView({
           transition: background 0.15s;
         }
         .btn-print-ebill:hover:not(:disabled) {
-          background: #b91c1c;
+          background: var(--btn-alert-hover, #b91c1c);
         }
         .btn-print-ebill:disabled {
           opacity: 0.5;
@@ -3767,9 +3798,9 @@ export default function PosBillingView({
           opacity: 0.6;
         }
         .btn-kot-print {
-          background: #2563eb;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-primary-bg, #2563eb);
+          color: var(--btn-primary-text, #ffffff);
+          border: 1px solid var(--btn-primary-border, #3b82f6);
           padding: 10px 12px;
           border-radius: 6px;
           font-size: 0.875rem;
@@ -3778,7 +3809,7 @@ export default function PosBillingView({
           transition: background 0.15s;
         }
         .btn-kot-print:hover:not(:disabled) {
-          background: #1d4ed8;
+          background: var(--btn-primary-hover, #1d4ed8);
         }
         .btn-kot-print:disabled {
           opacity: 0.5;
@@ -3792,19 +3823,21 @@ export default function PosBillingView({
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: rgba(15, 23, 42, 0.6);
-          backdrop-filter: blur(2px);
+          background: rgba(11, 19, 43, 0.8);
+          backdrop-filter: blur(4px);
           z-index: 200;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .modal-dialog-card {
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
+          color: var(--text-primary, #f8fafc);
           border-radius: 10px;
           width: 90%;
           max-width: 440px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
           overflow: hidden;
           display: flex;
           flex-direction: column;
@@ -3823,91 +3856,111 @@ export default function PosBillingView({
           padding: 20px;
           max-height: 350px;
           overflow-y: auto;
+          color: var(--text-primary, #f8fafc);
         }
         .dispatched-items-list {
           list-style: none;
           padding: 0;
           margin: 0;
           font-size: 0.875rem;
+          color: var(--text-primary, #f8fafc);
         }
         .dialog-footer {
           padding: 12px 20px;
-          background: #f8fafc;
-          border-top: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border-top: 1px solid var(--border, #1e293b);
           display: flex;
           justify-content: flex-end;
           gap: 8px;
         }
         .btn-dialog-primary {
-          background: #16a34a;
+          background: var(--btn-success-bg, #10b981);
           color: #ffffff;
-          border: none;
+          border: 1px solid #059669;
           padding: 8px 16px;
           border-radius: 6px;
           font-weight: 700;
           font-size: 0.875rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-dialog-primary:hover {
+          background: var(--btn-success-hover, #059669);
         }
         .btn-dialog-secondary {
-          background: #ffffff;
-          color: #334155;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-cancel-bg, #334155);
+          color: var(--btn-cancel-text, #cbd5e1);
+          border: 1px solid var(--btn-cancel-border, #475569);
           padding: 8px 16px;
           border-radius: 6px;
           font-weight: 700;
           font-size: 0.875rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-dialog-secondary:hover {
+          background: var(--btn-cancel-hover, #475569);
         }
 
         /* Thermal Receipt Dialog */
         .receipt-card {
           max-width: 380px;
-          background: #f8fafc;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
         }
         .receipt-paper {
-          background: #ffffff;
+          background: #070d1e;
+          color: #f8fafc;
           padding: 20px;
           margin: 16px;
-          border: 1px dashed #cbd5e1;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          border: 1px dashed var(--border-strong, #334155);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
           font-family: 'Courier New', Courier, monospace;
         }
         .receipt-header {
           text-align: center;
         }
         .receipt-divider {
-          color: #94a3b8;
+          color: #64748b;
           font-size: 0.75rem;
           margin: 4px 0;
           text-align: center;
         }
         .receipt-actions {
           padding: 12px 16px;
-          background: #f1f5f9;
-          border-top: 1px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border-top: 1px solid var(--border, #1e293b);
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 8px;
         }
         .btn-print-duplicate {
-          background: #0f172a;
+          background: var(--btn-primary-bg, #2563eb);
           color: #ffffff;
-          border: none;
+          border: 1px solid var(--btn-primary-border, #3b82f6);
           padding: 8px;
           border-radius: 6px;
           font-weight: 700;
           font-size: 0.8125rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-print-duplicate:hover {
+          background: var(--btn-primary-hover, #1d4ed8);
         }
         .btn-close-receipt {
-          background: #dc2626;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-alert-bg, #dc2626);
+          color: var(--btn-alert-text, #ffffff);
+          border: 1px solid var(--btn-alert-border, #ef4444);
           padding: 8px;
           border-radius: 6px;
           font-weight: 700;
           font-size: 0.8125rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-close-receipt:hover {
+          background: var(--btn-alert-hover, #b91c1c);
         }
       `}</style>
     </div>

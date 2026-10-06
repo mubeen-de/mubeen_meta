@@ -871,9 +871,9 @@ export default function TableViewFloor({
           box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
         }
         .btn-held-drawer {
-          background: #eff6ff;
-          color: #1d4ed8;
-          border: 1px solid #bfdbfe;
+          background: rgba(59, 130, 246, 0.15);
+          color: #60a5fa;
+          border: 1px solid rgba(59, 130, 246, 0.3);
           padding: 6px 12px;
           border-radius: 6px;
           font-size: 0.75rem;
@@ -881,7 +881,7 @@ export default function TableViewFloor({
           cursor: pointer;
         }
         .btn-held-drawer:hover {
-          background: #dbeafe;
+          background: rgba(59, 130, 246, 0.25);
         }
 
         .table-view-toolbar {
@@ -889,8 +889,8 @@ export default function TableViewFloor({
           align-items: center;
           justify-content: space-between;
           padding: 8px 16px;
-          background: #ffffff;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border-bottom: 1px solid var(--border);
           gap: 12px;
           flex-wrap: wrap;
         }
@@ -904,14 +904,14 @@ export default function TableViewFloor({
         .toolbar-title {
           font-size: 0.95rem;
           font-weight: 700;
-          color: #334155;
+          color: var(--text-primary);
           margin: 0;
         }
 
         .btn-move-kot {
-          background: #eff6ff;
-          color: #2563eb;
-          border: 1px solid #bfdbfe;
+          background: var(--btn-normal-bg);
+          color: var(--accent-subtle-text);
+          border: 1px solid var(--border-strong);
           border-radius: 4px;
           padding: 4px 10px;
           font-size: 0.75rem;
@@ -919,7 +919,7 @@ export default function TableViewFloor({
           cursor: pointer;
         }
         .btn-move-kot:hover {
-          background: #dbeafe;
+          background: var(--bg-hover);
         }
 
         .status-legend-group {
@@ -928,21 +928,22 @@ export default function TableViewFloor({
           gap: 6px;
         }
         .legend-pill {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border);
           border-radius: 4px;
           padding: 3px 8px;
           font-size: 0.6875rem;
-          color: #475569;
+          color: var(--text-secondary);
           display: flex;
           align-items: center;
           gap: 4px;
           cursor: pointer;
         }
         .legend-pill.active {
-          background: #e2e8f0;
+          background: var(--bg-elevated);
+          border-color: var(--accent);
           font-weight: 700;
-          color: #0f172a;
+          color: var(--text-primary);
         }
 
         .dot {
@@ -951,7 +952,7 @@ export default function TableViewFloor({
           border-radius: 999px;
           display: inline-block;
         }
-        .dot-blank { background: #cbd5e1; }
+        .dot-blank { background: #64748b; }
         .dot-running { background: #0284c7; }
         .dot-printed { background: #22c55e; }
         .dot-paid { background: #3b82f6; }
@@ -963,26 +964,17 @@ export default function TableViewFloor({
           gap: 8px;
         }
         .btn-toolbar-icon {
-          background: #f8fafc;
-          border: 1px solid #cbd5e1;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border-strong);
+          color: var(--text-primary);
           border-radius: 4px;
           padding: 4px 8px;
           cursor: pointer;
         }
         .btn-add-table {
-          background: #f97316;
-          color: #ffffff;
-          border: none;
-          border-radius: 4px;
-          padding: 5px 12px;
-          font-size: 0.75rem;
-          font-weight: 700;
-          cursor: pointer;
-        }
-        .btn-delivery-jump, .btn-pickup-jump {
-          background: #dc2626;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-primary-bg);
+          color: var(--btn-primary-text);
+          border: 1px solid var(--btn-primary-border);
           border-radius: 4px;
           padding: 5px 12px;
           font-size: 0.75rem;
@@ -990,10 +982,28 @@ export default function TableViewFloor({
           cursor: pointer;
           transition: all 0.15s ease;
         }
+        .btn-add-table:hover {
+          background: var(--btn-primary-hover);
+        }
+        .btn-delivery-jump, .btn-pickup-jump {
+          background: var(--btn-alert-bg);
+          color: var(--btn-alert-text);
+          border: 1px solid var(--btn-alert-border);
+          border-radius: 4px;
+          padding: 5px 12px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .btn-delivery-jump:hover, .btn-pickup-jump:hover {
+          background: var(--btn-alert-hover);
+        }
         .btn-delivery-jump:disabled, .btn-pickup-jump:disabled {
           opacity: 0.45;
           cursor: not-allowed;
-          background: #94a3b8;
+          background: #475569;
+          border-color: #334155;
         }
 
         .floor-matrix-scroll {
@@ -1006,8 +1016,8 @@ export default function TableViewFloor({
         }
 
         .floor-section-block {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 8px;
           padding: 14px;
         }
@@ -1015,7 +1025,7 @@ export default function TableViewFloor({
           margin: 0 0 12px 0;
           font-size: 0.8125rem;
           font-weight: 700;
-          color: #64748b;
+          color: var(--text-secondary);
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
@@ -1039,13 +1049,13 @@ export default function TableViewFloor({
         }
         .table-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          box-shadow: var(--shadow-card);
         }
 
         .card-blank {
-          background: #e2e8f0;
-          color: #475569;
-          border-color: #cbd5e1;
+          background: #1e293b;
+          color: #94a3b8;
+          border-color: #334155;
         }
         .card-running-kot {
           background: #fef08a; /* Yellow */
@@ -1116,18 +1126,22 @@ export default function TableViewFloor({
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: rgba(15, 23, 42, 0.5);
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(4px);
           z-index: 150;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .inspect-card {
-          background: #ffffff;
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
+          color: var(--text-primary);
           padding: 20px;
           border-radius: 12px;
           width: 90%;
           max-width: 440px;
+          box-shadow: var(--shadow-modal);
         }
         .inspect-header {
           display: flex;
@@ -1139,23 +1153,35 @@ export default function TableViewFloor({
           border: none;
           font-size: 1.1rem;
           cursor: pointer;
+          color: var(--text-secondary);
+        }
+        .close-btn:hover {
+          color: var(--text-primary);
         }
         .btn-secondary {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-cancel-bg);
+          border: 1px solid var(--btn-cancel-border);
+          color: var(--btn-cancel-text);
           padding: 6px 14px;
           border-radius: 6px;
           font-weight: 600;
           cursor: pointer;
         }
+        .btn-secondary:hover {
+          background: var(--btn-cancel-hover);
+          color: #fff;
+        }
         .btn-primary {
-          background: #2563eb;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-primary-bg);
+          color: var(--btn-primary-text);
+          border: 1px solid var(--btn-primary-border);
           padding: 6px 16px;
           border-radius: 6px;
           font-weight: 600;
           cursor: pointer;
+        }
+        .btn-primary:hover {
+          background: var(--btn-primary-hover);
         }
       `}</style>
     </div>

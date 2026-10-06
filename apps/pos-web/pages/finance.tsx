@@ -558,16 +558,9 @@ export default function FinancePage() {
                     <div style={{ display: "flex", gap: "10px" }}>
                       <button
                         type="button"
+                        className="btn-secondary"
                         onClick={() => setIsPettyCashOpen(true)}
                         style={{
-                          padding: "8px 14px",
-                          borderRadius: "var(--radius-md, 8px)",
-                          border: "1px solid #cbd5e1",
-                          background: "#ffffff",
-                          color: "#0f172a",
-                          fontSize: "0.8125rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "6px",
@@ -577,16 +570,9 @@ export default function FinancePage() {
                       </button>
                       <button
                         type="button"
+                        className="btn-primary"
                         onClick={() => setIsReconcileOpen(true)}
                         style={{
-                          padding: "8px 14px",
-                          borderRadius: "var(--radius-md, 8px)",
-                          border: "none",
-                          background: "#2563eb",
-                          color: "#ffffff",
-                          fontSize: "0.8125rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "6px",
@@ -606,43 +592,43 @@ export default function FinancePage() {
                   {!drawerLoading && cashDrawer && (
                     <>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", margin: "16px 0" }}>
-                        <div style={{ background: "#f8fafc", padding: "14px", borderRadius: "8px", border: "1px solid #e2e8f0" }}>
-                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748b" }}>OPENING FLOAT</span>
-                          <div style={{ fontSize: "1.25rem", fontWeight: 900, color: "#0f172a", marginTop: "4px" }}>
+                        <div style={{ background: "var(--bg-card)", padding: "14px", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)" }}>OPENING FLOAT</span>
+                          <div style={{ fontSize: "1.25rem", fontWeight: 900, color: "var(--text-primary)", marginTop: "4px" }}>
                             {formatMoney(cashDrawer.openingFloatMinor)}
                           </div>
                         </div>
-                        <div style={{ background: "#f0fdf4", padding: "14px", borderRadius: "8px", border: "1px solid #bbf7d0" }}>
-                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#166534" }}>CASH SALES INFLOW</span>
-                          <div style={{ fontSize: "1.25rem", fontWeight: 900, color: "#15803d", marginTop: "4px" }}>
+                        <div style={{ background: "rgba(16, 185, 129, 0.15)", padding: "14px", borderRadius: "8px", border: "1px solid rgba(16, 185, 129, 0.3)" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#34d399" }}>CASH SALES INFLOW</span>
+                          <div style={{ fontSize: "1.25rem", fontWeight: 900, color: "#34d399", marginTop: "4px" }}>
                             +{formatMoney(cashDrawer.cashSalesMinor)}
                           </div>
-                          <div style={{ fontSize: "0.75rem", color: "#166534", marginTop: "2px" }}>
+                          <div style={{ fontSize: "0.75rem", color: "#34d399", marginTop: "2px" }}>
                             {cashDrawer.cashTxCount} cash orders
                           </div>
                         </div>
-                        <div style={{ background: "#fef2f2", padding: "14px", borderRadius: "8px", border: "1px solid #fecaca" }}>
-                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>PETTY CASH OUTFLOW</span>
-                          <div style={{ fontSize: "1.25rem", fontWeight: 900, color: "#b91c1c", marginTop: "4px" }}>
+                        <div style={{ background: "rgba(239, 68, 68, 0.15)", padding: "14px", borderRadius: "8px", border: "1px solid rgba(239, 68, 68, 0.3)" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#f87171" }}>PETTY CASH OUTFLOW</span>
+                          <div style={{ fontSize: "1.25rem", fontWeight: 900, color: "#f87171", marginTop: "4px" }}>
                             -{formatMoney(cashDrawer.pettyCashTotalMinor)}
                           </div>
-                          <div style={{ fontSize: "0.75rem", color: "#991b1b", marginTop: "2px" }}>
+                          <div style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "2px" }}>
                             {cashDrawer.expenses.length} expenses
                           </div>
                         </div>
-                        <div style={{ background: "#eff6ff", padding: "14px", borderRadius: "8px", border: "1px solid #bfdbfe" }}>
-                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1e40af" }}>EXPECTED IN DRAWER</span>
-                          <div style={{ fontSize: "1.25rem", fontWeight: 900, color: "#1d4ed8", marginTop: "4px" }}>
+                        <div style={{ background: "rgba(59, 130, 246, 0.15)", padding: "14px", borderRadius: "8px", border: "1px solid rgba(59, 130, 246, 0.3)" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#60a5fa" }}>EXPECTED IN DRAWER</span>
+                          <div style={{ fontSize: "1.25rem", fontWeight: 900, color: "#60a5fa", marginTop: "4px" }}>
                             {formatMoney(cashDrawer.expectedCashMinor)}
                           </div>
                         </div>
                         <div style={{
-                          background: cashDrawer.isReconciled ? (Number(cashDrawer.varianceMinor) === 0 ? "#f0fdf4" : (Number(cashDrawer.varianceMinor) < 0 ? "#fef2f2" : "#fefce8")) : "#f8fafc",
+                          background: cashDrawer.isReconciled ? (Number(cashDrawer.varianceMinor) === 0 ? "rgba(16, 185, 129, 0.15)" : (Number(cashDrawer.varianceMinor) < 0 ? "rgba(239, 68, 68, 0.15)" : "rgba(245, 158, 11, 0.15)")) : "var(--bg-card)",
                           padding: "14px",
                           borderRadius: "8px",
-                          border: "1px solid #cbd5e1"
+                          border: "1px solid var(--border)"
                         }}>
-                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#475569" }}>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)" }}>
                             {cashDrawer.isReconciled ? "ACTUAL COUNTED & VARIANCE" : "STATUS"}
                           </span>
                           {cashDrawer.isReconciled ? (
@@ -962,12 +948,13 @@ export default function FinancePage() {
           >
             <div
               style={{
-                background: "#ffffff",
-                color: "#1e293b",
+                background: "var(--bg-card)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--border-strong)",
                 width: "100%",
                 maxWidth: "480px",
                 borderRadius: "var(--radius-lg, 12px)",
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                boxShadow: "var(--shadow-modal)",
                 padding: "24px",
                 position: "relative",
                 maxHeight: "90vh",
@@ -976,18 +963,18 @@ export default function FinancePage() {
               onClick={(e) => e.stopPropagation()}
             >
               <h3 style={{ margin: "0 0 12px", fontSize: "1.25rem", fontWeight: 800 }}>💸 Log Petty Cash Outflow</h3>
-              <p style={{ fontSize: "0.8125rem", color: "#64748b", margin: "0 0 16px" }}>
+              <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", margin: "0 0 16px" }}>
                 Record day-to-day cash disbursements from the restaurant cash drawer.
               </p>
               <form onSubmit={handleSavePettyCash}>
                 <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                     Category *
                   </label>
                   <select
                     value={pettyCategory}
                     onChange={(e) => setPettyCategory(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#fff" }}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-strong)", background: "var(--bg-subtle)", color: "var(--text-primary)" }}
                   >
                     <option value="Raw Materials / Veggies">Raw Materials / Veggies</option>
                     <option value="Dairy & Milk">Dairy & Milk</option>
@@ -1000,7 +987,7 @@ export default function FinancePage() {
                 </div>
 
                 <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                     Amount (₹) *
                   </label>
                   <input
@@ -1011,12 +998,12 @@ export default function FinancePage() {
                     placeholder="250.00"
                     value={pettyAmount}
                     onChange={(e) => setPettyAmount(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-strong)", background: "var(--bg-subtle)", color: "var(--text-primary)" }}
                   />
                 </div>
 
                 <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                     Paid To / Vendor Name
                   </label>
                   <input
@@ -1024,12 +1011,12 @@ export default function FinancePage() {
                     placeholder="e.g. Local Dairy / Supermarket"
                     value={pettyPaidTo}
                     onChange={(e) => setPettyPaidTo(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-strong)", background: "var(--bg-subtle)", color: "var(--text-primary)" }}
                   />
                 </div>
 
                 <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                     Description / Purpose
                   </label>
                   <textarea
@@ -1037,23 +1024,22 @@ export default function FinancePage() {
                     placeholder="Brief description of the purchase"
                     value={pettyDescription}
                     onChange={(e) => setPettyDescription(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-strong)", background: "var(--bg-subtle)", color: "var(--text-primary)" }}
                   />
                 </div>
 
                 <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                   <button
                     type="button"
-                    className="btn-secondary"
+                    className="btn-cancel"
                     onClick={() => setIsPettyCashOpen(false)}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="btn-primary"
+                    className="btn-alert"
                     disabled={savingPetty || !pettyAmount}
-                    style={{ background: "#dc2626", color: "#ffffff", fontWeight: 700 }}
                   >
                     {savingPetty ? "Saving..." : "Record Outflow"}
                   </button>
@@ -1084,12 +1070,13 @@ export default function FinancePage() {
           >
             <div
               style={{
-                background: "#ffffff",
-                color: "#1e293b",
+                background: "var(--bg-card)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--border-strong)",
                 width: "100%",
                 maxWidth: "480px",
                 borderRadius: "var(--radius-lg, 12px)",
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                boxShadow: "var(--shadow-modal)",
                 padding: "24px",
                 position: "relative",
                 maxHeight: "90vh",
@@ -1098,34 +1085,34 @@ export default function FinancePage() {
               onClick={(e) => e.stopPropagation()}
             >
               <h3 style={{ margin: "0 0 12px", fontSize: "1.25rem", fontWeight: 800 }}>🔒 End-of-Day Cash Drawer Close</h3>
-              <p style={{ fontSize: "0.8125rem", color: "#64748b", margin: "0 0 16px" }}>
+              <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", margin: "0 0 16px" }}>
                 Verify physical drawer cash against system records for {date}.
               </p>
 
               {cashDrawer && (
-                <div style={{ background: "#f8fafc", padding: "12px", borderRadius: "6px", marginBottom: "16px", fontSize: "0.8125rem" }}>
+                <div style={{ background: "var(--bg-subtle)", border: "1px solid var(--border)", padding: "12px", borderRadius: "6px", marginBottom: "16px", fontSize: "0.8125rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
                     <span>Opening Float:</span>
                     <strong>{formatMoney(cashDrawer.openingFloatMinor)}</strong>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", color: "#16a34a" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", color: "#34d399" }}>
                     <span>+ Cash Order Sales:</span>
                     <span>+{formatMoney(cashDrawer.cashSalesMinor)}</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", color: "#dc2626" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", color: "#f87171" }}>
                     <span>- Petty Cash Spent:</span>
                     <span>-{formatMoney(cashDrawer.pettyCashTotalMinor)}</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "6px", borderTop: "1px solid #cbd5e1", fontWeight: 800 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "6px", borderTop: "1px solid var(--border)", fontWeight: 800 }}>
                     <span>Expected In Drawer:</span>
-                    <span style={{ color: "#2563eb" }}>{formatMoney(cashDrawer.expectedCashMinor)}</span>
+                    <span style={{ color: "#60a5fa" }}>{formatMoney(cashDrawer.expectedCashMinor)}</span>
                   </div>
                 </div>
               )}
 
               <form onSubmit={handleReconcileSubmit}>
                 <div style={{ marginBottom: "12px" }}>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                     Actual Physical Cash Counted (₹) *
                   </label>
                   <input
@@ -1136,13 +1123,13 @@ export default function FinancePage() {
                     placeholder="Enter physical cash in drawer"
                     value={reconcileActualCount}
                     onChange={(e) => setReconcileActualCount(e.target.value)}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: "6px", border: "2px solid #2563eb", fontSize: "1rem", fontWeight: 700 }}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: "6px", border: "2px solid #2563eb", background: "var(--bg-subtle)", color: "var(--text-primary)", fontSize: "1rem", fontWeight: 700 }}
                   />
                   {reconcileActualCount && cashDrawer && (
                     <div style={{ marginTop: "6px", fontSize: "0.8125rem", fontWeight: 700 }}>
                       Calculated Variance:{" "}
                       <span style={{
-                        color: (parseFloat(reconcileActualCount) * 100 - Number(cashDrawer.expectedCashMinor)) === 0 ? "#16a34a" : ((parseFloat(reconcileActualCount) * 100 - Number(cashDrawer.expectedCashMinor)) < 0 ? "#dc2626" : "#ca8a04")
+                        color: (parseFloat(reconcileActualCount) * 100 - Number(cashDrawer.expectedCashMinor)) === 0 ? "#34d399" : ((parseFloat(reconcileActualCount) * 100 - Number(cashDrawer.expectedCashMinor)) < 0 ? "#f87171" : "#fbbf24")
                       }}>
                         ₹{((parseFloat(reconcileActualCount) * 100 - Number(cashDrawer.expectedCashMinor)) / 100).toFixed(2)}
                       </span>
@@ -1151,7 +1138,7 @@ export default function FinancePage() {
                 </div>
 
                 <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                     Closing Remarks / Notes
                   </label>
                   <textarea
@@ -1159,14 +1146,14 @@ export default function FinancePage() {
                     placeholder="e.g. Verified by shift manager, exact balance"
                     value={reconcileNotes}
                     onChange={(e) => setReconcileNotes(e.target.value)}
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #cbd5e1" }}
+                    style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--border-strong)", background: "var(--bg-subtle)", color: "var(--text-primary)" }}
                   />
                 </div>
 
                 <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                   <button
                     type="button"
-                    className="btn-secondary"
+                    className="btn-cancel"
                     onClick={() => setIsReconcileOpen(false)}
                   >
                     Cancel
@@ -1175,7 +1162,6 @@ export default function FinancePage() {
                     type="submit"
                     className="btn-primary"
                     disabled={savingReconcile || !reconcileActualCount}
-                    style={{ background: "#2563eb", color: "#ffffff", fontWeight: 700 }}
                   >
                     {savingReconcile ? "Submitting..." : "Confirm & Lock Shift"}
                   </button>

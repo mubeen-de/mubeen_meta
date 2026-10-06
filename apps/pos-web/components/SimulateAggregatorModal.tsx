@@ -523,15 +523,15 @@ export default function SimulateAggregatorModal({
           to { opacity: 1; }
         }
         .sim-modal-container {
-          background: var(--bg-card, #ffffff);
-          border: 1px solid var(--border, #e2e8f0);
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 16px;
           width: 100%;
           max-width: 580px;
           max-height: 92vh;
           display: flex;
           flex-direction: column;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
           overflow: hidden;
           animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -563,7 +563,7 @@ export default function SimulateAggregatorModal({
           font-size: 1.15rem;
           font-weight: 800;
           margin: 0;
-          color: var(--text-primary, #0f172a);
+          color: var(--text-primary, #f8fafc);
         }
         .sim-close-btn {
           background: transparent;
@@ -580,8 +580,8 @@ export default function SimulateAggregatorModal({
           transition: background 0.15s ease, color 0.15s ease;
         }
         .sim-close-btn:hover {
-          background: var(--bg-subtle, #f1f5f9);
-          color: var(--text-primary, #0f172a);
+          background: var(--bg-elevated, #1e293b);
+          color: var(--text-primary, #f8fafc);
         }
         .sim-form {
           padding: 18px 20px;
@@ -598,7 +598,7 @@ export default function SimulateAggregatorModal({
         .sim-label {
           font-size: 0.8rem;
           font-weight: 700;
-          color: var(--text-secondary, #475569);
+          color: var(--text-secondary, #94a3b8);
           text-transform: uppercase;
           letter-spacing: 0.03em;
         }
@@ -626,7 +626,7 @@ export default function SimulateAggregatorModal({
           transition: all 0.15s ease;
         }
         .sim-channel-btn.is-active {
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
         .sim-channel-icon {
           font-size: 1.5rem;
@@ -648,12 +648,12 @@ export default function SimulateAggregatorModal({
         }
         .sim-input {
           width: 100%;
-          border: 1px solid var(--border, #cbd5e1);
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 8px;
           padding: 7px 10px;
           font-size: 0.82rem;
-          color: var(--text-primary, #0f172a);
-          background: var(--bg-input, #fff);
+          color: var(--text-primary, #f8fafc);
+          background: var(--bg-subtle, #070d1e);
           outline: none;
           transition: border-color 0.15s ease;
         }
@@ -665,16 +665,16 @@ export default function SimulateAggregatorModal({
           letter-spacing: 0.15em;
           text-align: center;
           font-family: monospace;
-          color: #047857;
-          background: #ecfdf5;
-          border-color: #a7f3d0;
+          color: #34d399;
+          background: rgba(16, 185, 129, 0.15);
+          border-color: #059669;
         }
         .sim-items-list {
           max-height: 170px;
           overflow-y: auto;
-          border: 1px solid var(--border, #e2e8f0);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 10px;
-          background: var(--bg-subtle, #f8fafc);
+          background: var(--bg-subtle, #070d1e);
           padding: 6px;
           display: flex;
           flex-direction: column;
@@ -685,14 +685,14 @@ export default function SimulateAggregatorModal({
           align-items: center;
           justify-content: space-between;
           padding: 6px 10px;
-          background: var(--bg-card, #fff);
-          border: 1px solid var(--border, #e2e8f0);
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 8px;
           transition: background 0.1s ease;
         }
         .sim-item-row.is-selected {
-          border-color: #93c5fd;
-          background: #eff6ff;
+          border-color: #3b82f6;
+          background: rgba(37, 99, 235, 0.18);
         }
         .sim-item-info {
           display: flex;
@@ -701,11 +701,11 @@ export default function SimulateAggregatorModal({
         .sim-item-name {
           font-size: 0.82rem;
           font-weight: 700;
-          color: var(--text-primary, #0f172a);
+          color: var(--text-primary, #f8fafc);
         }
         .sim-item-price {
           font-size: 0.72rem;
-          color: var(--text-muted, #64748b);
+          color: var(--text-muted, #94a3b8);
         }
         .sim-item-stepper {
           display: flex;
@@ -716,10 +716,11 @@ export default function SimulateAggregatorModal({
           width: 26px;
           height: 26px;
           border-radius: 6px;
-          border: 1px solid var(--border, #cbd5e1);
-          background: var(--bg-card, #fff);
+          border: 1px solid var(--border-strong, #334155);
+          background: var(--bg-subtle, #070d1e);
           font-size: 0.88rem;
           font-weight: 700;
+          color: var(--text-primary, #f8fafc);
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -727,15 +728,15 @@ export default function SimulateAggregatorModal({
           transition: all 0.1s ease;
         }
         .sim-step-btn:hover:not(:disabled) {
-          background: var(--bg-subtle, #e2e8f0);
+          background: var(--bg-elevated, #1e293b);
         }
         .sim-step-btn.add {
-          background: #0284c7;
+          background: var(--btn-primary-bg, #2563eb);
           color: #fff;
-          border-color: #0284c7;
+          border-color: var(--btn-primary-border, #3b82f6);
         }
         .sim-step-btn.add:hover {
-          background: #0369a1;
+          background: var(--btn-primary-hover, #1d4ed8);
         }
         .sim-step-btn:disabled {
           opacity: 0.4;
@@ -748,13 +749,13 @@ export default function SimulateAggregatorModal({
           text-align: center;
         }
         .sim-rider-section {
-          background: var(--bg-subtle, #f8fafc);
+          background: var(--bg-elevated, #1e293b);
           padding: 10px 12px;
           border-radius: 10px;
-          border: 1px dashed var(--border, #cbd5e1);
+          border: 1px dashed var(--border-strong, #334155);
         }
         .sim-summary-box {
-          background: var(--bg-subtle, #f1f5f9);
+          background: var(--bg-subtle, #070d1e);
           border-radius: 10px;
           padding: 10px 14px;
           display: flex;
@@ -765,23 +766,23 @@ export default function SimulateAggregatorModal({
           display: flex;
           justify-content: space-between;
           font-size: 0.78rem;
-          color: var(--text-secondary, #475569);
+          color: var(--text-secondary, #94a3b8);
         }
         .sim-sum-row.total {
           font-size: 0.95rem;
           font-weight: 800;
-          color: var(--text-primary, #0f172a);
-          border-top: 1px solid var(--border, #cbd5e1);
+          color: var(--text-primary, #f8fafc);
+          border-top: 1px solid var(--border-strong, #334155);
           padding-top: 6px;
           margin-top: 4px;
         }
         .sim-sum-highlight {
-          color: #059669;
+          color: #34d399;
         }
         .sim-error-alert {
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #b91c1c;
+          background: rgba(220, 38, 38, 0.15);
+          border: 1px solid #ef4444;
+          color: #f87171;
           padding: 8px 12px;
           border-radius: 8px;
           font-size: 0.78rem;
@@ -796,12 +797,17 @@ export default function SimulateAggregatorModal({
           flex: 1;
           padding: 10px 16px;
           border-radius: 10px;
-          border: 1px solid var(--border, #cbd5e1);
-          background: transparent;
-          color: var(--text-secondary, #64748b);
+          border: 1px solid var(--btn-cancel-border, #475569);
+          background: var(--btn-cancel-bg, #334155);
+          color: var(--btn-cancel-text, #cbd5e1);
           font-size: 0.82rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .sim-btn-cancel:hover {
+          background: var(--btn-cancel-hover, #475569);
+          color: #f8fafc;
         }
         .sim-btn-submit {
           flex: 2;
@@ -815,12 +821,12 @@ export default function SimulateAggregatorModal({
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
           transition: transform 0.1s ease, filter 0.1s ease;
         }
         .sim-btn-submit:hover:not(:disabled) {
           transform: translateY(-1px);
-          filter: brightness(1.05);
+          filter: brightness(1.08);
         }
         .sim-btn-submit:disabled {
           opacity: 0.6;
@@ -847,18 +853,18 @@ export default function SimulateAggregatorModal({
         .sim-success-title {
           font-size: 1.25rem;
           font-weight: 800;
-          color: var(--text-primary, #0f172a);
+          color: var(--text-primary, #f8fafc);
           margin: 0 0 4px 0;
         }
         .sim-success-subtitle {
           font-size: 0.82rem;
-          color: var(--text-muted, #64748b);
+          color: var(--text-muted, #94a3b8);
           margin: 0 0 18px 0;
         }
         .sim-success-card {
           width: 100%;
-          background: var(--bg-subtle, #f8fafc);
-          border: 1px solid var(--border, #e2e8f0);
+          background: var(--bg-subtle, #070d1e);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 12px;
           padding: 14px 16px;
           display: flex;
@@ -873,28 +879,28 @@ export default function SimulateAggregatorModal({
           font-size: 0.8rem;
         }
         .sim-success-label {
-          color: var(--text-muted, #64748b);
+          color: var(--text-muted, #94a3b8);
         }
         .sim-success-value {
           font-weight: 700;
-          color: var(--text-primary, #0f172a);
+          color: var(--text-primary, #f8fafc);
         }
         .sim-success-value.highlight {
-          color: #0284c7;
+          color: #38bdf8;
           font-family: monospace;
           font-size: 0.88rem;
         }
         .sim-success-value.badge {
-          background: #ecfdf5;
-          color: #047857;
+          background: rgba(16, 185, 129, 0.2);
+          color: #34d399;
           padding: 2px 8px;
           border-radius: 4px;
           font-family: monospace;
           font-weight: 800;
         }
         .sim-success-value.status-tag {
-          background: #e0f2fe;
-          color: #0369a1;
+          background: rgba(56, 189, 248, 0.2);
+          color: #38bdf8;
           padding: 2px 8px;
           border-radius: 4px;
           font-size: 0.75rem;
@@ -910,21 +916,30 @@ export default function SimulateAggregatorModal({
           padding: 10px 16px;
           border-radius: 10px;
           border: none;
-          color: #fff;
+          background: var(--btn-primary-bg, #2563eb);
+          color: var(--btn-primary-text, #ffffff);
           font-size: 0.88rem;
           font-weight: 800;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .sim-btn-primary:hover {
+          background: var(--btn-primary-hover, #1d4ed8);
         }
         .sim-btn-secondary {
           width: 100%;
           padding: 10px 16px;
           border-radius: 10px;
-          border: 1px solid var(--border, #cbd5e1);
-          background: transparent;
-          color: var(--text-secondary, #475569);
+          border: 1px solid var(--btn-secondary-border, #475569);
+          background: var(--btn-secondary-bg, #334155);
+          color: var(--btn-secondary-text, #f8fafc);
           font-size: 0.82rem;
           font-weight: 700;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .sim-btn-secondary:hover {
+          background: var(--btn-secondary-hover, #475569);
         }
       `}</style>
     </div>

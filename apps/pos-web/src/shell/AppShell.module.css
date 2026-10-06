@@ -8,14 +8,14 @@
  */
 
 :root {
-  --kap-color-primary: #1e6fd9;
-  --kap-color-primary-dark: #164f9c;
-  --kap-color-bg: #f4f6f9;
-  --kap-color-surface: #ffffff;
-  --kap-color-border: #dfe4ea;
-  --kap-color-text: #1c2733;
-  --kap-color-text-muted: #6b7684;
-  --kap-color-danger: #d9432b;
+  --kap-color-primary: #2563eb;
+  --kap-color-primary-dark: #1d4ed8;
+  --kap-color-bg: var(--bg-base, #0b132b);
+  --kap-color-surface: var(--bg-card, #111c38);
+  --kap-color-border: var(--border, #1e293b);
+  --kap-color-text: var(--text-primary, #f8fafc);
+  --kap-color-text-muted: var(--text-secondary, #94a3b8);
+  --kap-color-danger: var(--btn-alert-bg, #dc2626);
 
   --kap-space-xs: 4px;
   --kap-space-sm: 8px;

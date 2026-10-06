@@ -187,14 +187,14 @@ export default function KitchenAnalytics() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", background: "var(--bg-base, #f8fafc)" }}>
+    <div style={{ minHeight: "100vh", display: "flex", background: "var(--bg-base, #0b132b)", color: "var(--text-primary, #f8fafc)" }}>
       <Head>
         <title>KapMeta POS - Kitchen Prep Times</title>
       </Head>
       <Nav variant="sidebar" />
       <div style={{ flex: 1, padding: 24, maxWidth: 900, margin: "0 auto", width: "100%" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4, flexWrap: "wrap", gap: 10 }}>
-          <h1 style={{ fontSize: "1.25rem", fontWeight: 800 }}>Kitchen Prep Times</h1>
+          <h1 style={{ fontSize: "1.25rem", fontWeight: 800, color: "var(--text-primary, #f8fafc)" }}>Kitchen Prep Times</h1>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <select
               value={stationFilter}
@@ -204,9 +204,9 @@ export default function KitchenAnalytics() {
                 fontWeight: 600,
                 padding: "6px 10px",
                 borderRadius: 8,
-                border: "1px solid var(--border, #e2e8f0)",
-                background: "var(--bg-card, #fff)",
-                color: "var(--text-secondary, #64748b)",
+                border: "1px solid var(--border, #1e293b)",
+                background: "var(--bg-card, #111c38)",
+                color: "var(--text-primary, #f8fafc)",
               }}
             >
               <option value="">All Stations</option>
@@ -225,10 +225,11 @@ export default function KitchenAnalytics() {
                   fontWeight: 600,
                   padding: "6px 12px",
                   borderRadius: 8,
-                  border: "1px solid var(--border, #e2e8f0)",
-                  background: range === r ? "var(--accent, #10b981)" : "var(--bg-card, #fff)",
-                  color: range === r ? "#fff" : "var(--text-secondary, #64748b)",
+                  border: range === r ? "1px solid var(--btn-primary-border, #3b82f6)" : "1px solid var(--btn-normal-border, #334155)",
+                  background: range === r ? "var(--btn-primary-bg, #2563eb)" : "var(--btn-normal-bg, #1e293b)",
+                  color: range === r ? "#ffffff" : "var(--btn-normal-text, #94a3b8)",
                   cursor: "pointer",
+                  transition: "all 0.15s ease",
                 }}
               >
                 {RANGE_LABEL[r]}
@@ -242,18 +243,19 @@ export default function KitchenAnalytics() {
                 fontWeight: 600,
                 padding: "6px 12px",
                 borderRadius: 8,
-                border: "1px solid var(--border, #e2e8f0)",
-                background: "var(--bg-card, #fff)",
-                color: "var(--text-secondary, #64748b)",
+                border: "1px solid var(--btn-normal-border, #334155)",
+                background: "var(--btn-normal-bg, #1e293b)",
+                color: "var(--btn-normal-text, #94a3b8)",
                 cursor: stations.length === 0 ? "not-allowed" : "pointer",
                 opacity: stations.length === 0 ? 0.5 : 1,
+                transition: "all 0.15s ease",
               }}
             >
               ⬇ Export CSV
             </button>
           </div>
         </div>
-        <p style={{ fontSize: "0.8rem", color: "var(--text-secondary, #64748b)", marginBottom: 16 }}>
+        <p style={{ fontSize: "0.8rem", color: "var(--text-secondary, #94a3b8)", marginBottom: 16 }}>
           Avg time from QUEUED to READY, {RANGE_LABEL[range].toLowerCase()} · live updates on every ticket completion.
           Colors follow each station's own SLA thresholds (Station.slaWarningSeconds / slaBreachSeconds), not a fixed cutoff.
         </p>
@@ -269,12 +271,13 @@ export default function KitchenAnalytics() {
               padding: "8px 14px",
               borderRadius: 10,
               marginBottom: 16,
-              background: comparison.deltaPercent <= 0 ? "var(--accent-soft, #ecfdf5)" : "var(--warning-soft, #fffbeb)",
-              color: comparison.deltaPercent <= 0 ? "var(--accent-subtle-text, #065f46)" : "var(--warning, #f59e0b)",
+              background: comparison.deltaPercent <= 0 ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
+              color: comparison.deltaPercent <= 0 ? "#34d399" : "#fbbf24",
+              border: comparison.deltaPercent <= 0 ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(245, 158, 11, 0.3)",
             }}
           >
             {comparison.deltaPercent <= 0 ? "▼" : "▲"} {Math.abs(comparison.deltaPercent)}% vs previous {RANGE_LABEL[range].toLowerCase()}
-            <span style={{ fontWeight: 400, color: "var(--text-muted, #94a3b8)" }}>
+            <span style={{ fontWeight: 400, color: "var(--text-muted, #64748b)" }}>
               ({comparison.currentAvgMinutes} min now vs {comparison.previousAvgMinutes} min prior)
             </span>
           </div>
@@ -282,7 +285,7 @@ export default function KitchenAnalytics() {
 
         {atRisk.length > 0 && (
           <section style={{ marginBottom: 24 }}>
-            <h2 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: 10, color: "var(--destructive, #ef4444)" }}>
+            <h2 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: 10, color: "#f87171" }}>
               🔥 Cooking Right Now, Over SLA ({atRisk.length})
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -293,11 +296,12 @@ export default function KitchenAnalytics() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    background: t.severity === "BREACH" ? "var(--destructive-soft, #fef2f2)" : "var(--warning-soft, #fffbeb)",
-                    border: `1px solid ${t.severity === "BREACH" ? "var(--destructive, #ef4444)" : "var(--warning, #f59e0b)"}`,
+                    background: t.severity === "BREACH" ? "rgba(220, 38, 38, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                    border: `1px solid ${t.severity === "BREACH" ? "rgba(239, 68, 68, 0.4)" : "rgba(245, 158, 11, 0.4)"}`,
                     borderRadius: 10,
                     padding: "8px 14px",
                     fontSize: "0.8rem",
+                    color: "var(--text-primary, #f8fafc)",
                   }}
                 >
                   <span style={{ fontWeight: 700 }}>
@@ -312,13 +316,13 @@ export default function KitchenAnalytics() {
         )}
 
         {loading ? (
-          <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #94a3b8)" }}>Loading...</p>
+          <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #64748b)" }}>Loading...</p>
         ) : stations.length === 0 ? (
-          <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #94a3b8)" }}>No completed tickets in this window yet.</p>
+          <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #64748b)" }}>No completed tickets in this window yet.</p>
         ) : (
           <>
             <section style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: 10 }}>By Station</h2>
+              <h2 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: 10, color: "var(--text-primary, #f8fafc)" }}>By Station</h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {[...stations]
                   .sort((a, b) => b.avgPrepMinutes - a.avgPrepMinutes)
@@ -326,22 +330,22 @@ export default function KitchenAnalytics() {
                     <div
                       key={s.stationId}
                       style={{
-                        background: "var(--bg-card, #fff)",
-                        border: "1px solid var(--border, #e2e8f0)",
+                        background: "var(--bg-card, #111c38)",
+                        border: "1px solid var(--border, #1e293b)",
                         borderRadius: 12,
                         padding: 16,
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 4 }}>
-                        <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>{s.stationName}</span>
-                        <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>
+                        <span style={{ fontWeight: 700, fontSize: "0.9rem", color: "var(--text-primary, #f8fafc)" }}>{s.stationName}</span>
+                        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary, #f8fafc)" }}>
                           {s.avgPrepMinutes} min avg{" "}
-                          <span style={{ fontWeight: 400, color: "var(--text-muted, #94a3b8)" }}>
+                          <span style={{ fontWeight: 400, color: "var(--text-muted, #64748b)" }}>
                             · median {s.medianPrepMinutes} · p90 {s.p90PrepMinutes} · {s.ticketCount} tickets · SLA {s.slaWarningMinutes}/{s.slaBreachMinutes} min
                           </span>
                         </span>
                       </div>
-                      <div style={{ height: 8, borderRadius: 9999, background: "var(--bg-subtle, #f1f5f9)", overflow: "hidden" }}>
+                      <div style={{ height: 8, borderRadius: 9999, background: "var(--bg-subtle, #070d1e)", overflow: "hidden" }}>
                         <div
                           style={{
                             height: "100%",
@@ -357,9 +361,9 @@ export default function KitchenAnalytics() {
             </section>
 
             <section style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: 10 }}>Slowest Dishes</h2>
+              <h2 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: 10, color: "var(--text-primary, #f8fafc)" }}>Slowest Dishes</h2>
               {items.length === 0 ? (
-                <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #94a3b8)" }}>No item data yet.</p>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #64748b)" }}>No item data yet.</p>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {items.map((it) => (
@@ -369,18 +373,18 @@ export default function KitchenAnalytics() {
                         display: "flex",
                         alignItems: "center",
                         gap: 12,
-                        background: "var(--bg-card, #fff)",
-                        border: "1px solid var(--border, #e2e8f0)",
+                        background: "var(--bg-card, #111c38)",
+                        border: "1px solid var(--border, #1e293b)",
                         borderRadius: 10,
                         padding: "10px 14px",
                         flexWrap: "wrap",
                       }}
                     >
-                      <span style={{ flex: 1, fontSize: "0.85rem", fontWeight: 600, minWidth: 160 }}>{it.itemName}</span>
-                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted, #94a3b8)" }}>
+                      <span style={{ flex: 1, fontSize: "0.85rem", fontWeight: 600, minWidth: 160, color: "var(--text-primary, #f8fafc)" }}>{it.itemName}</span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted, #64748b)" }}>
                         {it.ticketCount} tickets · median {it.medianPrepMinutes}m · p90 {it.p90PrepMinutes}m
                       </span>
-                      <div style={{ width: 100, height: 6, borderRadius: 9999, background: "var(--bg-subtle, #f1f5f9)", overflow: "hidden" }}>
+                      <div style={{ width: 100, height: 6, borderRadius: 9999, background: "var(--bg-subtle, #070d1e)", overflow: "hidden" }}>
                         <div
                           style={{
                             height: "100%",

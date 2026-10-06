@@ -214,34 +214,34 @@ export default function AttractiveMenuItemCard({
 
       <style jsx>{`
         .attractive-menu-card {
-          background: #ffffff;
-          border: 1.5px solid #e2e8f0;
+          background: var(--bg-card, #111c38);
+          border: 1.5px solid var(--border, #1e293b);
           border-radius: 14px;
           display: flex;
           flex-direction: column;
           cursor: pointer;
           position: relative;
           transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
           user-select: none;
           overflow: hidden;
         }
 
         .attractive-menu-card:hover {
-          border-color: #93c5fd;
+          border-color: #3b82f6;
           transform: translateY(-3px);
-          box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.15);
+          box-shadow: 0 10px 24px -4px rgba(37, 99, 235, 0.3);
         }
 
         .attractive-menu-card.card-in-cart {
           border-color: #2563eb;
-          box-shadow: 0 0 0 2px #2563eb, 0 8px 20px -2px rgba(37, 99, 235, 0.2);
+          box-shadow: 0 0 0 2px #2563eb, 0 8px 20px -2px rgba(37, 99, 235, 0.3);
         }
 
         .attractive-menu-card.card-disabled {
           opacity: 0.55;
-          background: #f8fafc;
-          border-color: #cbd5e1;
+          background: var(--bg-subtle, #070d1e);
+          border-color: var(--border, #1e293b);
           cursor: not-allowed;
           filter: grayscale(40%);
         }
@@ -251,7 +251,7 @@ export default function AttractiveMenuItemCard({
           position: relative;
           width: 100%;
           height: 120px;
-          background: #f1f5f9;
+          background: var(--bg-subtle, #070d1e);
           overflow: hidden;
         }
 
@@ -271,7 +271,7 @@ export default function AttractiveMenuItemCard({
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+          background: linear-gradient(135deg, #1e293b 0%, #111c38 100%);
         }
         .fallback-emoji {
           font-size: 2.5rem;
@@ -417,7 +417,7 @@ export default function AttractiveMenuItemCard({
           margin: 0;
           font-size: 0.875rem;
           font-weight: 800;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
           line-height: 1.25;
           letter-spacing: -0.2px;
           display: -webkit-box;
@@ -428,7 +428,7 @@ export default function AttractiveMenuItemCard({
 
         .tile-category-tag {
           font-size: 0.6875rem;
-          color: #64748b;
+          color: var(--text-muted, #94a3b8);
           font-weight: 600;
           margin-top: 3px;
         }
@@ -436,7 +436,7 @@ export default function AttractiveMenuItemCard({
         .item-desc {
           margin: 4px 0 0 0;
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--text-muted, #94a3b8);
           line-height: 1.3;
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -449,20 +449,20 @@ export default function AttractiveMenuItemCard({
           align-items: center;
           justify-content: space-between;
           gap: 6px;
-          border-top: 1px dashed #f1f5f9;
+          border-top: 1px dashed var(--border, #1e293b);
           padding-top: 6px;
         }
 
         .price-tag-box {
           display: flex;
           align-items: baseline;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
         .currency-symbol {
           font-size: 0.75rem;
           font-weight: 700;
           margin-right: 1px;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
         }
         .price-number {
           font-size: 1rem;
@@ -480,7 +480,7 @@ export default function AttractiveMenuItemCard({
         .unavailable-text {
           font-size: 0.6875rem;
           font-weight: 700;
-          color: #94a3b8;
+          color: var(--text-muted, #64748b);
         }
 
         .add-button-group {
@@ -490,9 +490,9 @@ export default function AttractiveMenuItemCard({
         }
 
         .btn-add-primary {
-          background: #ffffff;
-          border: 1.5px solid #2563eb;
-          color: #2563eb;
+          background: var(--bg-elevated, #1e293b);
+          border: 1.5px solid var(--btn-primary-bg, #2563eb);
+          color: #60a5fa;
           font-size: 0.6875rem;
           font-weight: 800;
           padding: 3px 10px;
@@ -502,10 +502,10 @@ export default function AttractiveMenuItemCard({
           align-items: center;
           gap: 3px;
           transition: all 0.15s;
-          box-shadow: 0 1px 2px rgba(37, 99, 235, 0.1);
+          box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
         }
         .btn-add-primary:hover {
-          background: #2563eb;
+          background: var(--btn-primary-bg, #2563eb);
           color: #ffffff;
         }
         .plus-icon {
@@ -516,14 +516,14 @@ export default function AttractiveMenuItemCard({
         .btn-customize-link {
           background: transparent;
           border: none;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
           font-size: 0.5625rem;
           font-weight: 600;
           cursor: pointer;
           padding: 1px 0 0 0;
         }
         .btn-customize-link:hover {
-          color: #2563eb;
+          color: #38bdf8;
           text-decoration: underline;
         }
 

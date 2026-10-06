@@ -419,16 +419,16 @@ export default function ChannelAvailabilityPage() {
       <style jsx>{`
         .channel-app {
           min-height: 100vh;
-          background: #f8fafc;
+          background: var(--bg-base);
           display: flex;
           flex-direction: column;
           font-family: "Inter", system-ui, -apple-system, sans-serif;
-          color: #0f172a;
+          color: var(--text-primary);
         }
         .topbar {
           height: 64px;
-          background: #ffffff;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border-bottom: 1px solid var(--border);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -453,18 +453,19 @@ export default function ChannelAvailabilityPage() {
         .brand-name {
           font-size: 16px;
           font-weight: 700;
-          color: #0f172a;
+          color: var(--text-primary);
         }
         .outlet-pill {
           display: flex;
           align-items: center;
           gap: 6px;
           padding: 4px 10px;
-          background: #eff6ff;
-          color: #1e40af;
+          background: rgba(59, 130, 246, 0.15);
+          color: #60a5fa;
           border-radius: 9999px;
           font-size: 12px;
           font-weight: 600;
+          border: 1px solid rgba(59, 130, 246, 0.25);
         }
         .outlet-dot {
           width: 6px;
@@ -484,8 +485,9 @@ export default function ChannelAvailabilityPage() {
         .avatar-circle {
           width: 32px;
           height: 32px;
-          background: #eff6ff;
-          color: #1e40af;
+          background: var(--bg-elevated);
+          color: var(--text-primary);
+          border: 1px solid var(--border-strong);
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -496,7 +498,7 @@ export default function ChannelAvailabilityPage() {
         .user-name {
           font-size: 13px;
           font-weight: 600;
-          color: #0f172a;
+          color: var(--text-primary);
         }
         .channel-content {
           padding: 24px;
@@ -516,21 +518,26 @@ export default function ChannelAvailabilityPage() {
         .tab-btn {
           padding: 8px 18px;
           border-radius: 9999px;
-          border: 1px solid #e2e8f0;
-          background: #ffffff;
+          border: 1px solid var(--border);
+          background: var(--bg-card);
           font-size: 13px;
           font-weight: 700;
-          color: #64748b;
+          color: var(--text-secondary);
           cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .tab-btn:hover {
+          color: var(--text-primary);
+          background: var(--bg-hover);
         }
         .tab-btn.active {
-          background: #0f172a;
+          background: var(--btn-primary-bg);
           color: #ffffff;
-          border-color: #0f172a;
+          border-color: var(--btn-primary-border);
         }
         .no-channels-hint {
           font-size: 12px;
-          color: #94a3b8;
+          color: var(--text-muted);
           margin-left: 8px;
         }
         .kpi-grid {
@@ -539,13 +546,14 @@ export default function ChannelAvailabilityPage() {
           gap: 16px;
         }
         .kpi-card {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 16px;
           padding: 20px;
           display: flex;
           align-items: center;
           gap: 16px;
+          box-shadow: var(--shadow-card);
         }
         .kpi-icon-square {
           width: 44px;
@@ -559,31 +567,31 @@ export default function ChannelAvailabilityPage() {
           flex-shrink: 0;
         }
         .kpi-icon-square.green {
-          background: #ecfdf5;
-          color: var(--accent-subtle-text);
+          background: rgba(16, 185, 129, 0.15);
+          color: #34d399;
         }
         .kpi-icon-square.blue {
-          background: #eff6ff;
-          color: #3b82f6;
+          background: rgba(59, 130, 246, 0.15);
+          color: #60a5fa;
         }
         .kpi-icon-square.amber {
-          background: #fffbeb;
-          color: #f59e0b;
+          background: rgba(245, 158, 11, 0.15);
+          color: #fbbf24;
         }
         .kpi-icon-square.purple {
-          background: #fef2f2;
-          color: #ef4444;
+          background: rgba(239, 68, 68, 0.15);
+          color: #f87171;
         }
         .kpi-label {
           font-size: 11px;
           font-weight: 700;
-          color: #94a3b8;
+          color: var(--text-secondary);
           letter-spacing: 0.5px;
         }
         .kpi-value {
           font-size: 24px;
           font-weight: 800;
-          color: #0f172a;
+          color: var(--text-primary);
           margin: 2px 0 0 0;
         }
         .toolbar {
@@ -591,17 +599,17 @@ export default function ChannelAvailabilityPage() {
           align-items: center;
           flex-wrap: wrap;
           gap: 12px;
-          background: #ffffff;
+          background: var(--bg-card);
           padding: 12px 16px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--border);
           border-radius: 12px;
         }
         .search-bar {
           display: flex;
           align-items: center;
           gap: 8px;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border-strong);
           border-radius: 8px;
           padding: 8px 12px;
           flex: 1;
@@ -614,16 +622,16 @@ export default function ChannelAvailabilityPage() {
           outline: none;
           font-size: 13px;
           width: 100%;
-          color: #0f172a;
+          color: var(--text-primary);
         }
         .cat-select {
           padding: 8px 12px;
           border-radius: 8px;
-          border: 1px solid #e2e8f0;
-          background: #ffffff;
+          border: 1px solid var(--border-strong);
+          background: var(--bg-subtle);
           font-size: 13px;
           font-weight: 600;
-          color: #0f172a;
+          color: var(--text-primary);
         }
         .status-pill-group {
           display: flex;
@@ -632,17 +640,21 @@ export default function ChannelAvailabilityPage() {
         .status-pill {
           padding: 7px 12px;
           border-radius: 8px;
-          border: 1px solid #e2e8f0;
-          background: #ffffff;
+          border: 1px solid var(--border);
+          background: var(--bg-subtle);
           font-size: 12px;
           font-weight: 700;
-          color: #64748b;
+          color: var(--text-secondary);
           cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .status-pill:hover {
+          color: var(--text-primary);
         }
         .status-pill.active {
-          background: #0f172a;
+          background: var(--btn-primary-bg);
           color: #ffffff;
-          border-color: #0f172a;
+          border-color: var(--btn-primary-border);
         }
         .bulk-actions {
           display: flex;
@@ -653,7 +665,7 @@ export default function ChannelAvailabilityPage() {
         .bulk-count {
           font-size: 12px;
           font-weight: 700;
-          color: #64748b;
+          color: var(--text-secondary);
         }
         .bulk-btn {
           padding: 7px 14px;
@@ -664,20 +676,22 @@ export default function ChannelAvailabilityPage() {
           cursor: pointer;
         }
         .bulk-btn.on {
-          background: #ecfdf5;
-          color: #065f46;
+          background: rgba(16, 185, 129, 0.2);
+          color: #34d399;
+          border: 1px solid rgba(16, 185, 129, 0.3);
         }
         .bulk-btn.off {
-          background: #fef2f2;
-          color: #991b1b;
+          background: rgba(239, 68, 68, 0.2);
+          color: #f87171;
+          border: 1px solid rgba(239, 68, 68, 0.3);
         }
         .bulk-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }
         .items-table-wrap {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 14px;
           overflow-x: auto;
         }
@@ -689,32 +703,33 @@ export default function ChannelAvailabilityPage() {
           text-align: left;
           font-size: 11px;
           font-weight: 700;
-          color: #94a3b8;
+          color: var(--text-secondary);
           text-transform: uppercase;
           letter-spacing: 0.4px;
           padding: 12px 16px;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--border);
         }
         .items-table td {
           padding: 12px 16px;
-          border-bottom: 1px solid #f1f5f9;
+          border-bottom: 1px solid var(--border);
           font-size: 13px;
           vertical-align: middle;
+          color: var(--text-primary);
         }
         .select-col {
           width: 36px;
         }
         .item-name {
           font-weight: 700;
-          color: #0f172a;
+          color: var(--text-primary);
         }
         .item-name-orig {
           font-size: 11px;
-          color: #94a3b8;
+          color: var(--text-muted);
           margin-top: 2px;
         }
         .item-category {
-          color: #64748b;
+          color: var(--text-secondary);
         }
         .status-badge {
           padding: 4px 10px;
@@ -723,16 +738,19 @@ export default function ChannelAvailabilityPage() {
           font-weight: 800;
         }
         .status-badge.on {
-          background: #ecfdf5;
-          color: #065f46;
+          background: rgba(16, 185, 129, 0.2);
+          color: #34d399;
+          border: 1px solid rgba(16, 185, 129, 0.3);
         }
         .status-badge.off {
-          background: #fef2f2;
-          color: #991b1b;
+          background: rgba(239, 68, 68, 0.2);
+          color: #f87171;
+          border: 1px solid rgba(239, 68, 68, 0.3);
         }
         .status-badge.partial {
-          background: #fffbeb;
-          color: #92400e;
+          background: rgba(245, 158, 11, 0.2);
+          color: #fbbf24;
+          border: 1px solid rgba(245, 158, 11, 0.3);
         }
         .channel-toggles {
           display: flex;
@@ -748,16 +766,22 @@ export default function ChannelAvailabilityPage() {
           cursor: pointer;
         }
         .channel-toggle.on {
-          background: #ecfdf5;
-          color: #065f46;
+          background: rgba(16, 185, 129, 0.2);
+          color: #34d399;
+          border: 1px solid rgba(16, 185, 129, 0.3);
         }
         .channel-toggle.off {
-          background: #fef2f2;
-          color: #991b1b;
+          background: rgba(239, 68, 68, 0.2);
+          color: #f87171;
+          border: 1px solid rgba(239, 68, 68, 0.3);
         }
         .empty-state {
           text-align: center;
           padding: 60px 20px;
+          background: var(--bg-card);
+          border: 1px dashed var(--border-strong);
+          border-radius: 16px;
+          color: var(--text-primary);
         }
         .empty-icon {
           font-size: 40px;

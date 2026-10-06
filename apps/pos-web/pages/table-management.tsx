@@ -205,7 +205,7 @@ export default function TableManagement() {
         height: "100vh",
         width: "100vw",
         overflow: "hidden",
-        background: "#f8fafc",
+        background: "var(--bg-base)",
       }}
     >
       <Head>
@@ -331,7 +331,7 @@ export default function TableManagement() {
                   </>
                 ) : (
                   <>
-                    <strong style={{ color: "#0f172a" }}>Table {tbl.tableNumber}</strong>
+                    <strong style={{ color: "var(--text-primary)" }}>Table {tbl.tableNumber}</strong>
                     <span>{tbl.section || "Non AC"}</span>
                     <span>{tbl.capacity} guests</span>
                     <span className={`status-badge status-${tbl.status.toLowerCase()}`}>{tbl.status}</span>
@@ -406,7 +406,8 @@ export default function TableManagement() {
           height: 100vh;
           width: 100vw;
           overflow: hidden;
-          background: #f8fafc;
+          background: var(--bg-base);
+          color: var(--text-primary);
           font-family: inherit;
         }
 
@@ -435,8 +436,8 @@ export default function TableManagement() {
 
         .sub-tab-bar {
           display: flex;
-          background: #ffffff;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border-bottom: 1px solid var(--border);
           padding: 0 16px;
           gap: 10px;
           flex-shrink: 0;
@@ -448,19 +449,19 @@ export default function TableManagement() {
           padding: 10px 16px;
           font-size: 0.8125rem;
           font-weight: 700;
-          color: #64748b;
+          color: var(--text-secondary);
           cursor: pointer;
           white-space: nowrap;
           transition: color 0.15s;
         }
 
         .sub-tab:hover {
-          color: #0f172a;
+          color: var(--text-primary);
         }
 
         .sub-tab.active {
-          color: #2563eb;
-          box-shadow: inset 0 -2px 0 #2563eb;
+          color: #3b82f6;
+          box-shadow: inset 0 -2px 0 #3b82f6;
         }
 
         .admin-content-container {
@@ -480,9 +481,9 @@ export default function TableManagement() {
         }
 
         .btn-primary-add {
-          background: #f97316;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-primary-bg);
+          color: var(--btn-primary-text);
+          border: 1px solid var(--btn-primary-border);
           padding: 8px 16px;
           border-radius: 6px;
           font-weight: 700;
@@ -492,12 +493,12 @@ export default function TableManagement() {
         }
 
         .btn-primary-add:hover {
-          background: #ea580c;
+          background: var(--btn-primary-hover);
         }
 
         .tables-admin-table {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 8px;
           overflow: hidden;
         }
@@ -507,20 +508,23 @@ export default function TableManagement() {
           grid-template-columns: 1fr 1fr 1fr 1fr 1fr 140px;
           padding: 12px 16px;
           align-items: center;
-          border-bottom: 1px solid #f1f5f9;
+          border-bottom: 1px solid var(--border);
           font-size: 0.8125rem;
+          color: var(--text-primary);
         }
 
         .table-head {
-          background: #f1f5f9;
+          background: var(--bg-subtle);
           font-weight: 800;
-          color: #64748b;
+          color: var(--text-secondary);
           font-size: 0.6875rem;
         }
 
         .input-inline {
           padding: 4px 8px;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong);
+          background: var(--bg-subtle);
+          color: var(--text-primary);
           border-radius: 4px;
           font-size: 0.8125rem;
         }
@@ -533,26 +537,31 @@ export default function TableManagement() {
           width: fit-content;
         }
 
-        .status-vacant { background: #e2e8f0; color: #475569; }
-        .status-occupied { background: #fef08a; color: #854d0e; }
-        .status-billing { background: #bbf7d0; color: #166534; }
-        .status-dirty { background: #fee2e2; color: #991b1b; }
+        .status-vacant { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+        .status-occupied { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-billing { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-dirty { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
 
-        .text-active { color: #16a34a; font-weight: 600; }
-        .text-inactive { color: #dc2626; font-weight: 600; }
+        .text-active { color: #10b981; font-weight: 600; }
+        .text-inactive { color: #ef4444; font-weight: 600; }
 
         .btn-edit-sm, .btn-save-sm, .btn-toggle-sm, .btn-cancel-sm {
-          padding: 3px 8px;
+          padding: 4px 10px;
           border-radius: 4px;
-          font-size: 0.6875rem;
+          font-size: 0.75rem;
           font-weight: 600;
           cursor: pointer;
+          transition: all 0.15s ease;
         }
 
-        .btn-edit-sm { background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; }
-        .btn-save-sm { background: #22c55e; border: none; color: #fff; }
-        .btn-cancel-sm { background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; }
-        .btn-toggle-sm { background: #f8fafc; border: 1px solid #cbd5e1; color: #475569; }
+        .btn-edit-sm { background: var(--btn-secondary-bg); border: 1px solid var(--btn-secondary-border); color: var(--btn-secondary-text); }
+        .btn-edit-sm:hover { background: var(--btn-secondary-hover); }
+        .btn-save-sm { background: var(--btn-success-bg); border: 1px solid var(--btn-success-border); color: #fff; }
+        .btn-save-sm:hover { background: var(--btn-success-hover); }
+        .btn-cancel-sm { background: var(--btn-cancel-bg); border: 1px solid var(--btn-cancel-border); color: var(--btn-cancel-text); }
+        .btn-cancel-sm:hover { background: var(--btn-cancel-hover); }
+        .btn-toggle-sm { background: var(--btn-normal-bg); border: 1px solid var(--btn-normal-border); color: var(--btn-normal-text); }
+        .btn-toggle-sm:hover { background: var(--btn-normal-hover); color: var(--text-primary); }
       `}</style>
     </div>
   );

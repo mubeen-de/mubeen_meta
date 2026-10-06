@@ -189,19 +189,22 @@ export default function MoveKotModal({ tables, onClose, onSuccess }: MoveKotModa
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: rgba(15, 23, 42, 0.5);
+          background: rgba(11, 19, 43, 0.8);
+          backdrop-filter: blur(4px);
           z-index: 150;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .move-modal-card {
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
+          color: var(--text-primary, #f8fafc);
           padding: 24px;
           border-radius: 12px;
           width: 90%;
           max-width: 480px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
         }
         .move-modal-header {
           display: flex;
@@ -213,50 +216,61 @@ export default function MoveKotModal({ tables, onClose, onSuccess }: MoveKotModa
           border: none;
           font-size: 1.1rem;
           cursor: pointer;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
         }
         .form-group label {
           font-size: 0.8125rem;
           font-weight: 600;
-          color: #334155;
+          color: var(--text-secondary, #94a3b8);
         }
         .select-field {
           width: 100%;
           padding: 9px 12px;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 6px;
           margin-top: 6px;
           font-size: 0.875rem;
-          background: #fff;
+          background: var(--bg-subtle, #070d1e);
+          color: var(--text-primary, #f8fafc);
           outline: none;
         }
         .select-field:focus {
-          border-color: #2563eb;
+          border-color: #3b82f6;
         }
         .error-alert {
-          background: #fef2f2;
-          color: #dc2626;
+          background: rgba(220, 38, 38, 0.15);
+          color: #f87171;
+          border: 1px solid rgba(239, 68, 68, 0.4);
           padding: 8px 12px;
           border-radius: 6px;
           font-size: 0.8125rem;
           margin-bottom: 12px;
         }
         .btn-cancel {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-cancel-bg, #334155);
+          color: var(--btn-cancel-text, #cbd5e1);
+          border: 1px solid var(--btn-cancel-border, #475569);
           padding: 8px 16px;
           border-radius: 6px;
           font-weight: 600;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-cancel:hover {
+          background: var(--btn-cancel-hover, #475569);
         }
         .btn-submit {
-          background: #2563eb;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-primary-bg, #2563eb);
+          color: var(--btn-primary-text, #ffffff);
+          border: 1px solid var(--btn-primary-border, #3b82f6);
           padding: 8px 18px;
           border-radius: 6px;
           font-weight: 600;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-submit:hover {
+          background: var(--btn-primary-hover, #1d4ed8);
         }
       `}</style>
     </div>

@@ -252,13 +252,14 @@ export default function MenuCustomizerModal({
         }
 
         .customizer-card {
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 16px;
           padding: 20px 24px;
           width: 90%;
           max-width: 520px;
           max-height: 90vh;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
           display: flex;
           flex-direction: column;
         }
@@ -267,7 +268,7 @@ export default function MenuCustomizerModal({
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--border, #1e293b);
           padding-bottom: 12px;
         }
 
@@ -287,12 +288,12 @@ export default function MenuCustomizerModal({
           margin: 0;
           font-size: 1.125rem;
           font-weight: 800;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         .base-price-tag {
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--text-muted, #64748b);
           font-weight: 600;
         }
 
@@ -300,8 +301,12 @@ export default function MenuCustomizerModal({
           background: transparent;
           border: none;
           font-size: 1.2rem;
-          color: #64748b;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
+          transition: color 0.15s;
+        }
+        .btn-close:hover {
+          color: var(--text-primary, #f8fafc);
         }
 
         .customizer-body-scroll {
@@ -322,7 +327,7 @@ export default function MenuCustomizerModal({
         .section-label {
           font-size: 0.8125rem;
           font-weight: 800;
-          color: #334155;
+          color: var(--text-secondary, #94a3b8);
           text-transform: uppercase;
           letter-spacing: 0.3px;
         }
@@ -333,8 +338,8 @@ export default function MenuCustomizerModal({
           gap: 8px;
         }
         .portion-chip {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border, #1e293b);
           padding: 8px;
           border-radius: 8px;
           display: flex;
@@ -343,19 +348,20 @@ export default function MenuCustomizerModal({
           gap: 2px;
           font-size: 0.75rem;
           font-weight: 700;
-          color: #334155;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
+          transition: all 0.15s;
         }
         .portion-chip.active {
-          border-color: #2563eb;
-          background: #eff6ff;
-          color: #1e40af;
-          box-shadow: 0 0 0 1px #2563eb;
+          border-color: #3b82f6;
+          background: rgba(37, 99, 235, 0.2);
+          color: #60a5fa;
+          box-shadow: 0 0 0 1px #3b82f6;
         }
         .portion-price {
           font-size: 0.875rem;
           font-weight: 900;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         .spice-grid {
@@ -364,20 +370,21 @@ export default function MenuCustomizerModal({
           gap: 6px;
         }
         .spice-chip {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border, #1e293b);
           padding: 8px 4px;
           border-radius: 8px;
           font-size: 0.75rem;
           font-weight: 700;
-          color: #334155;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
           text-align: center;
+          transition: all 0.15s;
         }
         .spice-chip.active {
           border-color: #f97316;
-          background: #fff7ed;
-          color: #c2410c;
+          background: rgba(249, 115, 22, 0.15);
+          color: #fb923c;
           box-shadow: 0 0 0 1px #f97316;
         }
 
@@ -390,23 +397,23 @@ export default function MenuCustomizerModal({
           padding: 12px;
           text-align: center;
           font-size: 0.8rem;
-          color: #94a3b8;
+          color: var(--text-muted, #64748b);
         }
         .addon-row {
           display: flex;
           align-items: center;
           justify-content: space-between;
           padding: 8px 12px;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 8px;
           cursor: pointer;
           font-size: 0.8125rem;
           transition: background 0.1s;
         }
         .addon-row.active {
-          background: #f0fdf4;
-          border-color: #86efac;
+          background: rgba(16, 185, 129, 0.15);
+          border-color: #10b981;
         }
         .addon-info {
           display: flex;
@@ -415,26 +422,28 @@ export default function MenuCustomizerModal({
         }
         .addon-name {
           font-weight: 600;
-          color: #334155;
+          color: var(--text-primary, #f8fafc);
         }
         .addon-price {
           font-weight: 700;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         .notes-input {
           padding: 10px 12px;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 8px;
           font-size: 0.8125rem;
           font-family: inherit;
+          background: var(--bg-subtle, #070d1e);
+          color: var(--text-primary, #f8fafc);
         }
 
         .customizer-footer {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-top: 1px solid #e2e8f0;
+          border-top: 1px solid var(--border, #1e293b);
           padding-top: 14px;
         }
         .footer-total-box {
@@ -443,25 +452,29 @@ export default function MenuCustomizerModal({
         }
         .footer-total-label {
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--text-muted, #64748b);
           font-weight: 600;
         }
         .footer-total-price {
           font-size: 1.25rem;
           font-weight: 900;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
         }
 
         .btn-confirm-add {
-          background: #2563eb;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-primary-bg, #2563eb);
+          color: var(--btn-primary-text, #ffffff);
+          border: 1px solid var(--btn-primary-border, #3b82f6);
           padding: 10px 20px;
           border-radius: 8px;
           font-weight: 800;
           font-size: 0.875rem;
           cursor: pointer;
-          box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+          box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+          transition: background 0.15s;
+        }
+        .btn-confirm-add:hover {
+          background: var(--btn-primary-hover, #1d4ed8);
         }
       `}</style>
     </div>

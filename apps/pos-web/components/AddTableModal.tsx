@@ -84,8 +84,8 @@ export default function AddTableModal({ onClose, onTableCreated, existingTables 
       <div className="add-table-card" onClick={(e) => e.stopPropagation()}>
         <div className="add-table-header">
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "1.2rem", color: "#f97316" }}>➕</span>
-            <h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700 }}>Add New Dining Table</h3>
+            <span style={{ fontSize: "1.2rem", color: "#3b82f6" }}>🪑</span>
+            <h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700, color: "var(--text-primary)" }}>Add New Dining Table</h3>
           </div>
           <button className="close-btn" onClick={onClose}>✕</button>
         </div>
@@ -151,19 +151,22 @@ export default function AddTableModal({ onClose, onTableCreated, existingTables 
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: rgba(15, 23, 42, 0.5);
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(4px);
           z-index: 150;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .add-table-card {
-          background: #ffffff;
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
+          color: var(--text-primary);
           padding: 24px;
           border-radius: 12px;
           width: 90%;
           max-width: 440px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+          box-shadow: var(--shadow-modal);
         }
         .add-table-header {
           display: flex;
@@ -175,50 +178,67 @@ export default function AddTableModal({ onClose, onTableCreated, existingTables 
           border: none;
           font-size: 1.1rem;
           cursor: pointer;
-          color: #64748b;
+          color: var(--text-secondary);
+        }
+        .close-btn:hover {
+          color: var(--text-primary);
         }
         .form-group label {
           font-size: 0.8125rem;
           font-weight: 600;
-          color: #334155;
+          color: var(--text-secondary);
         }
         .input-field {
           width: 100%;
           padding: 9px 12px;
-          border: 1px solid #cbd5e1;
+          border: 1px solid var(--border-strong);
+          background: var(--bg-subtle);
+          color: var(--text-primary);
           border-radius: 6px;
           margin-top: 6px;
           font-size: 0.875rem;
-          background: #fff;
           outline: none;
+          font-family: inherit;
         }
         .input-field:focus {
-          border-color: #f97316;
+          border-color: var(--accent);
         }
         .error-alert {
-          background: #fef2f2;
-          color: #dc2626;
+          background: rgba(239, 68, 68, 0.15);
+          color: #f87171;
+          border: 1px solid rgba(239, 68, 68, 0.3);
           padding: 8px 12px;
           border-radius: 6px;
           font-size: 0.8125rem;
           margin-bottom: 12px;
         }
         .btn-cancel {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-cancel-bg);
+          border: 1px solid var(--btn-cancel-border);
+          color: var(--btn-cancel-text);
           padding: 8px 16px;
           border-radius: 6px;
           font-weight: 600;
           cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .btn-cancel:hover:not(:disabled) {
+          background: var(--btn-cancel-hover);
+          color: #fff;
         }
         .btn-submit {
-          background: #f97316;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-primary-bg);
+          color: var(--btn-primary-text);
+          border: 1px solid var(--btn-primary-border);
           padding: 8px 18px;
           border-radius: 6px;
           font-weight: 600;
           cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .btn-submit:hover:not(:disabled) {
+          background: var(--btn-primary-hover);
+          box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
         }
       `}</style>
     </div>

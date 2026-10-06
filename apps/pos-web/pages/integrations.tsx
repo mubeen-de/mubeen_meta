@@ -107,19 +107,19 @@ export default function Integrations() {
   if (authLoading) return null;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", background: "var(--bg-base, #f8fafc)" }}>
+    <div style={{ minHeight: "100vh", display: "flex", background: "var(--bg-base, #0b132b)", color: "var(--text-primary, #f8fafc)" }}>
       <Head>
         <title>KapMeta POS - Connect Delivery Apps</title>
       </Head>
       <Nav variant="sidebar" />
       <div style={{ flex: 1, padding: 24, maxWidth: 760, margin: "0 auto", width: "100%" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: 4 }}>Connect Delivery Apps</h1>
-        <p style={{ fontSize: "0.8rem", color: "var(--text-secondary, #64748b)", marginBottom: 20 }}>
+        <h1 style={{ fontSize: "1.25rem", fontWeight: 800, marginBottom: 4, color: "var(--text-primary, #f8fafc)" }}>Connect Delivery Apps</h1>
+        <p style={{ fontSize: "0.8rem", color: "var(--text-secondary, #94a3b8)", marginBottom: 20 }}>
           Link Swiggy/Zomato so their orders drop straight into Live Orders and fire to the kitchen automatically.
         </p>
 
         {loading ? (
-          <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #94a3b8)" }}>Loading...</p>
+          <p style={{ fontSize: "0.8rem", color: "var(--text-muted, #64748b)" }}>Loading...</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {SUPPORTED_CHANNELS.map((ch) => {
@@ -131,8 +131,8 @@ export default function Integrations() {
                 <div
                   key={ch.code}
                   style={{
-                    background: "var(--bg-card, #fff)",
-                    border: "1px solid var(--border, #e2e8f0)",
+                    background: "var(--bg-card, #111c38)",
+                    border: "1px solid var(--border, #1e293b)",
                     borderRadius: 12,
                     padding: 18,
                     display: "flex",
@@ -144,9 +144,9 @@ export default function Integrations() {
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span style={{ fontSize: "1.5rem" }}>{ch.icon}</span>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>{ch.label}</div>
+                        <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary, #f8fafc)" }}>{ch.label}</div>
                         {account && (
-                          <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #94a3b8)" }}>
+                          <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)" }}>
                             Outlet ID: {account.externalOutletId}
                           </div>
                         )}
@@ -159,8 +159,9 @@ export default function Integrations() {
                         fontWeight: 700,
                         padding: "4px 10px",
                         borderRadius: 9999,
-                        background: isConnected ? "var(--accent-subtle, #ecfdf5)" : isPaused ? "var(--warning-subtle, #fffbeb)" : "var(--bg-subtle, #f1f5f9)",
-                        color: isConnected ? "var(--accent-subtle-text, #065f46)" : isPaused ? "var(--warning-text, #92400e)" : "var(--text-muted, #94a3b8)",
+                        background: isConnected ? "rgba(16, 185, 129, 0.15)" : isPaused ? "rgba(245, 158, 11, 0.15)" : "var(--bg-subtle, #070d1e)",
+                        color: isConnected ? "#34d399" : isPaused ? "#fbbf24" : "var(--text-muted, #64748b)",
+                        border: isConnected ? "1px solid rgba(16, 185, 129, 0.3)" : isPaused ? "1px solid rgba(245, 158, 11, 0.3)" : "1px solid var(--border, #1e293b)",
                       }}
                     >
                       {isConnected ? "● Connected" : isPaused ? "◐ Paused" : "○ Not Connected"}
@@ -173,20 +174,22 @@ export default function Integrations() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        background: "var(--bg-subtle, #f1f5f9)",
+                        background: "var(--bg-subtle, #070d1e)",
+                        border: "1px solid var(--border, #1e293b)",
                         borderRadius: 8,
                         padding: "8px 12px",
                         fontSize: "0.72rem",
                       }}
                     >
-                      <code style={{ color: "var(--text-secondary, #64748b)" }}>
+                      <code style={{ color: "var(--text-secondary, #94a3b8)" }}>
                         Webhook URL: /webhooks/{ch.code.toLowerCase()}
                       </code>
                       <button
                         onClick={() => copyWebhookUrl(ch.code)}
                         style={{
-                          border: "none",
-                          background: "var(--bg-card, #fff)",
+                          border: "1px solid var(--btn-normal-border, #334155)",
+                          background: "var(--btn-normal-bg, #1e293b)",
+                          color: "var(--btn-normal-text, #94a3b8)",
                           borderRadius: 6,
                           padding: "4px 8px",
                           fontSize: "0.68rem",
@@ -208,7 +211,7 @@ export default function Integrations() {
                         padding: "8px 14px",
                         borderRadius: 9999,
                         border: `1px solid ${ch.color}`,
-                        background: "rgba(255,255,255,0.9)",
+                        background: "rgba(255,255,255,0.06)",
                         color: ch.color,
                         fontWeight: 700,
                         fontSize: "0.8rem",
@@ -242,9 +245,9 @@ export default function Integrations() {
                         style={{
                           padding: "8px 16px",
                           borderRadius: 9999,
-                          border: "1px solid var(--border, #e2e8f0)",
+                          border: "1px solid var(--btn-alert-border, #ef4444)",
                           background: "transparent",
-                          color: "var(--destructive, #ef4444)",
+                          color: "var(--btn-alert-text, #ef4444)",
                           fontWeight: 700,
                           fontSize: "0.8rem",
                           cursor: "pointer",
@@ -267,57 +270,58 @@ export default function Integrations() {
             position: "fixed",
             inset: 0,
             zIndex: 50,
-            background: "rgba(0,0,0,0.5)",
+            background: "rgba(11, 19, 43, 0.8)",
+            backdropFilter: "blur(4px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             padding: 16,
           }}
         >
-          <div style={{ background: "var(--bg-card, #fff)", borderRadius: 16, padding: 24, width: "100%", maxWidth: 400 }}>
+          <div style={{ background: "var(--bg-card, #111c38)", border: "1px solid var(--border-strong, #334155)", borderRadius: 16, padding: 24, width: "100%", maxWidth: 400, color: "var(--text-primary, #f8fafc)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h2 style={{ fontSize: "1.05rem", fontWeight: 800 }}>
+              <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--text-primary, #f8fafc)" }}>
                 Connect {SUPPORTED_CHANNELS.find((c) => c.code === connectingChannel)?.label}
               </h2>
-              <button onClick={() => setConnectingChannel(null)} style={{ border: "none", background: "none", fontSize: "1.25rem", cursor: "pointer" }}>
+              <button onClick={() => setConnectingChannel(null)} style={{ border: "none", background: "none", fontSize: "1.25rem", cursor: "pointer", color: "var(--text-secondary, #94a3b8)" }}>
                 ×
               </button>
             </div>
 
-            <p style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)", marginBottom: 16 }}>
+            <p style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)", marginBottom: 16 }}>
               Find these in your {SUPPORTED_CHANNELS.find((c) => c.code === connectingChannel)?.label} partner dashboard under API/Integration settings.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <label style={{ fontSize: "0.75rem", fontWeight: 600, display: "block", marginBottom: 4 }}>Restaurant/Outlet ID on the platform</label>
+                <label style={{ fontSize: "0.75rem", fontWeight: 600, display: "block", marginBottom: 4, color: "var(--text-primary, #f8fafc)" }}>Restaurant/Outlet ID on the platform</label>
                 <input
                   type="text"
                   value={externalOutletId}
                   onChange={(e) => setExternalOutletId(e.target.value)}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: "0.85rem" }}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border-strong, #334155)", background: "var(--bg-subtle, #070d1e)", color: "var(--text-primary, #f8fafc)", fontSize: "0.85rem" }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: "0.75rem", fontWeight: 600, display: "block", marginBottom: 4 }}>API Key</label>
+                <label style={{ fontSize: "0.75rem", fontWeight: 600, display: "block", marginBottom: 4, color: "var(--text-primary, #f8fafc)" }}>API Key</label>
                 <input
                   type="text"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: "0.85rem" }}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border-strong, #334155)", background: "var(--bg-subtle, #070d1e)", color: "var(--text-primary, #f8fafc)", fontSize: "0.85rem" }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: "0.75rem", fontWeight: 600, display: "block", marginBottom: 4 }}>API Secret</label>
+                <label style={{ fontSize: "0.75rem", fontWeight: 600, display: "block", marginBottom: 4, color: "var(--text-primary, #f8fafc)" }}>API Secret</label>
                 <input
                   type="password"
                   value={apiSecret}
                   onChange={(e) => setApiSecret(e.target.value)}
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border, #e2e8f0)", fontSize: "0.85rem" }}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border-strong, #334155)", background: "var(--bg-subtle, #070d1e)", color: "var(--text-primary, #f8fafc)", fontSize: "0.85rem" }}
                 />
               </div>
 
-              {formError && <div style={{ fontSize: "0.75rem", color: "var(--destructive, #ef4444)" }}>{formError}</div>}
+              {formError && <div style={{ fontSize: "0.75rem", color: "var(--btn-alert-border, #ef4444)" }}>{formError}</div>}
 
               <button
                 onClick={submitConnect}
@@ -325,13 +329,14 @@ export default function Integrations() {
                 style={{
                   padding: "10px",
                   borderRadius: 9999,
-                  border: "none",
-                  background: "var(--dark-btn, #0f172a)",
-                  color: "#fff",
+                  border: "1px solid var(--btn-primary-border, #3b82f6)",
+                  background: "var(--btn-primary-bg, #2563eb)",
+                  color: "var(--btn-primary-text, #ffffff)",
                   fontWeight: 700,
                   fontSize: "0.85rem",
                   cursor: "pointer",
                   marginTop: 4,
+                  transition: "background 0.15s",
                 }}
               >
                 {saving ? "Connecting..." : "Save & Connect"}

@@ -250,7 +250,7 @@ export default function LoginPage() {
             })}
           </div>
 
-          <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px dashed #cbd5e1" }}>
+          <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px dashed var(--border)" }}>
             <button
               type="button"
               className="fast-pin-btn"
@@ -290,20 +290,20 @@ export default function LoginPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #f8fafc;
+          background: var(--bg-base);
           font-family: "Inter", system-ui, -apple-system, sans-serif;
-          color: #0f172a;
+          color: var(--text-primary);
           padding: 20px;
         }
 
         .login-card {
           width: 100%;
           max-width: 440px;
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
           border-radius: 24px;
           padding: 40px 36px;
-          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+          box-shadow: var(--shadow-modal);
         }
 
         .brand-header {
@@ -313,14 +313,14 @@ export default function LoginPage() {
         .welcome-title {
           font-size: 28px;
           font-weight: 800;
-          color: #0f172a;
+          color: var(--text-primary);
           margin: 0 0 6px 0;
           letter-spacing: -0.5px;
         }
 
         .welcome-subtitle {
           font-size: 14px;
-          color: #64748b;
+          color: var(--text-secondary);
           margin: 0;
           line-height: 1.5;
         }
@@ -338,15 +338,15 @@ export default function LoginPage() {
         }
 
         .notification-banner.success {
-          background: #ecfdf5;
-          color: #065f46;
-          border: 1px solid #a7f3d0;
+          background: rgba(16, 185, 129, 0.15);
+          color: #34d399;
+          border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .notification-banner.error {
-          background: #fef2f2;
-          color: #991b1b;
-          border: 1px solid #fecaca;
+          background: rgba(239, 68, 68, 0.15);
+          color: #f87171;
+          border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
         .notif-icon {
@@ -374,7 +374,7 @@ export default function LoginPage() {
         .field-label {
           font-size: 13px;
           font-weight: 600;
-          color: #334155;
+          color: var(--text-secondary);
         }
 
         .forgot-password {
@@ -383,13 +383,13 @@ export default function LoginPage() {
           padding: 0;
           font-size: 12px;
           font-weight: 600;
-          color: #2563eb;
+          color: #3b82f6;
           cursor: pointer;
           transition: color 0.15s ease;
         }
 
         .forgot-password:hover {
-          color: #1d4ed8;
+          color: #60a5fa;
           text-decoration: underline;
         }
 
@@ -403,7 +403,7 @@ export default function LoginPage() {
           position: absolute;
           left: 14px;
           font-size: 16px;
-          color: #94a3b8;
+          color: var(--text-muted);
           pointer-events: none;
         }
 
@@ -411,26 +411,25 @@ export default function LoginPage() {
           width: 100%;
           padding: 12px 14px 12px 42px;
           border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          background: #f1f5f9;
+          border: 1px solid var(--border-strong);
+          background: var(--bg-subtle);
           font-size: 14px;
-          color: #0f172a;
+          color: var(--text-primary);
           outline: none;
           transition: all 0.15s ease;
         }
 
         .field-input:focus {
-          background: #ffffff;
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+          border-color: var(--btn-primary-bg);
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
         }
 
         .submit-btn {
           margin-top: 10px;
           padding: 14px;
-          background: #0f172a;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-primary-bg);
+          color: var(--btn-primary-text);
+          border: 1px solid var(--btn-primary-border);
           border-radius: 14px;
           font-size: 15px;
           font-weight: 700;
@@ -442,7 +441,8 @@ export default function LoginPage() {
         }
 
         .submit-btn:hover:not(:disabled) {
-          background: #1e293b;
+          background: var(--btn-primary-hover);
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
           transform: translateY(-1px);
         }
 
@@ -466,12 +466,12 @@ export default function LoginPage() {
         .quick-access-divider::after {
           content: "";
           flex: 1;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid var(--border);
         }
 
         .quick-access-divider span {
           padding: 0 16px;
-          color: #94a3b8;
+          color: var(--text-muted);
           font-size: 11px;
           font-weight: 700;
           letter-spacing: 1.2px;
@@ -509,30 +509,31 @@ export default function LoginPage() {
           width: 58px;
           height: 58px;
           border-radius: 50%;
-          border: 1.5px solid #e2e8f0;
-          background: #ffffff;
+          border: 1.5px solid var(--border-strong);
+          background: var(--bg-elevated);
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: 22px;
-          box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+          box-shadow: var(--shadow-sm);
           transition: all 0.2s ease;
         }
 
         .quick-access-btn:hover .icon-circle {
-          border-color: #2563eb;
-          box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
+          border-color: #3b82f6;
+          background: var(--bg-hover);
+          box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
         }
 
         .quick-access-btn.active .icon-circle {
-          border-color: #2563eb;
-          background: #eff6ff;
+          border-color: #3b82f6;
+          background: rgba(59, 130, 246, 0.2);
         }
 
         .role-label {
           font-size: 11px;
           font-weight: 700;
-          color: #475569;
+          color: var(--text-secondary);
           letter-spacing: 0.5px;
         }
 
@@ -544,9 +545,9 @@ export default function LoginPage() {
           gap: 8px;
           padding: 10px 14px;
           border-radius: 10px;
-          border: 1px solid #3b82f6;
-          background: #eff6ff;
-          color: #1d4ed8;
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          background: rgba(59, 130, 246, 0.15);
+          color: #60a5fa;
           font-weight: 700;
           font-size: 0.8125rem;
           cursor: pointer;
@@ -554,8 +555,8 @@ export default function LoginPage() {
         }
 
         .fast-pin-btn:hover {
-          background: #dbeafe;
-          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+          background: rgba(59, 130, 246, 0.25);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
         @keyframes fadeIn {

@@ -53,14 +53,14 @@ export default function UnsuccessfulKotModal({
             queuedKots.map((k) => (
               <div key={k.id} className="queued-item-row">
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "#0f172a" }}>
+                  <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "var(--text-primary, #f8fafc)" }}>
                     Table {k.tableNumber} • {k.itemCount} items
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#dc2626", marginTop: "2px" }}>
+                  <div style={{ fontSize: "0.75rem", color: "#f87171", marginTop: "2px" }}>
                     {k.errorMessage || "Network timeout / POS unreachable"}
                   </div>
                 </div>
-                <div style={{ fontSize: "0.6875rem", color: "#94a3b8" }}>
+                <div style={{ fontSize: "0.6875rem", color: "var(--text-muted, #64748b)" }}>
                   {new Date(k.createdAt).toLocaleTimeString()}
                 </div>
               </div>
@@ -99,19 +99,22 @@ export default function UnsuccessfulKotModal({
           left: 0;
           width: 100vw;
           height: 100vh;
-          background: rgba(15, 23, 42, 0.5);
+          background: rgba(11, 19, 43, 0.7);
+          backdrop-filter: blur(4px);
           z-index: 250;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         .unsuccessful-modal-card {
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
+          color: var(--text-primary, #f8fafc);
           padding: 24px;
           border-radius: 12px;
           width: 90%;
           max-width: 480px;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
           max-height: 80vh;
           display: flex;
           flex-direction: column;
@@ -120,12 +123,18 @@ export default function UnsuccessfulKotModal({
           display: flex;
           align-items: center;
           justify-content: space-between;
+          color: var(--text-primary, #f8fafc);
         }
         .close-btn {
           background: transparent;
           border: none;
           font-size: 1.1rem;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
+          transition: color 0.15s;
+        }
+        .close-btn:hover {
+          color: var(--text-primary, #f8fafc);
         }
         .kot-queue-list {
           overflow-y: auto;
@@ -140,38 +149,52 @@ export default function UnsuccessfulKotModal({
           align-items: center;
           justify-content: space-between;
           padding: 10px 12px;
-          background: #fff1f2;
-          border: 1px solid #fecdd3;
+          background: rgba(220, 38, 38, 0.12);
+          border: 1px solid rgba(220, 38, 38, 0.3);
           border-radius: 6px;
         }
         .btn-clear {
-          background: #fee2e2;
-          color: #991b1b;
-          border: none;
+          background: var(--btn-alert-bg, #dc2626);
+          color: var(--btn-alert-text, #ffffff);
+          border: 1px solid var(--btn-alert-border, #ef4444);
           padding: 8px 14px;
           border-radius: 6px;
-          font-weight: 600;
+          font-weight: 700;
           font-size: 0.8125rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-clear:hover {
+          background: var(--btn-alert-hover, #b91c1c);
         }
         .btn-close {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
+          background: var(--btn-cancel-bg, #334155);
+          border: 1px solid var(--btn-cancel-border, #475569);
+          color: var(--btn-cancel-text, #cbd5e1);
           padding: 8px 16px;
           border-radius: 6px;
-          font-weight: 600;
+          font-weight: 700;
           font-size: 0.8125rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-close:hover {
+          background: var(--btn-cancel-hover, #475569);
+          color: #f8fafc;
         }
         .btn-retry {
-          background: #2563eb;
-          color: #ffffff;
-          border: none;
+          background: var(--btn-primary-bg, #2563eb);
+          color: var(--btn-primary-text, #ffffff);
+          border: 1px solid var(--btn-primary-border, #3b82f6);
           padding: 8px 18px;
           border-radius: 6px;
-          font-weight: 600;
+          font-weight: 700;
           font-size: 0.8125rem;
           cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-retry:hover {
+          background: var(--btn-primary-hover, #1d4ed8);
         }
       `}</style>
     </div>

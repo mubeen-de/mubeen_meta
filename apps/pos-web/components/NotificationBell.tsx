@@ -220,45 +220,55 @@ export default function NotificationBell() {
           width: 320px;
           max-height: 400px;
           overflow-y: auto;
-          background: #fff;
-          color: #1a1a1a;
+          background: var(--bg-card, #111c38);
+          color: var(--text-primary, #f8fafc);
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 10px;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
           z-index: 100;
         }
         .notification-bell-dropdown-header {
           padding: 12px 16px;
           font-weight: 700;
-          border-bottom: 1px solid #eee;
+          border-bottom: 1px solid var(--border, #1e293b);
+          background: var(--bg-subtle, #070d1e);
           display: flex;
           justify-content: space-between;
           align-items: center;
         }
         .notification-bell-empty {
           padding: 16px;
-          color: #888;
+          color: var(--text-secondary, #94a3b8);
           font-size: 0.9rem;
         }
         .notification-bell-item {
           padding: 10px 16px;
-          border-bottom: 1px solid #f2f2f2;
+          border-bottom: 1px solid var(--border, #1e293b);
           cursor: pointer;
+          transition: background 0.12s;
+        }
+        .notification-bell-item:hover {
+          background: var(--bg-subtle, #070d1e);
         }
         .notification-bell-item.unread {
-          background: #f5f8ff;
+          background: rgba(37, 99, 235, 0.15);
+        }
+        .notification-bell-item.unread:hover {
+          background: rgba(37, 99, 235, 0.25);
         }
         .notification-bell-item-title {
           font-weight: 600;
           font-size: 0.85rem;
+          color: var(--text-primary, #f8fafc);
         }
         .notification-bell-item-message {
           font-size: 0.8rem;
-          color: #555;
+          color: var(--text-secondary, #94a3b8);
           margin-top: 2px;
         }
         .notification-bell-item-time {
           font-size: 0.7rem;
-          color: #999;
+          color: var(--text-muted, #64748b);
           margin-top: 4px;
         }
       `}</style>

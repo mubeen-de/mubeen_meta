@@ -128,19 +128,19 @@ export default function CategoryNavbar({
           position: relative;
           display: flex;
           align-items: center;
-          background: #ffffff;
-          border: 1.5px solid #e2e8f0;
+          background: var(--bg-subtle, #070d1e);
+          border: 1.5px solid var(--border-strong, #334155);
           border-radius: 10px;
           padding: 0 12px;
-          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
         .search-input-wrapper:focus-within {
           border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
         }
         .search-icon {
           font-size: 0.875rem;
-          color: #94a3b8;
+          color: var(--text-secondary, #94a3b8);
           margin-right: 8px;
         }
         .search-field {
@@ -150,16 +150,19 @@ export default function CategoryNavbar({
           padding: 9px 0;
           font-size: 0.875rem;
           font-weight: 500;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
           background: transparent;
         }
         .clear-search-btn {
           background: transparent;
           border: none;
-          color: #94a3b8;
+          color: var(--text-muted, #64748b);
           font-size: 0.875rem;
           cursor: pointer;
           padding: 4px;
+        }
+        .clear-search-btn:hover {
+          color: var(--text-primary, #f8fafc);
         }
 
         .dietary-pills-row {
@@ -170,13 +173,13 @@ export default function CategoryNavbar({
           padding-bottom: 2px;
         }
         .dietary-pill {
-          background: #f1f5f9;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-elevated, #1e293b);
+          border: 1px solid var(--border, #1e293b);
           padding: 4px 10px;
           border-radius: 999px;
           font-size: 0.6875rem;
           font-weight: 700;
-          color: #475569;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
           white-space: nowrap;
           display: flex;
@@ -185,13 +188,13 @@ export default function CategoryNavbar({
           transition: all 0.15s;
         }
         .dietary-pill:hover {
-          background: #e2e8f0;
-          color: #0f172a;
+          background: var(--bg-card, #111c38);
+          color: var(--text-primary, #f8fafc);
         }
         .dietary-pill.active {
-          background: #0f172a;
+          background: #2563eb;
           color: #ffffff;
-          border-color: #0f172a;
+          border-color: #3b82f6;
         }
         .veg-pill.active {
           background: #16a34a;
@@ -223,7 +226,7 @@ export default function CategoryNavbar({
           font-size: 0.6875rem;
           font-weight: 800;
           text-transform: uppercase;
-          color: #64748b;
+          color: var(--text-muted, #64748b);
           padding: 6px 8px;
           letter-spacing: 0.5px;
         }
@@ -247,26 +250,26 @@ export default function CategoryNavbar({
           align-items: center;
           gap: 8px;
           padding: 8px 12px;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border, #1e293b);
           border-radius: 10px;
           font-size: 0.8125rem;
           font-weight: 700;
-          color: #334155;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
           white-space: nowrap;
           text-align: left;
           transition: all 0.15s;
         }
         .category-chip-btn:hover {
-          background: #f1f5f9;
-          color: #0f172a;
+          background: var(--bg-elevated, #1e293b);
+          color: var(--text-primary, #f8fafc);
         }
         .category-chip-btn.active {
-          background: #2563eb;
+          background: var(--btn-primary-bg, #2563eb);
           color: #ffffff;
-          border-color: #2563eb;
-          box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+          border-color: var(--btn-primary-bg, #2563eb);
+          box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
         }
         .cat-emoji {
           font-size: 1rem;
@@ -275,7 +278,8 @@ export default function CategoryNavbar({
           flex: 1;
         }
         .cat-count-badge {
-          background: rgba(0, 0, 0, 0.08);
+          background: rgba(255, 255, 255, 0.12);
+          color: var(--text-secondary, #94a3b8);
           font-size: 0.6875rem;
           padding: 1px 6px;
           border-radius: 999px;

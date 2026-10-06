@@ -499,7 +499,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
               <div className="toolbar-actions">
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="btn-normal"
                   style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
                   onClick={() => {
                     setIsBulkImportOpen(true);
@@ -575,7 +575,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                           </button>
                           <button
                             type="button"
-                            className="btn-secondary small btn-danger"
+                            className="btn-alert small"
                             disabled={deletingCategoryId === cat.id}
                             onClick={() => handleDeleteCategory(cat)}
                           >
@@ -641,7 +641,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                                         </button>
                                         <button
                                           type="button"
-                                          className="btn-secondary small btn-danger"
+                                          className="btn-alert small"
                                           disabled={deletingItemId === item.id}
                                           onClick={() => handleDeleteItem(item)}
                                         >
@@ -689,7 +689,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                 />
               </label>
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setIsAddCategoryOpen(false)}>
+                <button type="button" className="btn-cancel" onClick={() => setIsAddCategoryOpen(false)}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" disabled={savingCategory}>
@@ -766,7 +766,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                 Vegetarian
               </label>
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setIsAddItemOpen(false)}>
+                <button type="button" className="btn-cancel" onClick={() => setIsAddItemOpen(false)}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" disabled={savingItem}>
@@ -841,7 +841,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                 Vegetarian
               </label>
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setIsEditItemOpen(false)}>
+                <button type="button" className="btn-cancel" onClick={() => setIsEditItemOpen(false)}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" disabled={savingEditItem}>
@@ -876,7 +876,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                 />
               </label>
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setIsEditCategoryOpen(false)}>
+                <button type="button" className="btn-cancel" onClick={() => setIsEditCategoryOpen(false)}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary" disabled={savingEditCategory}>
@@ -896,29 +896,20 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
               <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800 }}>📥 Bulk Import Menu (CSV / Excel)</h3>
               <button
                 type="button"
+                className="btn-normal small"
                 onClick={downloadSampleCsv}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "var(--radius-sm, 6px)",
-                  border: "1px solid #cbd5e1",
-                  background: "#f1f5f9",
-                  color: "#0f172a",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
               >
                 📥 Download Sample CSV
               </button>
             </div>
 
-            <p style={{ fontSize: "0.8125rem", color: "#64748b", margin: "0 0 16px" }}>
+            <p style={{ fontSize: "0.8125rem", color: "var(--text-secondary)", margin: "0 0 16px" }}>
               Upload a <code>.csv</code> file or paste rows copied directly from Excel / Google Sheets. Categories will be automatically created if they don&apos;t already exist.
             </p>
 
             <form onSubmit={handleBulkImportSubmit}>
               <div style={{ marginBottom: "12px" }}>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                   Option 1: Pick a .CSV File from Computer
                 </label>
                 <input
@@ -930,15 +921,16 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                     width: "100%",
                     fontSize: "0.8125rem",
                     padding: "8px",
-                    border: "1px dashed #cbd5e1",
+                    border: "1px dashed var(--border-strong)",
                     borderRadius: "6px",
-                    background: "#f8fafc",
+                    background: "var(--bg-subtle)",
+                    color: "var(--text-primary)",
                   }}
                 />
               </div>
 
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "4px" }}>
                   Option 2: Paste CSV Text / Excel Rows Below
                 </label>
                 <textarea
@@ -952,8 +944,9 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                     fontSize: "0.75rem",
                     padding: "10px",
                     borderRadius: "6px",
-                    border: "1px solid #cbd5e1",
-                    background: "#ffffff",
+                    border: "1px solid var(--border-strong)",
+                    background: "var(--bg-subtle)",
+                    color: "var(--text-primary)",
                     resize: "vertical",
                   }}
                 />
@@ -963,12 +956,12 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                 <div style={{
                   padding: "12px 16px",
                   borderRadius: "6px",
-                  background: bulkImportResult.errors.length === 0 ? "#f0fdf4" : "#fffbeb",
-                  border: `1px solid ${bulkImportResult.errors.length === 0 ? "#86efac" : "#fde68a"}`,
+                  background: bulkImportResult.errors.length === 0 ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                  border: `1px solid ${bulkImportResult.errors.length === 0 ? "#10b981" : "#f59e0b"}`,
                   marginBottom: "16px",
                   fontSize: "0.8125rem",
                 }}>
-                  <div style={{ fontWeight: 800, color: "#166534", marginBottom: "4px" }}>
+                  <div style={{ fontWeight: 800, color: bulkImportResult.errors.length === 0 ? "#34d399" : "#fbbf24", marginBottom: "4px" }}>
                     🎉 Import Summary:
                   </div>
                   <div>• Processed: <strong>{bulkImportResult.totalProcessed}</strong> items</div>
@@ -976,7 +969,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                   <div>• Items Created: <strong>{bulkImportResult.itemsCreated}</strong></div>
                   <div>• Items Updated: <strong>{bulkImportResult.itemsUpdated}</strong></div>
                   {bulkImportResult.errors.length > 0 && (
-                    <div style={{ color: "#b45309", marginTop: "6px" }}>
+                    <div style={{ color: "#fbbf24", marginTop: "6px" }}>
                       ⚠️ Warnings / Skipped:
                       <ul style={{ margin: "4px 0 0", paddingLeft: "16px" }}>
                         {bulkImportResult.errors.map((err, i) => <li key={i}>{err}</li>)}
@@ -989,7 +982,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
               <div className="modal-actions" style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="btn-cancel"
                   onClick={() => setIsBulkImportOpen(false)}
                 >
                   Close
@@ -998,7 +991,6 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                   type="submit"
                   className="btn-primary"
                   disabled={isImporting || !bulkCsvText.trim()}
-                  style={{ background: "#2563eb", color: "#ffffff", fontWeight: 700 }}
                 >
                   {isImporting ? "Importing..." : "Commit Bulk Import"}
                 </button>
@@ -1013,17 +1005,17 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
       <style jsx>{`
         .menu-app {
           min-height: 100vh;
-          background: #f8fafc;
+          background: var(--bg-base);
           display: flex;
           flex-direction: column;
           font-family: "Inter", system-ui, -apple-system, sans-serif;
-          color: #0f172a;
+          color: var(--text-primary);
         }
 
         .topbar {
           height: 64px;
-          background: #ffffff;
-          border-bottom: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border-bottom: 1px solid var(--border);
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1052,7 +1044,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         .brand-name {
           font-size: 16px;
           font-weight: 700;
-          color: #0f172a;
+          color: var(--text-primary);
         }
 
         .outlet-pill {
@@ -1060,11 +1052,12 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
           align-items: center;
           gap: 6px;
           padding: 4px 10px;
-          background: #ecfdf5;
-          color: #065f46;
+          background: rgba(16, 185, 129, 0.15);
+          color: #34d399;
           border-radius: 9999px;
           font-size: 12px;
           font-weight: 600;
+          border: 1px solid rgba(16, 185, 129, 0.2);
         }
 
         .outlet-dot {
@@ -1088,8 +1081,9 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         .avatar-circle {
           width: 32px;
           height: 32px;
-          background: #ecfdf5;
-          color: #065f46;
+          background: var(--bg-elevated);
+          color: var(--text-primary);
+          border: 1px solid var(--border-strong);
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -1101,7 +1095,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         .user-name {
           font-size: 13px;
           font-weight: 600;
-          color: #0f172a;
+          color: var(--text-primary);
         }
 
         .menu-content {
@@ -1123,14 +1117,14 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         }
 
         .kpi-card {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 16px;
           padding: 20px;
           display: flex;
           align-items: center;
           gap: 16px;
-          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+          box-shadow: var(--shadow-card);
         }
 
         .kpi-icon-square {
@@ -1145,26 +1139,26 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         }
 
         .kpi-icon-square.green {
-          background: #ecfdf5;
-          color: #10b981;
+          background: rgba(16, 185, 129, 0.15);
+          color: #34d399;
         }
 
         .kpi-icon-square.blue {
-          background: #eff6ff;
-          color: #3b82f6;
+          background: rgba(59, 130, 246, 0.15);
+          color: #60a5fa;
         }
 
         .kpi-label {
           font-size: 11px;
           font-weight: 700;
-          color: #94a3b8;
+          color: var(--text-secondary);
           letter-spacing: 0.5px;
         }
 
         .kpi-value {
           font-size: 26px;
           font-weight: 800;
-          color: #0f172a;
+          color: var(--text-primary);
           margin: 2px 0 0 0;
         }
 
@@ -1177,53 +1171,12 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         .toolbar h2 {
           font-size: 18px;
           margin: 0;
+          color: var(--text-primary);
         }
 
         .toolbar-actions {
           display: flex;
           gap: 10px;
-        }
-
-        .btn-primary {
-          background: #0f172a;
-          color: #fff;
-          border: none;
-          padding: 10px 16px;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 700;
-          cursor: pointer;
-        }
-
-        .btn-primary:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .btn-secondary {
-          background: #ffffff;
-          color: #0f172a;
-          border: 1px solid #e2e8f0;
-          padding: 10px 16px;
-          border-radius: 8px;
-          font-size: 13px;
-          font-weight: 700;
-          cursor: pointer;
-        }
-
-        .btn-secondary.small {
-          padding: 6px 10px;
-          font-size: 12px;
-        }
-
-        .btn-danger {
-          border-color: #fecaca;
-          color: #991b1b;
-        }
-
-        .btn-danger:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
         }
 
         .category-header-row {
@@ -1262,8 +1215,8 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         .empty-state {
           text-align: center;
           padding: 60px 20px;
-          background: #ffffff;
-          border: 1px dashed #e2e8f0;
+          background: var(--bg-card);
+          border: 1px dashed var(--border-strong);
           border-radius: 16px;
         }
 
@@ -1280,8 +1233,8 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         }
 
         .category-card {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 12px;
           overflow: hidden;
         }
@@ -1306,7 +1259,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
 
         .chevron {
           font-size: 10px;
-          color: #94a3b8;
+          color: var(--text-muted);
           transition: transform 0.15s ease;
         }
 
@@ -1317,25 +1270,26 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         .category-name {
           font-size: 14px;
           font-weight: 700;
-          color: #0f172a;
+          color: var(--text-primary);
         }
 
         .category-count {
           font-size: 12px;
-          color: #64748b;
-          background: #f1f5f9;
+          color: var(--text-secondary);
+          background: var(--bg-subtle);
+          border: 1px solid var(--border);
           padding: 2px 8px;
           border-radius: 9999px;
         }
 
         .category-desc {
           font-size: 12px;
-          color: #94a3b8;
+          color: var(--text-muted);
         }
 
         .category-body {
           padding: 0 16px 16px 16px;
-          border-top: 1px solid #f1f5f9;
+          border-top: 1px solid var(--border);
         }
 
         .category-body-actions {
@@ -1344,7 +1298,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
 
         .no-items-msg {
           font-size: 13px;
-          color: #94a3b8;
+          color: var(--text-muted);
         }
 
         .items-table {
@@ -1356,20 +1310,20 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         .items-table th {
           text-align: left;
           font-size: 11px;
-          color: #94a3b8;
+          color: var(--text-secondary);
           font-weight: 700;
           padding: 8px;
-          border-bottom: 1px solid #f1f5f9;
+          border-bottom: 1px solid var(--border);
         }
 
         .items-table td {
           padding: 8px;
-          border-bottom: 1px solid #f8fafc;
-          color: #0f172a;
+          border-bottom: 1px solid var(--border);
+          color: var(--text-primary);
         }
 
         .desc-cell {
-          color: #64748b;
+          color: var(--text-secondary);
           max-width: 240px;
         }
 
@@ -1381,19 +1335,22 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         }
 
         .status-pill.active {
-          background: #ecfdf5;
-          color: #065f46;
+          background: rgba(16, 185, 129, 0.15);
+          color: #34d399;
+          border: 1px solid rgba(16, 185, 129, 0.25);
         }
 
         .status-pill.inactive {
-          background: #fef2f2;
-          color: #991b1b;
+          background: rgba(239, 68, 68, 0.15);
+          color: #f87171;
+          border: 1px solid rgba(239, 68, 68, 0.25);
         }
 
         .modal-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(15, 23, 42, 0.4);
+          background: rgba(0, 0, 0, 0.65);
+          backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1401,17 +1358,20 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         }
 
         .modal {
-          background: #ffffff;
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
           border-radius: 16px;
           padding: 24px;
           width: 420px;
           max-width: 90vw;
-          box-shadow: 0 10px 40px rgba(15, 23, 42, 0.2);
+          box-shadow: var(--shadow-modal);
+          color: var(--text-primary);
         }
 
         .modal h3 {
           margin: 0 0 16px 0;
           font-size: 16px;
+          color: var(--text-primary);
         }
 
         .modal label {
@@ -1420,7 +1380,7 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
           gap: 6px;
           font-size: 12px;
           font-weight: 600;
-          color: #64748b;
+          color: var(--text-secondary);
           margin-bottom: 12px;
         }
 
@@ -1428,17 +1388,26 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
         .modal select,
         .modal textarea {
           padding: 10px 12px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid var(--border-strong);
+          background: var(--bg-subtle);
           border-radius: 8px;
           font-size: 13px;
-          color: #0f172a;
+          color: var(--text-primary);
           font-family: inherit;
+        }
+
+        .modal input:focus,
+        .modal select:focus,
+        .modal textarea:focus {
+          border-color: var(--accent);
+          outline: none;
         }
 
         .modal .checkbox-row {
           flex-direction: row;
           align-items: center;
           gap: 8px;
+          color: var(--text-primary);
         }
 
         .field-row {
@@ -1461,14 +1430,15 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
           position: fixed;
           bottom: 24px;
           right: 24px;
-          background: #0f172a;
-          color: #fff;
+          background: var(--bg-elevated);
+          color: var(--text-primary);
+          border: 1px solid var(--border-strong);
           padding: 12px 18px;
           border-radius: 10px;
           font-size: 13px;
           font-weight: 600;
           z-index: 200;
-          box-shadow: 0 6px 20px rgba(15, 23, 42, 0.25);
+          box-shadow: var(--shadow-pop);
         }
       `}</style>
       </div>

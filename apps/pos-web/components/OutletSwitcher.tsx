@@ -101,16 +101,18 @@ export default function OutletSwitcher() {
           gap: 6px;
           padding: 8px 12px;
           border-radius: 10px;
-          border: 1px solid #e2e8f0;
-          background: #ffffff;
+          border: 1px solid var(--border, #1e293b);
+          background: var(--bg-card, #111c38);
           font-size: 13px;
           font-weight: 600;
-          color: #334155;
+          color: var(--text-primary, #f8fafc);
           cursor: pointer;
+          transition: all 0.15s ease;
         }
 
         .outlet-switcher-trigger:hover:not(:disabled) {
-          border-color: #2563eb;
+          border-color: #3b82f6;
+          background: var(--bg-elevated, #1e293b);
         }
 
         .outlet-switcher-trigger:disabled {
@@ -131,7 +133,7 @@ export default function OutletSwitcher() {
 
         .outlet-switcher-caret {
           font-size: 10px;
-          color: #94a3b8;
+          color: var(--text-secondary, #94a3b8);
         }
 
         .outlet-switcher-dropdown {
@@ -139,10 +141,10 @@ export default function OutletSwitcher() {
           right: 0;
           top: calc(100% + 6px);
           width: 260px;
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
           border-radius: 12px;
-          box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
           z-index: 50;
           overflow: hidden;
         }
@@ -152,15 +154,16 @@ export default function OutletSwitcher() {
           font-size: 11px;
           font-weight: 700;
           letter-spacing: 0.5px;
-          color: #94a3b8;
-          border-bottom: 1px solid #f1f5f9;
+          color: var(--text-secondary, #94a3b8);
+          border-bottom: 1px solid var(--border, #1e293b);
+          background: var(--bg-subtle, #070d1e);
         }
 
         .outlet-switcher-error {
           padding: 8px 14px;
           font-size: 12px;
-          color: #991b1b;
-          background: #fef2f2;
+          color: #f87171;
+          background: rgba(220, 38, 38, 0.15);
         }
 
         .outlet-switcher-item {
@@ -174,11 +177,12 @@ export default function OutletSwitcher() {
           text-align: left;
           cursor: pointer;
           font-size: 13px;
-          color: #0f172a;
+          color: var(--text-primary, #f8fafc);
+          transition: background 0.1s ease;
         }
 
         .outlet-switcher-item:hover:not(:disabled) {
-          background: #f8fafc;
+          background: var(--bg-subtle, #070d1e);
         }
 
         .outlet-switcher-item:disabled {
@@ -187,7 +191,8 @@ export default function OutletSwitcher() {
         }
 
         .outlet-switcher-item.active {
-          background: #eff6ff;
+          background: rgba(37, 99, 235, 0.2);
+          color: #60a5fa;
         }
 
         .outlet-switcher-item-name {

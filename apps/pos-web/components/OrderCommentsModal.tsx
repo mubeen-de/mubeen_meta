@@ -36,7 +36,7 @@ export default function OrderCommentsModal({
       >
         {/* Header */}
         <div className="petpooja-modal-header">
-          <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "#1e293b" }}>
+          <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 600, color: "var(--text-primary, #f8fafc)" }}>
             Order Wise Comments
           </h3>
           <button
@@ -59,7 +59,7 @@ export default function OrderCommentsModal({
                 marginBottom: "8px",
                 fontSize: "13px",
                 fontWeight: 600,
-                color: "#334155",
+                color: "var(--text-secondary, #94a3b8)",
               }}
             >
               Comment:
@@ -74,7 +74,9 @@ export default function OrderCommentsModal({
                 width: "100%",
                 padding: "10px 12px",
                 fontSize: "14px",
-                border: "1px solid #cbd5e1",
+                border: "1px solid var(--border-strong, #334155)",
+                background: "var(--bg-subtle, #070d1e)",
+                color: "var(--text-primary, #f8fafc)",
                 borderRadius: "6px",
                 outline: "none",
                 resize: "vertical",
@@ -92,7 +94,8 @@ export default function OrderCommentsModal({
               justifyContent: "flex-end",
               gap: "10px",
               padding: "12px 22px 18px",
-              borderTop: "1px solid #f1f5f9",
+              borderTop: "1px solid var(--border, #1e293b)",
+              background: "var(--bg-subtle, #070d1e)",
             }}
           >
             <button
@@ -100,12 +103,12 @@ export default function OrderCommentsModal({
               onClick={onClose}
               style={{
                 padding: "7px 20px",
-                backgroundColor: "#fff",
-                border: "1px solid #cbd5e1",
-                borderRadius: "4px",
+                backgroundColor: "var(--btn-cancel-bg, #334155)",
+                border: "1px solid var(--btn-cancel-border, #475569)",
+                borderRadius: "6px",
                 fontSize: "13px",
                 fontWeight: 600,
-                color: "#475569",
+                color: "var(--btn-cancel-text, #cbd5e1)",
                 cursor: "pointer",
               }}
             >
@@ -115,12 +118,12 @@ export default function OrderCommentsModal({
               type="submit"
               style={{
                 padding: "7px 24px",
-                backgroundColor: "#b91c1c",
-                border: "none",
-                borderRadius: "4px",
+                backgroundColor: "var(--btn-primary-bg, #2563eb)",
+                border: "1px solid var(--btn-primary-border, #3b82f6)",
+                borderRadius: "6px",
                 fontSize: "13px",
                 fontWeight: 600,
-                color: "#ffffff",
+                color: "var(--btn-primary-text, #ffffff)",
                 cursor: "pointer",
               }}
             >
@@ -137,17 +140,19 @@ export default function OrderCommentsModal({
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(15, 23, 42, 0.45);
+          background: rgba(11, 19, 43, 0.8);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 9999;
-          backdrop-filter: blur(1px);
+          backdrop-filter: blur(4px);
         }
         .petpooja-modal-container {
-          background: #ffffff;
+          background: var(--bg-card, #111c38);
+          border: 1px solid var(--border-strong, #334155);
+          color: var(--text-primary, #f8fafc);
           border-radius: 8px;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
           overflow: hidden;
           animation: modalPop 0.15s ease-out;
         }
@@ -156,18 +161,19 @@ export default function OrderCommentsModal({
           justify-content: space-between;
           align-items: center;
           padding: 14px 22px;
-          border-bottom: 1px solid #f1f5f9;
+          border-bottom: 1px solid var(--border, #1e293b);
+          background: var(--bg-subtle, #070d1e);
         }
         .petpooja-close-btn {
           background: transparent;
           border: none;
           font-size: 16px;
-          color: #94a3b8;
+          color: var(--text-secondary, #94a3b8);
           cursor: pointer;
           padding: 2px 6px;
         }
         .petpooja-close-btn:hover {
-          color: #1e293b;
+          color: #ffffff;
         }
         @keyframes modalPop {
           from {
