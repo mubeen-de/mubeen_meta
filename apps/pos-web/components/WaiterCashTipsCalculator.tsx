@@ -83,6 +83,13 @@ export default function WaiterCashTipsCalculator({
     setDenoms((prev) => ({ ...prev, [field]: num }));
   };
 
+  const stepDenom = (field: keyof Denominations, delta: number) => {
+    setDenoms((prev) => ({
+      ...prev,
+      [field]: Math.max(0, (prev[field] || 0) + delta),
+    }));
+  };
+
   // Calculations
   const totalCountedCash = useMemo(() => {
     return (
@@ -120,6 +127,24 @@ export default function WaiterCashTipsCalculator({
   // Expected Physical Cash in Hand = Opening Float + Cash Sales + Direct Cash Tips - Cash Drops
   const expectedCashInHand = openingFloat + cashSales + directCashTips - cashDrop;
   const cashVariance = totalCountedCash - expectedCashInHand;
+
+  // Intelligent denomination breakdown to match expected cash in 1-click
+  const handleAutoFillExpected = () => {
+    let remaining = Math.max(0, Math.round(expectedCashInHand));
+    const n500 = Math.floor(remaining / 500); remaining %= 500;
+    const n200 = Math.floor(remaining / 200); remaining %= 200;
+    const n100 = Math.floor(remaining / 100); remaining %= 100;
+    const n50 = Math.floor(remaining / 50); remaining %= 50;
+    const n20 = Math.floor(remaining / 20); remaining %= 20;
+    const n10 = Math.floor(remaining / 10); remaining %= 10;
+    const n5 = Math.floor(remaining / 5); remaining %= 5;
+    const coins = remaining;
+    setDenoms({ n500, n200, n100, n50, n20, n10, n5, coins });
+  };
+
+  const handleResetDenoms = () => {
+    setDenoms({ n500: 0, n200: 0, n100: 0, n50: 0, n20: 0, n10: 0, n5: 0, coins: 0 });
+  };
 
   if (!isOpen) return null;
 
@@ -178,110 +203,70 @@ export default function WaiterCashTipsCalculator({
             <div className="two-column-layout">
               {/* Left Column: Physical Cash Denomination Counter */}
               <div className="column-pane">
-                <h4 className="pane-title">💵 Physical Cash Denominations Count</h4>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "6px" }}>
+                  <h4 className="pane-title" style={{ margin: 0 }}>💵 Physical Cash Denominations</h4>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={handleAutoFillExpected}
+                      className="btn-quick-fill"
+                      title="Instantly calculate denominations to match expected cash drawer"
+                    >
+                      ⚡ Match Expected (₹{expectedCashInHand.toFixed(0)})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetDenoms}
+                      className="btn-quick-clear"
+                      title="Clear all counts to 0"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
 
                 <div className="denom-grid">
-                  <div className="denom-row">
-                    <span className="denom-label">₹500 x</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={denoms.n500 || ""}
-                      onChange={(e) => updateDenom("n500", e.target.value)}
-                      className="denom-input"
-                      placeholder="0"
-                    />
-                    <span className="denom-subtotal">= ₹{denoms.n500 * 500}</span>
-                  </div>
-
-                  <div className="denom-row">
-                    <span className="denom-label">₹200 x</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={denoms.n200 || ""}
-                      onChange={(e) => updateDenom("n200", e.target.value)}
-                      className="denom-input"
-                      placeholder="0"
-                    />
-                    <span className="denom-subtotal">= ₹{denoms.n200 * 200}</span>
-                  </div>
-
-                  <div className="denom-row">
-                    <span className="denom-label">₹100 x</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={denoms.n100 || ""}
-                      onChange={(e) => updateDenom("n100", e.target.value)}
-                      className="denom-input"
-                      placeholder="0"
-                    />
-                    <span className="denom-subtotal">= ₹{denoms.n100 * 100}</span>
-                  </div>
-
-                  <div className="denom-row">
-                    <span className="denom-label">₹50 x</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={denoms.n50 || ""}
-                      onChange={(e) => updateDenom("n50", e.target.value)}
-                      className="denom-input"
-                      placeholder="0"
-                    />
-                    <span className="denom-subtotal">= ₹{denoms.n50 * 50}</span>
-                  </div>
-
-                  <div className="denom-row">
-                    <span className="denom-label">₹20 x</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={denoms.n20 || ""}
-                      onChange={(e) => updateDenom("n20", e.target.value)}
-                      className="denom-input"
-                      placeholder="0"
-                    />
-                    <span className="denom-subtotal">= ₹{denoms.n20 * 20}</span>
-                  </div>
-
-                  <div className="denom-row">
-                    <span className="denom-label">₹10 x</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={denoms.n10 || ""}
-                      onChange={(e) => updateDenom("n10", e.target.value)}
-                      className="denom-input"
-                      placeholder="0"
-                    />
-                    <span className="denom-subtotal">= ₹{denoms.n10 * 10}</span>
-                  </div>
-
-                  <div className="denom-row">
-                    <span className="denom-label">₹5 x</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={denoms.n5 || ""}
-                      onChange={(e) => updateDenom("n5", e.target.value)}
-                      className="denom-input"
-                      placeholder="0"
-                    />
-                    <span className="denom-subtotal">= ₹{denoms.n5 * 5}</span>
-                  </div>
+                  {[
+                    { key: "n500" as const, label: "₹500 x", val: 500 },
+                    { key: "n200" as const, label: "₹200 x", val: 200 },
+                    { key: "n100" as const, label: "₹100 x", val: 100 },
+                    { key: "n50" as const, label: "₹50 x", val: 50 },
+                    { key: "n20" as const, label: "₹20 x", val: 20 },
+                    { key: "n10" as const, label: "₹10 x", val: 10 },
+                    { key: "n5" as const, label: "₹5 x", val: 5 },
+                  ].map((d) => (
+                    <div className="denom-row" key={d.key}>
+                      <span className="denom-label">{d.label}</span>
+                      <div className="denom-stepper">
+                        <button type="button" className="step-btn" onClick={() => stepDenom(d.key, -1)} tabIndex={-1}>-</button>
+                        <input
+                          type="number"
+                          min="0"
+                          value={denoms[d.key] || ""}
+                          onChange={(e) => updateDenom(d.key, e.target.value)}
+                          className="denom-input"
+                          placeholder="0"
+                        />
+                        <button type="button" className="step-btn" onClick={() => stepDenom(d.key, 1)} tabIndex={-1}>+</button>
+                      </div>
+                      <span className="denom-subtotal">= ₹{denoms[d.key] * d.val}</span>
+                    </div>
+                  ))}
 
                   <div className="denom-row">
                     <span className="denom-label">Coins (₹)</span>
-                    <input
-                      type="number"
-                      min="0"
-                      value={denoms.coins || ""}
-                      onChange={(e) => updateDenom("coins", e.target.value)}
-                      className="denom-input"
-                      placeholder="0"
-                    />
+                    <div className="denom-stepper">
+                      <button type="button" className="step-btn" onClick={() => stepDenom("coins", -5)} tabIndex={-1}>-5</button>
+                      <input
+                        type="number"
+                        min="0"
+                        value={denoms.coins || ""}
+                        onChange={(e) => updateDenom("coins", e.target.value)}
+                        className="denom-input"
+                        placeholder="0"
+                      />
+                      <button type="button" className="step-btn" onClick={() => stepDenom("coins", 5)} tabIndex={-1}>+5</button>
+                    </div>
                     <span className="denom-subtotal">= ₹{denoms.coins}</span>
                   </div>
                 </div>
@@ -295,6 +280,42 @@ export default function WaiterCashTipsCalculator({
               {/* Right Column: Reconciliation & Tips Distribution */}
               <div className="column-pane">
                 <h4 className="pane-title">⚖️ Shift Cash Reconciliation</h4>
+
+                {/* Formula Breakdown Banner */}
+                <div className="formula-summary-card">
+                  <div className="formula-box">
+                    <span className="formula-lbl">Float</span>
+                    <span className="formula-val">₹{openingFloat.toFixed(0)}</span>
+                  </div>
+                  <span className="formula-op">+</span>
+                  <div className="formula-box">
+                    <span className="formula-lbl">Cash Sales</span>
+                    <span className="formula-val">₹{cashSales.toFixed(0)}</span>
+                  </div>
+                  {directCashTips > 0 && (
+                    <>
+                      <span className="formula-op">+</span>
+                      <div className="formula-box">
+                        <span className="formula-lbl">Tips</span>
+                        <span className="formula-val">₹{directCashTips.toFixed(0)}</span>
+                      </div>
+                    </>
+                  )}
+                  {cashDrop > 0 && (
+                    <>
+                      <span className="formula-op">-</span>
+                      <div className="formula-box">
+                        <span className="formula-lbl">Drop</span>
+                        <span className="formula-val">₹{cashDrop.toFixed(0)}</span>
+                      </div>
+                    </>
+                  )}
+                  <span className="formula-op">=</span>
+                  <div className="formula-box target">
+                    <span className="formula-lbl">Expected</span>
+                    <span className="formula-val">₹{expectedCashInHand.toFixed(2)}</span>
+                  </div>
+                </div>
 
                 <div className="reconcile-field-list">
                   <div className="reconcile-row">
@@ -344,16 +365,24 @@ export default function WaiterCashTipsCalculator({
                     <span style={{ color: "#0f172a" }}>₹{totalCountedCash.toFixed(2)}</span>
                   </div>
 
-                  {/* Overage / Shortage Badge */}
-                  <div className={`variance-banner ${Math.abs(cashVariance) < 0.01 ? "match" : cashVariance > 0 ? "overage" : "shortage"}`}>
-                    {Math.abs(cashVariance) < 0.01 ? (
-                      <span>✓ Perfect Match (₹0.00 Variance)</span>
-                    ) : cashVariance > 0 ? (
-                      <span>🟢 Cash Overage: +₹{cashVariance.toFixed(2)}</span>
-                    ) : (
-                      <span>⚠️ Cash Shortage: -₹{Math.abs(cashVariance).toFixed(2)}</span>
-                    )}
-                  </div>
+                  {/* Overage / Shortage / Pending Badge */}
+                  {totalCountedCash === 0 && expectedCashInHand > 0 ? (
+                    <div className="variance-banner pending">
+                      ℹ️ Count Pending: Count physical notes or tap &ldquo;⚡ Match Expected&rdquo;
+                    </div>
+                  ) : Math.abs(cashVariance) < 0.01 ? (
+                    <div className="variance-banner match">
+                      ✓ Perfect Match (₹0.00 Variance) — Drawer balanced!
+                    </div>
+                  ) : cashVariance > 0 ? (
+                    <div className="variance-banner overage">
+                      🟢 Cash Surplus: +₹{cashVariance.toFixed(2)}
+                    </div>
+                  ) : (
+                    <div className="variance-banner shortage">
+                      ⚠️ Cash Shortage: -₹{Math.abs(cashVariance).toFixed(2)}
+                    </div>
+                  )}
                 </div>
 
                 {/* Tips Distribution Section */}
@@ -416,6 +445,12 @@ export default function WaiterCashTipsCalculator({
               type="button"
               className="btn-complete-shift"
               onClick={async () => {
+                if (totalCountedCash === 0 && expectedCashInHand > 0) {
+                  const confirmed = window.confirm(
+                    `⚠️ Attention ${shiftData?.waiter?.name || "Captain"}:\n\nYour counted cash is ₹0.00, but your expected cash from shift sales and opening float is ₹${expectedCashInHand.toFixed(2)}.\n\nSubmitting ₹0.00 will record a SHORTAGE of -₹${expectedCashInHand.toFixed(2)} against your shift.\n\nDid you forget to enter your counted cash?\n\n• Click CANCEL to count notes or click '⚡ Match Expected'.\n• Click OK ONLY if you really collected ₹0 cash.`
+                  );
+                  if (!confirmed) return;
+                }
                 try {
                   const res = await authedFetch("/waiters/me/shift-handover", {
                     method: "POST",
@@ -564,6 +599,36 @@ export default function WaiterCashTipsCalculator({
           letter-spacing: 0.5px;
         }
 
+        .btn-quick-fill {
+          background: #2563eb;
+          color: #ffffff;
+          border: 1px solid #1d4ed8;
+          border-radius: 4px;
+          padding: 3px 8px;
+          font-size: 0.6875rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .btn-quick-fill:hover {
+          background: #1d4ed8;
+        }
+        .btn-quick-clear {
+          background: #334155;
+          color: #cbd5e1;
+          border: 1px solid #475569;
+          border-radius: 4px;
+          padding: 3px 8px;
+          font-size: 0.6875rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .btn-quick-clear:hover {
+          background: #475569;
+          color: #f8fafc;
+        }
+
         .denom-grid {
           display: flex;
           flex-direction: column;
@@ -571,9 +636,9 @@ export default function WaiterCashTipsCalculator({
         }
         .denom-row {
           display: grid;
-          grid-template-columns: 70px 70px 1fr;
+          grid-template-columns: 65px 105px 1fr;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           font-size: 0.8125rem;
           color: var(--text-primary, #f8fafc) !important;
         }
@@ -581,8 +646,34 @@ export default function WaiterCashTipsCalculator({
           font-weight: 600;
           color: var(--text-secondary, #94a3b8) !important;
         }
+        .denom-stepper {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+        }
+        .step-btn {
+          background: #1e293b;
+          border: 1px solid #334155;
+          color: #94a3b8;
+          border-radius: 3px;
+          width: 22px;
+          height: 24px;
+          padding: 0;
+          font-weight: 700;
+          font-size: 0.75rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          user-select: none;
+        }
+        .step-btn:hover {
+          background: #334155;
+          color: #f8fafc;
+        }
         .denom-input {
-          padding: 4px 6px;
+          width: 44px;
+          padding: 3px 4px;
           border: 1px solid var(--border-strong, #334155);
           border-radius: 4px;
           text-align: center;
@@ -609,6 +700,46 @@ export default function WaiterCashTipsCalculator({
           font-size: 0.8125rem;
           font-weight: 700;
           color: var(--text-primary, #f8fafc) !important;
+        }
+
+        .formula-summary-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: var(--bg-subtle, #070d1e);
+          border: 1px solid var(--border, #1e293b);
+          border-radius: 8px;
+          padding: 6px 10px;
+          margin-bottom: 10px;
+          font-size: 0.75rem;
+        }
+        .formula-box {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1px;
+        }
+        .formula-box.target {
+          background: rgba(37, 99, 235, 0.2);
+          border: 1px solid #3b82f6;
+          border-radius: 4px;
+          padding: 2px 6px;
+        }
+        .formula-lbl {
+          font-size: 0.625rem;
+          color: #94a3b8;
+          text-transform: uppercase;
+          font-weight: 700;
+        }
+        .formula-val {
+          font-size: 0.8125rem;
+          font-weight: 800;
+          color: #f8fafc;
+        }
+        .formula-op {
+          font-weight: 900;
+          color: #64748b;
+          font-size: 0.875rem;
         }
 
         .reconcile-field-list {
@@ -655,6 +786,7 @@ export default function WaiterCashTipsCalculator({
           font-weight: 800;
           text-align: center;
         }
+        .variance-banner.pending { background: rgba(59, 130, 246, 0.15); color: #60a5fa !important; border: 1px dashed #3b82f6; }
         .variance-banner.match { background: rgba(16, 185, 129, 0.2); color: #34d399 !important; border: 1px solid #059669; }
         .variance-banner.overage { background: rgba(59, 130, 246, 0.2); color: #60a5fa !important; border: 1px solid #2563eb; }
         .variance-banner.shortage { background: rgba(220, 38, 38, 0.2); color: #f87171 !important; border: 1px solid #dc2626; }

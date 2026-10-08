@@ -131,7 +131,20 @@ export default function FinancePage() {
   const [savingReconcile, setSavingReconcile] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [waiterHandovers, setWaiterHandovers] = useState<
-    { id: string; waiterId: string; waiterName?: string; createdAt: string; actualCashCountedMinor: number; openingFloatMinor: number; netTipPayoutMinor: number; managerNotes: string }[]
+    {
+      id: string;
+      waiterId: string;
+      waiterName?: string;
+      createdAt: string;
+      businessDate?: string;
+      actualCashCountedMinor: number;
+      openingFloatMinor: number;
+      netTipPayoutMinor: number;
+      digitalTipsMinor?: number;
+      serviceChargeMinor?: number;
+      cashSalesMinor?: number;
+      managerNotes: string;
+    }[]
   >([]);
 
   const fetchWaiterHandovers = () => {
@@ -711,8 +724,30 @@ export default function FinancePage() {
                           Captain shift cash &amp; tips handovers
                         </h4>
                         <p style={{ fontSize: "0.75rem", color: "#64748b", margin: "0 0 10px" }}>
-                          From POST /waiters/me/shift-handover. Does not close the house cash drawer.
+                          From POST /waiters/me/shift-handover. Captures captain physical cash counts, float balance, and tips. Does not close the house cash drawer.
                         </p>
+
+                        {waiterHandovers.length > 0 && (
+                          <div style={{ display: "flex", gap: "10px", marginBottom: "12px", flexWrap: "wrap" }}>
+                            <div style={{ background: "rgba(59, 130, 246, 0.1)", border: "1px solid rgba(59, 130, 246, 0.3)", borderRadius: "6px", padding: "8px 12px", fontSize: "0.75rem" }}>
+                              <span style={{ color: "#94a3b8" }}>Handovers Recorded: </span>
+                              <strong style={{ color: "#60a5fa" }}>{waiterHandovers.length} shift{waiterHandovers.length > 1 ? "s" : ""}</strong>
+                            </div>
+                            <div style={{ background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)", borderRadius: "6px", padding: "8px 12px", fontSize: "0.75rem" }}>
+                              <span style={{ color: "#94a3b8" }}>Total Captain Cash Counted: </span>
+                              <strong style={{ color: "#34d399" }}>
+                                {formatMoney(String(waiterHandovers.reduce((s, h) => s + (h.actualCashCountedMinor || 0), 0)))}
+                              </strong>
+                            </div>
+                            <div style={{ background: "rgba(15, 118, 110, 0.1)", border: "1px solid rgba(15, 118, 110, 0.3)", borderRadius: "6px", padding: "8px 12px", fontSize: "0.75rem" }}>
+                              <span style={{ color: "#94a3b8" }}>Total Tips Settled: </span>
+                              <strong style={{ color: "#2dd4bf" }}>
+                                {formatMoney(String(waiterHandovers.reduce((s, h) => s + (h.netTipPayoutMinor || 0), 0)))}
+                              </strong>
+                            </div>
+                          </div>
+                        )}
+
                         {waiterHandovers.length === 0 ? (
                           <div className="not-available-box" style={{ padding: "16px" }}>
                             <p>No captain handovers recorded yet.</p>
@@ -724,23 +759,48 @@ export default function FinancePage() {
                                 <tr>
                                   <th>Time</th>
                                   <th>Captain</th>
-                                  <th style={{ textAlign: "right" }}>Counted cash</th>
                                   <th style={{ textAlign: "right" }}>Opening float</th>
+                                  <th style={{ textAlign: "right" }}>Cash Sales</th>
+                                  <th style={{ textAlign: "right" }}>Expected Drawer</th>
+                                  <th style={{ textAlign: "right" }}>Counted cash</th>
+                                  <th>Reconciliation Status</th>
                                   <th style={{ textAlign: "right" }}>Net tip payout</th>
-                                  <th>Notes</th>
+                                  <th>Denominations &amp; Notes</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {waiterHandovers.map((h) => (
-                                  <tr key={h.id}>
-                                    <td>{new Date(h.createdAt).toLocaleString("en-IN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" })}</td>
-                                    <td><strong>{h.waiterName || h.waiterId.slice(0, 8)}</strong></td>
-                                    <td className="amount-cell">{formatMoney(String(h.actualCashCountedMinor))}</td>
-                                    <td className="amount-cell">{formatMoney(String(h.openingFloatMinor))}</td>
-                                    <td className="amount-cell" style={{ color: "#0f766e", fontWeight: 800 }}>{formatMoney(String(h.netTipPayoutMinor))}</td>
-                                    <td style={{ color: "#64748b", fontSize: "0.75rem" }}>{h.managerNotes || "—"}</td>
-                                  </tr>
-                                ))}
+                                {waiterHandovers.map((h) => {
+                                  const expMinor = (h.openingFloatMinor || 0) + (h.cashSalesMinor || 0);
+                                  const varianceMinor = (h.actualCashCountedMinor || 0) - expMinor;
+                                  const varianceRupees = varianceMinor / 100;
+                                  return (
+                                    <tr key={h.id}>
+                                      <td>{new Date(h.createdAt).toLocaleString("en-IN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" })}</td>
+                                      <td><strong>{h.waiterName || h.waiterId.slice(0, 8)}</strong></td>
+                                      <td className="amount-cell">{formatMoney(String(h.openingFloatMinor))}</td>
+                                      <td className="amount-cell" style={{ color: "#34d399", fontWeight: 700 }}>+{formatMoney(String(h.cashSalesMinor || 0))}</td>
+                                      <td className="amount-cell" style={{ color: "#60a5fa", fontWeight: 700 }}>{formatMoney(String(expMinor))}</td>
+                                      <td className="amount-cell" style={{ fontWeight: 800 }}>{formatMoney(String(h.actualCashCountedMinor))}</td>
+                                      <td>
+                                        {Math.abs(varianceRupees) < 0.01 ? (
+                                          <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: 800, background: "#dcfce7", color: "#166534", whiteSpace: "nowrap" }}>
+                                            ✅ Balanced
+                                          </span>
+                                        ) : varianceRupees < 0 ? (
+                                          <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: 800, background: "#fee2e2", color: "#991b1b", whiteSpace: "nowrap" }}>
+                                            ⚠️ Shortage (-₹{Math.abs(varianceRupees).toFixed(2)})
+                                          </span>
+                                        ) : (
+                                          <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "4px", fontSize: "0.75rem", fontWeight: 800, background: "#fef9c3", color: "#854d0e", whiteSpace: "nowrap" }}>
+                                            🟢 Surplus (+₹{varianceRupees.toFixed(2)})
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="amount-cell" style={{ color: "#0f766e", fontWeight: 800 }}>{formatMoney(String(h.netTipPayoutMinor))}</td>
+                                      <td style={{ color: "#64748b", fontSize: "0.75rem", maxWidth: "260px", wordBreak: "break-word" }}>{h.managerNotes || "—"}</td>
+                                    </tr>
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>
