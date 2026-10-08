@@ -7,6 +7,7 @@ export interface KotItemLine {
   name: string;
   quantity: number;
   notes?: string | null;
+  seatNumber?: number | null;
 }
 
 export interface KotCardData {
@@ -593,9 +594,53 @@ export default function KapMetaKotView({
                     {/* Items List */}
                     <div className="kds-items-list">
                       {card.items.map((it, idx) => (
-                        <div key={it.id || idx} className="kds-item-row">
-                          <span className="kds-item-name">{it.name}</span>
-                          <span className="kds-item-qty">×{it.quantity}</span>
+                        <div key={it.id || idx} className="kds-item-entry" style={{ padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                          <div className="kds-item-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", flex: 1, paddingRight: "8px" }}>
+                              <span className="kds-item-name">{it.name}</span>
+                              {it.seatNumber != null && (
+                                <span
+                                  className="kds-seat-tag"
+                                  style={{
+                                    fontSize: "10px",
+                                    fontWeight: 800,
+                                    background: "#2563eb",
+                                    color: "#ffffff",
+                                    padding: "1px 6px",
+                                    borderRadius: "4px",
+                                    letterSpacing: "0.4px",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "2px",
+                                  }}
+                                  title={`Serve to Person / Seat #${it.seatNumber}`}
+                                >
+                                  🪑 Seat {it.seatNumber}
+                                </span>
+                              )}
+                            </div>
+                            <span className="kds-item-qty">×{it.quantity}</span>
+                          </div>
+                          {it.notes && (
+                            <div
+                              className="kds-item-instruction"
+                              style={{
+                                marginTop: "3px",
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                color: "#fef08a",
+                                background: "rgba(234, 179, 8, 0.15)",
+                                border: "1px solid rgba(234, 179, 8, 0.35)",
+                                borderRadius: "4px",
+                                padding: "2px 7px",
+                                display: "inline-block",
+                                maxWidth: "100%",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              💬 <span style={{ textDecoration: "underline" }}>Chef Note:</span> {it.notes}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -721,10 +766,54 @@ export default function KapMetaKotView({
 
                     {/* Items List */}
                     <div className="card-items-scroll-list">
-                      {card.items.map((it) => (
-                        <div key={it.id} className="card-item-line-row">
-                          <span className="item-title">{it.name}</span>
-                          <span className="item-qty-number">{it.quantity}</span>
+                      {card.items.map((it, idx) => (
+                        <div key={it.id || idx} className="card-item-entry" style={{ padding: "4px 0", borderBottom: "1px dashed #e2e8f0" }}>
+                          <div className="card-item-line-row">
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", flex: 1, paddingRight: "6px" }}>
+                              <span className="item-title" style={{ fontWeight: 600 }}>{it.name}</span>
+                              {it.seatNumber != null && (
+                                <span
+                                  className="kot-seat-badge"
+                                  style={{
+                                    fontSize: "10px",
+                                    fontWeight: 800,
+                                    background: "#2563eb",
+                                    color: "#ffffff",
+                                    padding: "1px 6px",
+                                    borderRadius: "4px",
+                                    letterSpacing: "0.4px",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "2px",
+                                  }}
+                                  title={`Serve to Person / Seat #${it.seatNumber}`}
+                                >
+                                  🪑 Seat {it.seatNumber}
+                                </span>
+                              )}
+                            </div>
+                            <span className="item-qty-number">{it.quantity}</span>
+                          </div>
+                          {it.notes && (
+                            <div
+                              className="kot-item-notes"
+                              style={{
+                                marginTop: "3px",
+                                fontSize: "11px",
+                                fontWeight: 700,
+                                color: "#9a3412",
+                                background: "#ffedd5",
+                                border: "1px solid #fdba74",
+                                borderRadius: "4px",
+                                padding: "2px 7px",
+                                display: "inline-block",
+                                maxWidth: "100%",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              💬 <span style={{ textDecoration: "underline" }}>Chef Note:</span> {it.notes}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

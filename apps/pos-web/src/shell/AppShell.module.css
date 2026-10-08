@@ -10,11 +10,11 @@
 :root {
   --kap-color-primary: #2563eb;
   --kap-color-primary-dark: #1d4ed8;
-  --kap-color-bg: var(--bg-base, #0b132b);
-  --kap-color-surface: var(--bg-card, #111c38);
-  --kap-color-border: var(--border, #1e293b);
-  --kap-color-text: var(--text-primary, #f8fafc);
-  --kap-color-text-muted: var(--text-secondary, #94a3b8);
+  --kap-color-bg: var(--bg-base, #f8fafc);
+  --kap-color-surface: var(--bg-card, #ffffff);
+  --kap-color-border: var(--border, #e2e8f0);
+  --kap-color-text: var(--text-primary, #0f172a);
+  --kap-color-text-muted: var(--text-secondary, #475569);
   --kap-color-danger: var(--btn-alert-bg, #dc2626);
 
   --kap-space-xs: 4px;

@@ -141,10 +141,10 @@ export default function OutletSwitcher() {
           right: 0;
           top: calc(100% + 6px);
           width: 260px;
-          background: var(--bg-card, #111c38);
-          border: 1px solid var(--border-strong, #334155);
+          background: var(--bg-card, #ffffff);
+          border: 1px solid var(--border-strong, #cbd5e1);
           border-radius: 12px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          box-shadow: var(--shadow-pop, 0 10px 25px -5px rgba(0, 0, 0, 0.1));
           z-index: 50;
           overflow: hidden;
         }
@@ -154,16 +154,16 @@ export default function OutletSwitcher() {
           font-size: 11px;
           font-weight: 700;
           letter-spacing: 0.5px;
-          color: var(--text-secondary, #94a3b8);
-          border-bottom: 1px solid var(--border, #1e293b);
-          background: var(--bg-subtle, #070d1e);
+          color: var(--text-secondary, #475569);
+          border-bottom: 1px solid var(--border, #e2e8f0);
+          background: var(--bg-subtle, #f1f5f9);
         }
 
         .outlet-switcher-error {
           padding: 8px 14px;
           font-size: 12px;
-          color: #f87171;
-          background: rgba(220, 38, 38, 0.15);
+          color: #dc2626;
+          background: #fef2f2;
         }
 
         .outlet-switcher-item {
@@ -177,12 +177,12 @@ export default function OutletSwitcher() {
           text-align: left;
           cursor: pointer;
           font-size: 13px;
-          color: var(--text-primary, #f8fafc);
+          color: var(--text-primary, #0f172a);
           transition: background 0.1s ease;
         }
 
         .outlet-switcher-item:hover:not(:disabled) {
-          background: var(--bg-subtle, #070d1e);
+          background: var(--bg-subtle, #f1f5f9);
         }
 
         .outlet-switcher-item:disabled {
@@ -191,8 +191,8 @@ export default function OutletSwitcher() {
         }
 
         .outlet-switcher-item.active {
-          background: rgba(37, 99, 235, 0.2);
-          color: #60a5fa;
+          background: rgba(37, 99, 235, 0.08);
+          color: #2563eb;
         }
 
         .outlet-switcher-item-name {

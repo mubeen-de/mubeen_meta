@@ -55,6 +55,7 @@ export interface MeResponse {
   roles: string[];
   permissions: string[];
   outlet: MeOutlet | null;
+  captainCode?: string | null;
 }
 
 function isBrowser(): boolean {
@@ -303,7 +304,7 @@ export async function authedFetch(url: string, options: RequestInit = {}): Promi
   if (res.status === 401) {
     if (isBrowser()) {
       window.localStorage.removeItem(STORAGE_KEY);
-      window.location.href = "/login";
+      window.location.href = "/login?reason=session_transferred";
     }
   }
 

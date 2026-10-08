@@ -1058,20 +1058,21 @@ export default function AdminDashboard() {
           style={{
             padding: "8px 16px",
             borderRadius: "var(--radius-pill)",
-            border: activeTab === "daily-ops" ? "1px solid #0284c7" : "1px solid var(--border)",
-            background: activeTab === "daily-ops" ? "rgba(2, 132, 199, 0.12)" : "var(--bg-base)",
-            color: activeTab === "daily-ops" ? "#0284c7" : "var(--text-secondary)",
+            border: activeTab === "daily-ops" ? "1px solid #2563eb" : "1px solid var(--border)",
+            background: activeTab === "daily-ops" ? "rgba(37, 99, 235, 0.08)" : "var(--bg-card)",
+            color: activeTab === "daily-ops" ? "#2563eb" : "var(--text-secondary)",
             fontWeight: 700,
             fontSize: "0.875rem",
             cursor: "pointer",
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
+            transition: "all 0.15s ease",
           }}
         >
           <span>⚡</span>
           <span>Daily Operations</span>
-          <span style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "999px", background: "#0284c7", color: "#ffffff", fontWeight: 800 }}>
+          <span style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "999px", background: "#2563eb", color: "#ffffff", fontWeight: 800 }}>
             6 Nodes
           </span>
         </button>
@@ -1083,8 +1084,8 @@ export default function AdminDashboard() {
           style={{
             padding: "8px 16px",
             borderRadius: "var(--radius-pill)",
-            border: activeTab === "agents" ? "1px solid #6366f1" : "1px solid var(--border)",
-            background: activeTab === "agents" ? "rgba(99, 102, 241, 0.1)" : "var(--bg-base)",
+            border: activeTab === "agents" ? "1px solid #4f46e5" : "1px solid var(--border)",
+            background: activeTab === "agents" ? "rgba(79, 70, 229, 0.08)" : "var(--bg-card)",
             color: activeTab === "agents" ? "#4f46e5" : "var(--text-secondary)",
             fontWeight: 700,
             fontSize: "0.875rem",
@@ -1092,6 +1093,7 @@ export default function AdminDashboard() {
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
+            transition: "all 0.15s ease",
           }}
         >
           <span>🤖</span>
@@ -1108,8 +1110,8 @@ export default function AdminDashboard() {
           style={{
             padding: "8px 16px",
             borderRadius: "var(--radius-pill)",
-            border: activeTab === "analytics" ? "1px solid #6366f1" : "1px solid var(--border)",
-            background: activeTab === "analytics" ? "rgba(99, 102, 241, 0.1)" : "var(--bg-base)",
+            border: activeTab === "analytics" ? "1px solid #4f46e5" : "1px solid var(--border)",
+            background: activeTab === "analytics" ? "rgba(79, 70, 229, 0.08)" : "var(--bg-card)",
             color: activeTab === "analytics" ? "#4f46e5" : "var(--text-secondary)",
             fontWeight: 700,
             fontSize: "0.875rem",
@@ -1117,6 +1119,7 @@ export default function AdminDashboard() {
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
+            transition: "all 0.15s ease",
           }}
         >
           <span>📊</span>
@@ -1130,8 +1133,8 @@ export default function AdminDashboard() {
           style={{
             padding: "8px 16px",
             borderRadius: "var(--radius-pill)",
-            border: activeTab === "hub" ? "1px solid #6366f1" : "1px solid var(--border)",
-            background: activeTab === "hub" ? "rgba(99, 102, 241, 0.1)" : "var(--bg-base)",
+            border: activeTab === "hub" ? "1px solid #4f46e5" : "1px solid var(--border)",
+            background: activeTab === "hub" ? "rgba(79, 70, 229, 0.08)" : "var(--bg-card)",
             color: activeTab === "hub" ? "#4f46e5" : "var(--text-secondary)",
             fontWeight: 700,
             fontSize: "0.875rem",
@@ -1139,6 +1142,7 @@ export default function AdminDashboard() {
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
+            transition: "all 0.15s ease",
           }}
         >
           <span>⚙️</span>
@@ -1152,8 +1156,8 @@ export default function AdminDashboard() {
           style={{
             padding: "8px 16px",
             borderRadius: "var(--radius-pill)",
-            border: activeTab === "audit" ? "1px solid #6366f1" : "1px solid var(--border)",
-            background: activeTab === "audit" ? "rgba(99, 102, 241, 0.1)" : "var(--bg-base)",
+            border: activeTab === "audit" ? "1px solid #4f46e5" : "1px solid var(--border)",
+            background: activeTab === "audit" ? "rgba(79, 70, 229, 0.08)" : "var(--bg-card)",
             color: activeTab === "audit" ? "#4f46e5" : "var(--text-secondary)",
             fontWeight: 700,
             fontSize: "0.875rem",
@@ -1161,12 +1165,13 @@ export default function AdminDashboard() {
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
+            transition: "all 0.15s ease",
           }}
         >
           <span>📋</span>
           <span>Security & Audit Trail</span>
           {auditLogs.length > 0 && (
-            <span style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "999px", background: "#3b82f6", color: "#ffffff", fontWeight: 800 }}>
+            <span style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "999px", background: "#2563eb", color: "#ffffff", fontWeight: 800 }}>
               {auditLogs.length}
             </span>
           )}
@@ -1189,12 +1194,12 @@ export default function AdminDashboard() {
               <div className="daily-operations-dashboard" style={{ animation: "fadeIn 0.2s ease" }}>
                 {/* Top Banner */}
                 <div style={{
-                  background: "linear-gradient(135deg, #0f172a 0%, #0369a1 50%, #0284c7 100%)",
+                  background: "linear-gradient(135deg, #2563eb 0%, #0284c7 50%, #059669 100%)",
                   borderRadius: "var(--radius-lg)",
                   padding: "24px 28px",
                   color: "#ffffff",
                   marginBottom: "24px",
-                  boxShadow: "0 10px 25px -5px rgba(2, 132, 199, 0.3)",
+                  boxShadow: "0 10px 25px -5px rgba(37, 99, 235, 0.25)",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
@@ -1204,14 +1209,14 @@ export default function AdminDashboard() {
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
                       <span style={{ fontSize: "1.5rem" }}>⚡</span>
-                      <h2 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800, letterSpacing: "-0.5px" }}>
+                      <h2 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 800, letterSpacing: "-0.5px", color: "#ffffff" }}>
                         Daily Operations Command Center
                       </h2>
                       <span style={{ background: "#10b981", color: "#ffffff", padding: "2px 8px", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 800 }}>
                         A2A SYNCED
                       </span>
                     </div>
-                    <p style={{ margin: 0, color: "#e0f2fe", fontSize: "0.85rem", maxWidth: "680px" }}>
+                    <p style={{ margin: 0, color: "rgba(255, 255, 255, 0.9)", fontSize: "0.85rem", maxWidth: "680px" }}>
                       Unified command bridge orchestrating POS Terminal, Captain Waiter, Kitchen KDS, and Orders Register via the A2A Multi-Agent Framework.
                     </p>
                   </div>
@@ -1222,8 +1227,8 @@ export default function AdminDashboard() {
                       onClick={fetchDailyOperations}
                       disabled={dailyOpsLoading}
                       style={{
-                        background: "rgba(255, 255, 255, 0.15)",
-                        border: "1px solid rgba(255, 255, 255, 0.3)",
+                        background: "rgba(255, 255, 255, 0.18)",
+                        border: "1px solid rgba(255, 255, 255, 0.35)",
                         color: "#ffffff",
                         padding: "8px 16px",
                         borderRadius: "var(--radius-pill)",
@@ -1247,9 +1252,9 @@ export default function AdminDashboard() {
                       onClick={runE2eSimulation}
                       disabled={simulationRunning}
                       style={{
-                        background: "#10b981",
+                        background: "#ffffff",
                         border: "none",
-                        color: "#ffffff",
+                        color: "#0f172a",
                         padding: "8px 18px",
                         borderRadius: "var(--radius-pill)",
                         fontSize: "0.82rem",
@@ -1258,7 +1263,7 @@ export default function AdminDashboard() {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "8px",
-                        boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)",
+                        boxShadow: "0 4px 14px rgba(0, 0, 0, 0.12)",
                         transition: "all 0.15s ease",
                       }}
                     >
@@ -1318,10 +1323,10 @@ export default function AdminDashboard() {
 
                 {/* 4 KPI Summary Metric Cards */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "24px" }}>
-                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "18px 20px" }}>
+                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "18px 20px", boxShadow: "var(--shadow-card)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                       <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontWeight: 600 }}>🪑 Floor Occupancy</span>
-                      <span style={{ fontSize: "0.72rem", background: "rgba(2, 132, 199, 0.1)", color: "#0284c7", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
+                      <span style={{ fontSize: "0.72rem", background: "rgba(37, 99, 235, 0.08)", color: "#2563eb", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
                         {dailyOps?.pos?.occupancyPercent || 0}% Occupied
                       </span>
                     </div>
@@ -1333,10 +1338,10 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "18px 20px" }}>
+                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "18px 20px", boxShadow: "var(--shadow-card)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                       <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontWeight: 600 }}>⚡ Live Orders Pipeline</span>
-                      <span style={{ fontSize: "0.72rem", background: "rgba(16, 185, 129, 0.1)", color: "var(--accent-subtle-text)", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
+                      <span style={{ fontSize: "0.72rem", background: "rgba(16, 185, 129, 0.12)", color: "#059669", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
                         Running
                       </span>
                     </div>
@@ -1348,10 +1353,10 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "18px 20px" }}>
+                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "18px 20px", boxShadow: "var(--shadow-card)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                       <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontWeight: 600 }}>👨‍🍳 Kitchen KOTs</span>
-                      <span style={{ fontSize: "0.72rem", background: "rgba(245, 158, 11, 0.1)", color: "#d97706", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
+                      <span style={{ fontSize: "0.72rem", background: "rgba(245, 158, 11, 0.12)", color: "#b45309", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
                         {dailyOps?.kitchen?.totalActiveKots || 0} Active
                       </span>
                     </div>
@@ -1363,10 +1368,10 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "18px 20px" }}>
+                  <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "18px 20px", boxShadow: "var(--shadow-card)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                       <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontWeight: 600 }}>📋 Today's Settlements</span>
-                      <span style={{ fontSize: "0.72rem", background: "rgba(99, 102, 241, 0.1)", color: "#6366f1", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
+                      <span style={{ fontSize: "0.72rem", background: "rgba(99, 102, 241, 0.12)", color: "#4f46e5", padding: "2px 8px", borderRadius: "999px", fontWeight: 700 }}>
                         Audited
                       </span>
                     </div>
@@ -3813,12 +3818,14 @@ export default function AdminDashboard() {
           width: 34px;
           height: 34px;
           border-radius: 50%;
-          background: #e2e8f0;
+          background: #2563eb;
+          color: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 700;
           font-size: 0.8125rem;
+          box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
         }
 
         .user-info-text {

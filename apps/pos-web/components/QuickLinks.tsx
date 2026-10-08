@@ -184,11 +184,11 @@ export default function QuickLinks() {
           width: 100%;
           max-height: 280px;
           overflow-y: auto;
-          background: var(--bg-card, #111c38);
-          color: var(--text-primary, #f8fafc);
-          border: 1px solid var(--border-strong, #334155);
+          background: var(--bg-card, #ffffff);
+          color: var(--text-primary, #0f172a);
+          border: 1px solid var(--border-strong, #cbd5e1);
           border-radius: 10px;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+          box-shadow: var(--shadow-pop, 0 10px 25px -5px rgba(0, 0, 0, 0.1));
           z-index: 9999;
           box-sizing: border-box;
         }
@@ -199,15 +199,15 @@ export default function QuickLinks() {
           padding: 8px 12px;
           font-weight: 700;
           font-size: 0.8rem;
-          background: var(--bg-subtle, #070d1e);
-          border-bottom: 1px solid var(--border, #1e293b);
+          background: var(--bg-subtle, #f1f5f9);
+          border-bottom: 1px solid var(--border, #e2e8f0);
           border-radius: 9px 9px 0 0;
-          color: var(--text-primary, #f8fafc);
+          color: var(--text-primary, #0f172a);
         }
         .quick-links-add-btn {
           background: var(--btn-primary-bg, #2563eb);
           color: var(--btn-primary-text, #ffffff);
-          border: 1px solid var(--btn-primary-border, #3b82f6);
+          border: 1px solid var(--btn-primary-border, #2563eb);
           border-radius: 5px;
           padding: 3px 8px;
           font-size: 0.72rem;
@@ -225,7 +225,7 @@ export default function QuickLinks() {
         }
         .quick-links-empty {
           padding: 14px 10px;
-          color: var(--text-secondary, #94a3b8);
+          color: var(--text-secondary, #475569);
           font-size: 0.78rem;
           text-align: center;
         }
@@ -234,7 +234,7 @@ export default function QuickLinks() {
           align-items: center;
           justify-content: space-between;
           padding: 8px 12px;
-          border-bottom: 1px solid var(--border, #1e293b);
+          border-bottom: 1px solid var(--border, #e2e8f0);
           gap: 6px;
         }
         .quick-links-item:last-child {
@@ -243,7 +243,7 @@ export default function QuickLinks() {
         .quick-links-item-link {
           font-size: 0.8rem;
           font-weight: 500;
-          color: var(--text-primary, #f8fafc);
+          color: var(--text-primary, #0f172a);
           text-decoration: none;
           flex: 1;
           white-space: nowrap;
@@ -251,7 +251,7 @@ export default function QuickLinks() {
           text-overflow: ellipsis;
         }
         .quick-links-item-link:hover {
-          color: #60a5fa;
+          color: #2563eb;
           text-decoration: underline;
         }
         .quick-links-remove-btn {
@@ -266,8 +266,8 @@ export default function QuickLinks() {
           flex-shrink: 0;
         }
         .quick-links-remove-btn:hover {
-          color: #ef4444;
-          background: rgba(220, 38, 38, 0.15);
+          color: #dc2626;
+          background: rgba(220, 38, 38, 0.08);
         }
       `}</style>
     </div>

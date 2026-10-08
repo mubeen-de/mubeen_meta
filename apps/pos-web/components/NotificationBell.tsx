@@ -220,55 +220,56 @@ export default function NotificationBell() {
           width: 320px;
           max-height: 400px;
           overflow-y: auto;
-          background: var(--bg-card, #111c38);
-          color: var(--text-primary, #f8fafc);
-          border: 1px solid var(--border-strong, #334155);
+          background: var(--bg-card, #ffffff);
+          color: var(--text-primary, #0f172a);
+          border: 1px solid var(--border-strong, #cbd5e1);
           border-radius: 10px;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+          box-shadow: var(--shadow-pop, 0 10px 25px -5px rgba(0, 0, 0, 0.1));
           z-index: 100;
         }
         .notification-bell-dropdown-header {
           padding: 12px 16px;
           font-weight: 700;
-          border-bottom: 1px solid var(--border, #1e293b);
-          background: var(--bg-subtle, #070d1e);
+          border-bottom: 1px solid var(--border, #e2e8f0);
+          background: var(--bg-subtle, #f1f5f9);
           display: flex;
           justify-content: space-between;
           align-items: center;
+          color: var(--text-primary, #0f172a);
         }
         .notification-bell-empty {
           padding: 16px;
-          color: var(--text-secondary, #94a3b8);
+          color: var(--text-secondary, #475569);
           font-size: 0.9rem;
         }
         .notification-bell-item {
           padding: 10px 16px;
-          border-bottom: 1px solid var(--border, #1e293b);
+          border-bottom: 1px solid var(--border, #e2e8f0);
           cursor: pointer;
           transition: background 0.12s;
         }
         .notification-bell-item:hover {
-          background: var(--bg-subtle, #070d1e);
+          background: var(--bg-subtle, #f1f5f9);
         }
         .notification-bell-item.unread {
-          background: rgba(37, 99, 235, 0.15);
+          background: rgba(37, 99, 235, 0.06);
         }
         .notification-bell-item.unread:hover {
-          background: rgba(37, 99, 235, 0.25);
+          background: rgba(37, 99, 235, 0.1);
         }
         .notification-bell-item-title {
           font-weight: 600;
           font-size: 0.85rem;
-          color: var(--text-primary, #f8fafc);
+          color: var(--text-primary, #0f172a);
         }
         .notification-bell-item-message {
           font-size: 0.8rem;
-          color: var(--text-secondary, #94a3b8);
+          color: var(--text-secondary, #475569);
           margin-top: 2px;
         }
         .notification-bell-item-time {
           font-size: 0.7rem;
-          color: var(--text-muted, #64748b);
+          color: var(--text-muted, #94a3b8);
           margin-top: 4px;
         }
       `}</style>

@@ -98,4 +98,32 @@ describe("KapMetaKotView Component", () => {
 
     expect(handleMarkReady).toHaveBeenCalledWith("kot_26");
   });
+
+  it("renders seat number badge and chef notes for items", () => {
+    const customTicket: any = {
+      id: "kot_custom_1",
+      kotNo: "101",
+      orderType: "DINE_IN",
+      orderTypeDisplay: "Dine In",
+      orderTag: "b5",
+      initialElapsedSeconds: 15,
+      biller: "Kitchen Station",
+      status: "QUEUED",
+      items: [
+        {
+          id: "item_1",
+          name: "Breakfast Buffet",
+          quantity: 1,
+          seatNumber: 3,
+          notes: "less mirchi",
+        },
+      ],
+    };
+
+    render(<KapMetaKotView initialTickets={[customTicket]} />);
+
+    expect(screen.getByText("Breakfast Buffet")).toBeInTheDocument();
+    expect(screen.getByText(/Seat 3/i)).toBeInTheDocument();
+    expect(screen.getByText(/less mirchi/i)).toBeInTheDocument();
+  });
 });

@@ -503,13 +503,13 @@ export default function RoleManagementPage() {
                           {!canManageUsers && (
                             <div
                               style={{
-                                background: "rgba(59, 130, 246, 0.12)",
-                                border: "1px solid rgba(59, 130, 246, 0.3)",
+                                background: "rgba(37, 99, 235, 0.08)",
+                                border: "1px solid rgba(37, 99, 235, 0.2)",
                                 borderRadius: "6px",
                                 padding: "6px 12px",
                                 marginTop: "6px",
                                 fontSize: "0.82rem",
-                                color: "#93c5fd",
+                                color: "var(--accent, #2563eb)",
                                 display: "inline-flex",
                                 alignItems: "center",
                                 gap: "6px",
@@ -529,12 +529,14 @@ export default function RoleManagementPage() {
                             value={searchRole}
                             onChange={(e) => setSearchRole(e.target.value)}
                             style={{
-                              padding: "6px 12px",
-                              background: "#0f172a",
-                              border: "1px solid #334155",
-                              borderRadius: "6px",
-                              color: "#f8fafc",
-                              fontSize: "0.82rem",
+                              height: "38px",
+                              padding: "0 12px",
+                              background: "var(--bg-card)",
+                              border: "1px solid var(--border)",
+                              borderRadius: "8px",
+                              color: "var(--text-primary)",
+                              fontSize: "0.8125rem",
+                              boxSizing: "border-box",
                             }}
                           />
                           {canManageUsers && (
@@ -549,10 +551,10 @@ export default function RoleManagementPage() {
                         <table className="clean-table">
                           <thead>
                             <tr>
-                              <th>Role Name</th>
-                              <th>Description</th>
-                              <th>Assigned Staff</th>
-                              <th style={{ textAlign: "right" }}>Actions</th>
+                              <th style={{ minWidth: "180px" }}>Role Name</th>
+                              <th style={{ minWidth: "260px" }}>Description</th>
+                              <th style={{ minWidth: "140px" }}>Assigned Staff</th>
+                              <th style={{ minWidth: "120px", textAlign: "right" }}>Actions</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -642,22 +644,23 @@ export default function RoleManagementPage() {
                 {/* Section Link Banner */}
                 <div
                   style={{
-                    padding: "16px 20px",
-                    background: "#1e293b",
-                    borderRadius: "10px",
-                    border: "1px solid #334155",
+                    padding: "18px 24px",
+                    background: "var(--bg-card)",
+                    borderRadius: "12px",
+                    border: "1px solid var(--border)",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
                     flexWrap: "wrap",
-                    gap: "12px",
+                    gap: "16px",
+                    boxShadow: "var(--shadow-card)",
                   }}
                 >
                   <div>
-                    <h4 style={{ margin: "0 0 4px 0", color: "#f8fafc", fontSize: "0.95rem" }}>
+                    <h4 style={{ margin: "0 0 4px 0", color: "var(--text-primary)", fontSize: "0.95rem", fontWeight: 700 }}>
                       Need to manage individual staff accounts and login credentials?
                     </h4>
-                    <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.82rem" }}>
+                    <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "0.82rem" }}>
                       Add new staff members, set passwords, configure 4-digit POS PINs, and assign outlet scopes in User Management.
                     </p>
                   </div>
@@ -666,11 +669,17 @@ export default function RoleManagementPage() {
                     style={{
                       background: "#2563eb",
                       color: "#ffffff",
-                      padding: "8px 16px",
+                      height: "38px",
+                      padding: "0 18px",
                       borderRadius: "8px",
                       textDecoration: "none",
-                      fontWeight: 700,
-                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      fontSize: "0.8125rem",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxSizing: "border-box",
+                      boxShadow: "0 2px 6px rgba(37, 99, 235, 0.2)",
                     }}
                   >
                     Go to User Management →
@@ -792,8 +801,8 @@ export default function RoleManagementPage() {
           display: flex;
           flex-direction: column;
           height: 100vh;
-          background: #0f172a;
-          color: #f8fafc;
+          background: var(--bg-base);
+          color: var(--text-primary);
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
           overflow: hidden;
         }
@@ -803,8 +812,8 @@ export default function RoleManagementPage() {
           align-items: center;
           justify-content: space-between;
           padding: 12px 24px;
-          background: #1e293b;
-          border-bottom: 1px solid #334155;
+          background: var(--bg-card);
+          border-bottom: 1px solid var(--border);
           flex-shrink: 0;
         }
 
@@ -816,14 +825,14 @@ export default function RoleManagementPage() {
 
         .brand-icon {
           font-size: 1.25rem;
-          color: #38bdf8;
+          color: var(--accent);
         }
 
         .brand-name {
           font-size: 1.125rem;
           font-weight: 800;
           letter-spacing: -0.025em;
-          color: #f1f5f9;
+          color: var(--text-primary);
         }
 
         .topbar-right {
@@ -835,9 +844,9 @@ export default function RoleManagementPage() {
         .view-mode-tag {
           font-size: 0.75rem;
           font-weight: 700;
-          background: rgba(56, 189, 248, 0.12);
-          border: 1px solid rgba(56, 189, 248, 0.3);
-          color: #38bdf8;
+          background: rgba(37, 99, 235, 0.08);
+          border: 1px solid rgba(37, 99, 235, 0.2);
+          color: var(--accent);
           padding: 4px 10px;
           border-radius: 9999px;
         }
@@ -852,13 +861,14 @@ export default function RoleManagementPage() {
           width: 36px;
           height: 36px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: var(--btn-primary-bg, #2563eb);
           color: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 700;
           font-size: 0.875rem;
+          box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
         }
 
         .user-info-text {
@@ -869,12 +879,12 @@ export default function RoleManagementPage() {
         .user-name {
           font-size: 0.875rem;
           font-weight: 700;
-          color: #f8fafc;
+          color: var(--text-primary);
         }
 
         .user-role {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: var(--text-secondary);
           text-transform: uppercase;
         }
 
@@ -899,19 +909,19 @@ export default function RoleManagementPage() {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: #38bdf8;
+          color: var(--accent, #2563eb);
         }
 
         .greeting-title {
           font-size: 1.75rem;
           font-weight: 800;
           margin: 4px 0 6px 0;
-          color: #f8fafc;
+          color: var(--text-primary);
         }
 
         .greeting-subtitle {
           font-size: 0.9375rem;
-          color: #94a3b8;
+          color: var(--text-secondary);
           max-width: 820px;
           margin: 0;
           line-height: 1.5;
@@ -924,70 +934,92 @@ export default function RoleManagementPage() {
         }
 
         .export-action-btn {
-          padding: 8px 16px;
+          height: 38px;
+          padding: 0 16px;
           font-size: 0.8125rem;
-          font-weight: 700;
+          font-weight: 600;
           border-radius: 8px;
           cursor: pointer;
-          background: #334155;
-          color: #f8fafc;
-          border: 1px solid #475569;
+          background: var(--bg-card);
+          color: var(--text-secondary);
+          border: 1px solid var(--border);
+          box-shadow: var(--shadow-sm);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          box-sizing: border-box;
           transition: all 0.15s ease;
         }
 
         .export-action-btn:hover {
-          background: #475569;
+          background: var(--bg-subtle);
+          color: var(--text-primary);
         }
 
         .export-action-btn.primary {
           background: #2563eb;
-          border-color: #3b82f6;
+          border-color: #2563eb;
           color: #ffffff;
         }
 
         .export-action-btn.primary:hover {
           background: #1d4ed8;
+          border-color: #1d4ed8;
         }
 
         .tabs-header-container {
           display: flex;
-          gap: 12px;
-          border-bottom: 1px solid #334155;
-          padding-bottom: 12px;
-          flex-wrap: wrap;
+          gap: 4px;
+          border-bottom: 2px solid var(--border);
+          padding: 0;
+          margin-bottom: 20px;
         }
 
         .tab-item-btn {
-          background: #1e293b;
-          border: 1px solid #334155;
-          color: #94a3b8;
-          padding: 10px 18px;
-          border-radius: 8px;
-          font-size: 0.875rem;
-          font-weight: 700;
-          cursor: pointer;
           display: inline-flex;
           align-items: center;
           gap: 8px;
+          height: 44px;
+          padding: 0 18px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          border: none;
+          background: transparent;
+          color: var(--text-secondary);
+          border-bottom: 3px solid transparent;
+          margin-bottom: -2px;
+          cursor: pointer;
+          text-decoration: none;
+          white-space: nowrap;
+          box-sizing: border-box;
           transition: all 0.15s ease;
         }
 
         .tab-item-btn:hover {
-          background: #334155;
-          color: #f8fafc;
+          color: var(--text-primary);
+          border-bottom-color: var(--border-hover, #cbd5e1);
         }
 
         .tab-item-btn.active {
-          background: #2563eb;
-          border-color: #3b82f6;
-          color: #ffffff;
+          color: var(--accent, #2563eb);
+          border-bottom-color: var(--accent, #2563eb);
+          font-weight: 700;
         }
 
         .tab-pill {
-          background: rgba(0, 0, 0, 0.25);
-          font-size: 0.75rem;
-          padding: 2px 6px;
+          font-size: 0.6875rem;
+          padding: 2px 8px;
           border-radius: 9999px;
+          background: var(--bg-subtle);
+          color: var(--text-secondary);
+          font-weight: 700;
+          line-height: 1.2;
+        }
+
+        .tab-item-btn.active .tab-pill {
+          background: rgba(37, 99, 235, 0.1);
+          color: var(--accent, #2563eb);
         }
 
         .kpi-grid {
@@ -997,18 +1029,19 @@ export default function RoleManagementPage() {
         }
 
         .kpi-card {
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 12px;
           padding: 18px;
           display: flex;
           align-items: center;
           gap: 16px;
+          box-shadow: var(--shadow-card);
         }
 
         .kpi-card.highlight {
-          border-color: #6366f1;
-          background: linear-gradient(135deg, #1e293b 0%, rgba(99, 102, 241, 0.12) 100%);
+          border-color: rgba(37, 99, 235, 0.3);
+          background: linear-gradient(135deg, var(--bg-card) 0%, rgba(37, 99, 235, 0.05) 100%);
         }
 
         .kpi-icon {
@@ -1022,7 +1055,7 @@ export default function RoleManagementPage() {
 
         .kpi-label {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: var(--text-secondary);
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.05em;
@@ -1031,13 +1064,13 @@ export default function RoleManagementPage() {
         .kpi-value {
           font-size: 1.5rem;
           font-weight: 800;
-          color: #f8fafc;
+          color: var(--text-primary);
           margin: 2px 0;
         }
 
         .kpi-sub {
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--text-muted);
         }
 
         .users-section-wrapper {
@@ -1047,54 +1080,63 @@ export default function RoleManagementPage() {
         }
 
         .panel-card {
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 12px;
           padding: 20px;
+          box-shadow: var(--shadow-card);
         }
 
         .panel-header {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 16px;
+          align-items: center;
+          margin-bottom: 18px;
           flex-wrap: wrap;
-          gap: 12px;
+          gap: 16px;
         }
 
         .panel-header h3 {
           margin: 0;
           font-size: 1.125rem;
           font-weight: 700;
-          color: #f8fafc;
+          color: var(--text-primary);
         }
 
         .panel-sub {
           margin: 4px 0 0 0;
           font-size: 0.8125rem;
-          color: #94a3b8;
+          color: var(--text-secondary);
         }
 
         .panel-actions {
           display: flex;
-          gap: 8px;
+          gap: 10px;
           align-items: center;
         }
 
         .add-user-btn {
-          background: #10b981;
+          height: 38px;
+          background: #2563eb;
           color: #ffffff;
-          border: none;
-          padding: 8px 14px;
-          border-radius: 6px;
+          border: 1px solid #2563eb;
+          padding: 0 18px;
+          border-radius: 8px;
           font-size: 0.8125rem;
           font-weight: 700;
           cursor: pointer;
-          transition: background 0.15s ease;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          box-sizing: border-box;
+          box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+          transition: all 0.15s ease;
         }
 
         .add-user-btn:hover {
-          background: #059669;
+          background: #1d4ed8;
+          border-color: #1d4ed8;
         }
 
         .table-responsive {
@@ -1109,25 +1151,29 @@ export default function RoleManagementPage() {
 
         .clean-table th {
           text-align: left;
-          padding: 10px 14px;
-          background: #0f172a;
-          color: #94a3b8;
+          padding: 12px 14px;
+          background: var(--bg-subtle);
+          color: var(--text-secondary);
           font-weight: 700;
           font-size: 0.75rem;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          border-bottom: 1px solid #334155;
+          letter-spacing: 0.04em;
+          border-bottom: 2px solid var(--border);
+          vertical-align: middle;
+          white-space: nowrap;
         }
 
         .clean-table td {
           padding: 12px 14px;
-          border-bottom: 1px solid #334155;
-          color: #f1f5f9;
+          border-bottom: 1px solid var(--border);
+          color: var(--text-primary);
+          vertical-align: middle;
+          font-size: 0.875rem;
         }
 
         .counter-pill {
-          background: rgba(56, 189, 248, 0.15);
-          color: #38bdf8;
+          background: rgba(37, 99, 235, 0.1);
+          color: var(--accent, #2563eb);
           padding: 3px 8px;
           border-radius: 9999px;
           font-size: 0.75rem;
@@ -1135,39 +1181,49 @@ export default function RoleManagementPage() {
         }
 
         .no-roles {
-          color: #64748b;
+          color: var(--text-muted);
           font-style: italic;
           font-size: 0.8125rem;
         }
 
         .btn-table-action {
-          padding: 4px 10px;
+          height: 32px;
+          padding: 0 10px;
           border-radius: 6px;
           font-size: 0.75rem;
-          font-weight: 700;
-          border: 1px solid #475569;
-          background: #334155;
-          color: #f8fafc;
+          font-weight: 600;
+          border: 1px solid var(--border);
+          background: var(--bg-card);
+          color: var(--text-primary);
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          box-sizing: border-box;
+          vertical-align: middle;
+          transition: all 0.15s ease;
         }
 
         .btn-table-action:hover {
-          background: #475569;
+          background: var(--bg-subtle);
         }
 
         .edit-btn {
-          padding: 4px 10px;
+          height: 32px;
+          padding: 0 10px;
           border-radius: 6px;
           font-size: 0.75rem;
-          font-weight: 700;
-          border: 1px solid #3b82f6;
-          background: rgba(59, 130, 246, 0.15);
-          color: #60a5fa;
+          font-weight: 600;
+          border: 1px solid rgba(37, 99, 235, 0.3);
+          background: rgba(37, 99, 235, 0.08);
+          color: #2563eb;
           cursor: pointer;
+          transition: all 0.15s ease;
         }
 
         .edit-btn:hover {
-          background: rgba(59, 130, 246, 0.25);
+          background: rgba(37, 99, 235, 0.16);
         }
 
         .delete-btn {
@@ -1175,14 +1231,15 @@ export default function RoleManagementPage() {
           border-radius: 6px;
           font-size: 0.75rem;
           font-weight: 700;
-          border: 1px solid #ef4444;
-          background: rgba(239, 68, 68, 0.15);
-          color: #f87171;
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          background: rgba(239, 68, 68, 0.08);
+          color: #dc2626;
           cursor: pointer;
+          transition: all 0.15s ease;
         }
 
         .delete-btn:hover:not(:disabled) {
-          background: rgba(239, 68, 68, 0.25);
+          background: rgba(239, 68, 68, 0.16);
         }
 
         .delete-btn:disabled {
@@ -1191,24 +1248,25 @@ export default function RoleManagementPage() {
         }
 
         .empty-state-card {
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 12px;
           padding: 32px;
           text-align: center;
-          color: #94a3b8;
+          color: var(--text-secondary);
+          box-shadow: var(--shadow-card);
         }
 
         .empty-state-card.error-card {
           border-color: #ef4444;
-          background: rgba(239, 68, 68, 0.08);
-          color: #fca5a5;
+          background: rgba(239, 68, 68, 0.04);
+          color: #dc2626;
         }
 
         .empty-state-card.notice-card {
-          border-color: #3b82f6;
-          background: rgba(59, 130, 246, 0.08);
-          color: #93c5fd;
+          border-color: var(--accent);
+          background: rgba(37, 99, 235, 0.04);
+          color: var(--accent);
         }
 
         .empty-icon {
@@ -1224,7 +1282,7 @@ export default function RoleManagementPage() {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.7);
+          background: rgba(15, 23, 42, 0.45);
           backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
@@ -1234,14 +1292,14 @@ export default function RoleManagementPage() {
         }
 
         .modal-content {
-          background: #1e293b;
-          border: 1px solid #475569;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 12px;
           width: 100%;
           max-width: 520px;
           max-height: 90vh;
           overflow-y: auto;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+          box-shadow: var(--shadow-modal, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
         }
 
         .modal-content.modal-lg {
@@ -1257,26 +1315,26 @@ export default function RoleManagementPage() {
           justify-content: space-between;
           align-items: flex-start;
           padding: 16px 20px;
-          border-bottom: 1px solid #334155;
+          border-bottom: 1px solid var(--border);
         }
 
         .modal-header h4 {
           margin: 0;
           font-size: 1.125rem;
           font-weight: 700;
-          color: #f8fafc;
+          color: var(--text-primary);
         }
 
         .modal-subtitle {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: var(--text-secondary);
           font-family: monospace;
         }
 
         .close-modal-btn {
           background: transparent;
           border: none;
-          color: #94a3b8;
+          color: var(--text-muted);
           font-size: 1.25rem;
           cursor: pointer;
           padding: 0;
@@ -1284,7 +1342,7 @@ export default function RoleManagementPage() {
         }
 
         .close-modal-btn:hover {
-          color: #f8fafc;
+          color: var(--text-primary);
         }
 
         .modal-form {
@@ -1303,30 +1361,31 @@ export default function RoleManagementPage() {
         .form-group label {
           font-size: 0.8125rem;
           font-weight: 600;
-          color: #cbd5e1;
+          color: var(--text-primary);
         }
 
         .form-group input,
         .form-group select {
-          background: #0f172a;
-          border: 1px solid #334155;
+          background: var(--bg-base);
+          border: 1px solid var(--border);
           border-radius: 6px;
           padding: 8px 12px;
-          color: #f8fafc;
+          color: var(--text-primary);
           font-size: 0.875rem;
         }
 
         .form-group input:focus,
         .form-group select:focus {
           outline: none;
-          border-color: #3b82f6;
+          border-color: #2563eb;
+          background: #ffffff;
         }
 
         .permission-matrix {
           max-height: 280px;
           overflow-y: auto;
-          background: #0f172a;
-          border: 1px solid #334155;
+          background: var(--bg-base);
+          border: 1px solid var(--border);
           border-radius: 6px;
           padding: 8px 12px;
           display: flex;
@@ -1340,22 +1399,22 @@ export default function RoleManagementPage() {
           gap: 10px;
           font-size: 0.8125rem;
           cursor: pointer;
-          padding: 4px;
+          padding: 6px;
           border-radius: 4px;
         }
 
         .permission-row:hover {
-          background: #1e293b;
+          background: var(--bg-hover);
         }
 
         .permission-action {
           font-weight: 700;
-          color: #38bdf8;
+          color: #2563eb;
           font-family: monospace;
         }
 
         .permission-desc {
-          color: #94a3b8;
+          color: var(--text-secondary);
         }
 
         .modal-actions {
@@ -1363,16 +1422,16 @@ export default function RoleManagementPage() {
           justify-content: flex-end;
           gap: 10px;
           padding: 16px 20px;
-          border-top: 1px solid #334155;
-          background: #1e293b;
+          border-top: 1px solid var(--border);
+          background: var(--bg-subtle);
           border-bottom-left-radius: 12px;
           border-bottom-right-radius: 12px;
         }
 
         .cancel-modal-btn {
-          background: #334155;
-          color: #f8fafc;
-          border: 1px solid #475569;
+          background: var(--bg-card);
+          color: var(--text-primary);
+          border: 1px solid var(--border);
           padding: 8px 16px;
           border-radius: 6px;
           font-size: 0.8125rem;
@@ -1381,7 +1440,7 @@ export default function RoleManagementPage() {
         }
 
         .cancel-modal-btn:hover {
-          background: #475569;
+          background: var(--bg-hover);
         }
 
         .submit-modal-btn {
@@ -1405,9 +1464,9 @@ export default function RoleManagementPage() {
         }
 
         .error-banner {
-          background: rgba(239, 68, 68, 0.15);
+          background: rgba(239, 68, 68, 0.08);
           border: 1px solid #ef4444;
-          color: #fca5a5;
+          color: #dc2626;
           padding: 8px 12px;
           border-radius: 6px;
           font-size: 0.8125rem;
@@ -1427,7 +1486,7 @@ export default function RoleManagementPage() {
           display: flex;
           flex-direction: column;
           gap: 2px;
-          border-bottom: 1px solid #334155;
+          border-bottom: 1px solid var(--border-subtle);
           padding-bottom: 8px;
         }
 
@@ -1435,13 +1494,13 @@ export default function RoleManagementPage() {
           font-size: 0.75rem;
           font-weight: 700;
           text-transform: uppercase;
-          color: #94a3b8;
+          color: var(--text-secondary);
           letter-spacing: 0.05em;
         }
 
         .detail-value {
           font-size: 0.9375rem;
-          color: #f8fafc;
+          color: var(--text-primary);
         }
 
         .btn-download {
@@ -1450,13 +1509,14 @@ export default function RoleManagementPage() {
           font-size: 0.75rem;
           font-weight: 700;
           cursor: pointer;
-          border: 1px solid #475569;
-          background: #334155;
-          color: #f8fafc;
+          border: 1px solid var(--border);
+          background: var(--bg-card);
+          color: var(--text-primary);
+          box-shadow: var(--shadow-sm);
         }
 
         .btn-download:hover {
-          background: #475569;
+          background: var(--bg-subtle);
         }
       `}</style>
     </div>

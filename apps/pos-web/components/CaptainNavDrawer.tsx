@@ -15,6 +15,7 @@ interface CaptainNavDrawerProps {
   onUpdateMenu: () => void;
   onOpenServerIpModal: () => void;
   onOpenCashTipsCalculator?: () => void;
+  onOpenStationModal?: () => void;
   onOpenSettings: () => void;
   onLogout?: () => void;
 }
@@ -33,6 +34,7 @@ export default function CaptainNavDrawer({
   onUpdateMenu,
   onOpenServerIpModal,
   onOpenCashTipsCalculator,
+  onOpenStationModal,
   onOpenSettings,
   onLogout,
 }: CaptainNavDrawerProps) {
@@ -64,7 +66,18 @@ export default function CaptainNavDrawer({
           <div className="captain-meta-info">
             <div className="version-station-row">
               <span className="version-text">{appVersion}</span>
-              <span className="station-badge">● Station {stationCode}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onOpenStationModal) onOpenStationModal();
+                  onClose();
+                }}
+                className="station-badge"
+                style={{ cursor: "pointer", border: "none", background: "inherit" }}
+                title="Click to change Captain Station"
+              >
+                ● Station {stationCode} ✏️
+              </button>
             </div>
             <div className="outlet-name-text">
               <span className="hotel-icon">🏨</span> {outletName}
@@ -148,6 +161,20 @@ export default function CaptainNavDrawer({
             <span className="menu-icon">🌐</span>
             <span className="menu-label">Find Server IP</span>
           </button>
+
+          {onOpenStationModal && (
+            <button
+              type="button"
+              className="menu-item-btn"
+              onClick={() => {
+                onOpenStationModal();
+                onClose();
+              }}
+            >
+              <span className="menu-icon">📱</span>
+              <span className="menu-label">Change Station ({stationCode})</span>
+            </button>
+          )}
 
           <button
             type="button"

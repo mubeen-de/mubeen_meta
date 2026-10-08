@@ -12,6 +12,7 @@ interface KOTItem {
   quantity: number;
   notes: string | null;
   course: string | null;
+  seatNumber?: number | null;
   servedAt: string | null;
   menuItem: {
     name: string;
@@ -128,6 +129,7 @@ export default function KitchenMonitor() {
       name: it.menuItem.name,
       quantity: it.quantity,
       notes: it.notes,
+      seatNumber: it.seatNumber ?? (it as any).seat_number ?? null,
     })),
     status: t.status,
     createdAt: t.createdAt,

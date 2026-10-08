@@ -102,6 +102,9 @@ function serializeCurrentOrder(activeOrder: any, resolvedWaiterName?: string | n
         name: ki.menuItem?.name || ki.notes || "Item",
         quantity: ki.quantity,
         status: ki.status || k.status,
+        notes: ki.notes || null,
+        seatNumber: ki.seatNumber ?? ki.seat_number ?? null,
+        course: ki.course || null,
       })),
     })),
     items: (activeOrder.orderItems || []).map((oi: any) => ({
@@ -111,7 +114,9 @@ function serializeCurrentOrder(activeOrder: any, resolvedWaiterName?: string | n
       quantity: oi.quantity,
       unitPriceMinor: Number(oi.unitPrice || oi.unitPriceMinor || 0),
       subtotalMinor: Number(oi.subtotal || oi.subtotalMinor || 0),
-      notes: oi.notes,
+      notes: oi.notes || null,
+      seatNumber: oi.seatNumber ?? oi.seat_number ?? null,
+      course: oi.course || null,
     })),
   };
 }

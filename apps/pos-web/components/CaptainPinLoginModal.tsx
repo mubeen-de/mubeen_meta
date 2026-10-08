@@ -19,8 +19,9 @@ interface CaptainPinLoginModalProps {
 
 const STAFF_LIST: StaffProfile[] = [
   { id: "waiter-1", name: "Ramesh (Captain 1)", role: "Captain", email: "ramesh@hotelkapila.com", avatar: "👨‍🍳" },
-  { id: "waiter-2", name: "Suresh (Captain 2)", role: "Captain", email: "suresh@hotelkapila.com", avatar: "🧑‍🍳" },
-  { id: "waiter-3", name: "Mahesh (Captain 3)", role: "Captain", email: "mahesh@hotelkapila.com", avatar: "🤵" },
+  { id: "waiter-2", name: "Mahesh (Captain 2)", role: "Captain", email: "mahesh@hotelkapila.com", avatar: "🤵" },
+  { id: "waiter-3", name: "Suresh (Captain 3)", role: "Captain", email: "suresh@hotelkapila.com", avatar: "🧑‍🍳" },
+  { id: "waiter-4", name: "Rahul (Captain 4)", role: "Captain", email: "waiter@hotelkapila.com", avatar: "🧑‍🍳" },
   { id: "cashier-1", name: "Kapila Cashier", role: "Cashier", email: "cashier@hotelkapila.com", avatar: "💳" },
   { id: "admin-1", name: "Store Manager", role: "Manager", email: "admin@hotelkapila.com", avatar: "🛡️" },
 ];

@@ -19,6 +19,7 @@ export const FLOOR_EVENT_TOPICS = new Set([
   "advance_order.fired",
   "advance_order.due",
   "outlet.notification_created",
+  "auth.session_revoked",
 ]);
 
 export type KapmetaSocketPayload = { topic: string; data?: Record<string, unknown> };

@@ -13,50 +13,50 @@ function MyApp({ Component, pageProps }: AppProps) {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         :root {
-          /* Unified Dark Theme - Backgrounds */
-          --bg-base: #0b132b;
-          --bg-card: #111c38;
-          --bg-elevated: #1e293b;
-          --bg-subtle: #070d1e;
-          --bg-hover: #1e293b;
+          /* Unified Clean Executive Light Theme */
+          --bg-base: #f8fafc;
+          --bg-card: #ffffff;
+          --bg-elevated: #ffffff;
+          --bg-subtle: #f1f5f9;
+          --bg-hover: #f1f5f9;
           
           /* Typography */
-          --text-primary: #f8fafc;
-          --text-secondary: #94a3b8;
-          --text-muted: #64748b;
+          --text-primary: #0f172a;
+          --text-secondary: #475569;
+          --text-muted: #94a3b8;
           
           /* Borders */
-          --border: #1e293b;
-          --border-strong: #334155;
-          --border-subtle: #162244;
+          --border: #e2e8f0;
+          --border-strong: #cbd5e1;
+          --border-subtle: #f1f5f9;
           
           /* Button Tokens: Primary, Secondary, Normal, Alert/Danger, Cancel, Success */
           --btn-primary-bg: #2563eb;
           --btn-primary-hover: #1d4ed8;
           --btn-primary-text: #ffffff;
-          --btn-primary-border: #3b82f6;
+          --btn-primary-border: #2563eb;
 
-          --btn-secondary-bg: #334155;
-          --btn-secondary-hover: #475569;
-          --btn-secondary-text: #f8fafc;
-          --btn-secondary-border: #475569;
+          --btn-secondary-bg: #f1f5f9;
+          --btn-secondary-hover: #e2e8f0;
+          --btn-secondary-text: #0f172a;
+          --btn-secondary-border: #cbd5e1;
 
-          --btn-normal-bg: #1e293b;
-          --btn-normal-hover: #334155;
-          --btn-normal-text: #94a3b8;
-          --btn-normal-border: #334155;
+          --btn-normal-bg: #ffffff;
+          --btn-normal-hover: #f8fafc;
+          --btn-normal-text: #475569;
+          --btn-normal-border: #e2e8f0;
 
           --btn-alert-bg: #dc2626;
           --btn-alert-hover: #b91c1c;
           --btn-alert-text: #ffffff;
           --btn-alert-border: #ef4444;
-          --btn-alert-subtle-bg: rgba(239, 68, 68, 0.15);
-          --btn-alert-subtle-text: #f87171;
+          --btn-alert-subtle-bg: #fef2f2;
+          --btn-alert-subtle-text: #dc2626;
 
-          --btn-cancel-bg: #334155;
-          --btn-cancel-hover: #475569;
-          --btn-cancel-text: #cbd5e1;
-          --btn-cancel-border: #475569;
+          --btn-cancel-bg: #f1f5f9;
+          --btn-cancel-hover: #e2e8f0;
+          --btn-cancel-text: #475569;
+          --btn-cancel-border: #cbd5e1;
 
           --btn-success-bg: #10b981;
           --btn-success-hover: #059669;
@@ -69,38 +69,38 @@ function MyApp({ Component, pageProps }: AppProps) {
           --btn-warning-border: #f59e0b;
 
           /* Accents */
-          --accent: #3b82f6;
-          --accent-hover: #2563eb;
-          --accent-subtle: rgba(59, 130, 246, 0.15);
-          --accent-subtle-text: #93c5fd;
-          --accent-glow: rgba(59, 130, 246, 0.25);
+          --accent: #2563eb;
+          --accent-hover: #1d4ed8;
+          --accent-subtle: rgba(37, 99, 235, 0.08);
+          --accent-subtle-text: #2563eb;
+          --accent-glow: rgba(37, 99, 235, 0.2);
           
-          --dark-btn: #1e293b;
-          --dark-btn-hover: #334155;
+          --dark-btn: #0f172a;
+          --dark-btn-hover: #1e293b;
           
-          --warning: #f59e0b;
-          --warning-subtle: rgba(245, 158, 11, 0.15);
-          --warning-text: #fbbf24;
+          --warning: #d97706;
+          --warning-subtle: #fffbeb;
+          --warning-text: #b45309;
           
-          --destructive: #ef4444;
-          --destructive-subtle: rgba(239, 68, 68, 0.15);
-          --destructive-text: #f87171;
+          --destructive: #dc2626;
+          --destructive-subtle: #fef2f2;
+          --destructive-text: #b91c1c;
           
-          --blue-subtle: rgba(59, 130, 246, 0.15);
-          --blue-text: #60a5fa;
+          --blue-subtle: rgba(37, 99, 235, 0.08);
+          --blue-text: #2563eb;
           
-          --purple-subtle: rgba(168, 85, 247, 0.15);
-          --purple-text: #c084fc;
+          --purple-subtle: rgba(124, 58, 237, 0.08);
+          --purple-text: #7c3aed;
 
           --radius-sm: 6px;
           --radius-md: 10px;
           --radius-lg: 14px;
           --radius-pill: 9999px;
           
-          --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-          --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-          --shadow-pop: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
-          --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+          --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+          --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+          --shadow-pop: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+          --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
         }
 
         body {
@@ -179,7 +179,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         }
         .btn-normal:hover:not(:disabled), button.normal:hover:not(:disabled) {
           background-color: var(--btn-normal-hover) !important;
-          color: #f8fafc !important;
+          color: var(--text-primary) !important;
         }
 
         .btn-alert, .btn-danger, button.danger {
@@ -219,7 +219,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         }
         .btn-cancel:hover:not(:disabled), button.cancel:hover:not(:disabled) {
           background-color: var(--btn-cancel-hover) !important;
-          color: #ffffff !important;
+          color: var(--text-primary) !important;
         }
 
         .btn-success, button.success {
@@ -256,11 +256,11 @@ function MyApp({ Component, pageProps }: AppProps) {
           background: transparent;
         }
         ::-webkit-scrollbar-thumb {
-          background: #334155;
+          background: #cbd5e1;
           border-radius: 9999px;
         }
         ::-webkit-scrollbar-thumb:hover {
-          background: #475569;
+          background: #94a3b8;
         }
 
         /* Global Header/Topbar & Permission-Aware Navigation System */
@@ -302,7 +302,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           width: 32px;
           height: 32px;
           border-radius: var(--radius-sm);
-          background: var(--dark-btn);
+          background: var(--btn-primary-bg, #2563eb);
           color: #fff;
           display: flex;
           align-items: center;

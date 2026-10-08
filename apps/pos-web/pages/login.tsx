@@ -81,6 +81,12 @@ export default function LoginPage() {
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false);
 
+  useEffect(() => {
+    if (router.query.reason === "session_transferred") {
+      setError("⚠️ Session transferred: Your account was logged in from another device. Please sign in again.");
+    }
+  }, [router.query.reason]);
+
   const performLogin = async (eMail: string, pass: string, outId: string, targetPath = "/") => {
     setError(null);
     setErrorDetail(null);

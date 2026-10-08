@@ -44,7 +44,28 @@ router.post("/login", async (req, res) => {
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 
     const effectiveOutletId = user.outletId || outletId;
+
+    // Single active device rule: Invalidate any previous active sessions for this user
+    await prisma.session.updateMany({
+      where: {
+        userId: user.userId,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    }).catch(() => {});
+
     const session = await sessionStore.create(user.userId, effectiveOutletId, refreshToken, expiresAt);
+
+    // Broadcast session takeover across WebSocket bus
+    import("../websockets").then(({ broadcast }) => {
+      broadcast(effectiveOutletId, "auth.session_revoked", {
+        userId: user.userId,
+        activeSessionId: session.id,
+        timestamp: new Date().toISOString(),
+      });
+    }).catch(() => {});
 
     const accessToken = signAccessToken(
       { sub: user.userId, outletIds: [effectiveOutletId], sessionId: session.id },
@@ -154,11 +175,31 @@ router.post("/pin-login", async (req, res) => {
       }
     }
 
+    // Single active device rule: Invalidate any previous active sessions for this user
+    await prisma.session.updateMany({
+      where: {
+        userId: user.id,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    }).catch(() => {});
+
     const sessionStore = new PrismaSessionStore(prisma);
     const refreshToken = generateRefreshToken();
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
 
     const session = await sessionStore.create(user.id, effectiveOutletId, refreshToken, expiresAt);
+
+    // Broadcast session takeover across WebSocket bus
+    import("../websockets").then(({ broadcast }) => {
+      broadcast(effectiveOutletId, "auth.session_revoked", {
+        userId: user.id,
+        activeSessionId: session.id,
+        timestamp: new Date().toISOString(),
+      });
+    }).catch(() => {});
 
     const accessToken = signAccessToken(
       { sub: user.id, outletIds: [effectiveOutletId], sessionId: session.id },
@@ -377,6 +418,24 @@ router.get("/me", requireAuth, async (req: AuthedRequest, res) => {
       };
     }
 
+    // Query persistent captain_code from database for waiters/captains
+    const captainRes = await prisma.$queryRaw<Array<{ captain_code: string | null }>>`
+      SELECT captain_code FROM users WHERE id = ${userId}::uuid LIMIT 1
+    `.catch(() => []);
+    let captainCode = captainRes[0]?.captain_code || null;
+    if (!captainCode && roles.some(r => r.toUpperCase().includes("WAITER") || r.toUpperCase().includes("CAPTAIN"))) {
+      const existing = await prisma.$queryRaw<Array<{ captain_code: string }>>`
+        SELECT captain_code FROM users WHERE captain_code IS NOT NULL
+      `.catch(() => []);
+      const used = new Set(existing.map(e => e.captain_code));
+      let n = 1;
+      while (used.has(`cp${n}`)) n++;
+      captainCode = `cp${n}`;
+      await prisma.$queryRaw`
+        UPDATE users SET captain_code = ${captainCode} WHERE id = ${userId}::uuid
+      `.catch(() => {});
+    }
+
     res.status(200).json({
       userId: user.id,
       email: user.email,
@@ -385,6 +444,7 @@ router.get("/me", requireAuth, async (req: AuthedRequest, res) => {
       roles,
       permissions,
       outlet: outletData,
+      captainCode: captainCode || null,
     });
   } catch (err) {
     console.error(err);

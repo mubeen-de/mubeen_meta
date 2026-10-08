@@ -14,7 +14,7 @@ export interface AuthedRequest extends Request {
 // request. Per security-framework.md: outlet_id is resolved from the
 // session/token, never from the request body — routes must read
 // req.auth.outletId, not req.body.outletId, once this runs.
-export function requireAuth(req: AuthedRequest, res: Response, next: NextFunction): void {
+export async function requireAuth(req: AuthedRequest, res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
     res.status(401).json({ error: "missing bearer token" });
@@ -35,6 +35,24 @@ export function requireAuth(req: AuthedRequest, res: Response, next: NextFunctio
   }
 
   const userId = claims.sub || (claims as any).userId;
+
+  // Single-device session validation: check if this session was revoked by another device login
+  if (claims.sessionId) {
+    try {
+      const session = await prisma.session.findUnique({
+        where: { id: claims.sessionId },
+        select: { revokedAt: true, expiresAt: true },
+      });
+      if (session && (session.revokedAt !== null || session.expiresAt < new Date())) {
+        res.status(401).json({
+          error: "SESSION_TERMINATED",
+          message: "Session ended because your account logged in from another device.",
+        });
+        return;
+      }
+    } catch (_) {}
+  }
+
   req.auth = { userId, outletId };
   next();
 }

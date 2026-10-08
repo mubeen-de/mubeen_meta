@@ -146,6 +146,20 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
       orderBy: { createdAt: queryStr ? "desc" : "asc" },
     });
 
+    const allOrderItemIds = Array.from(
+      new Set(
+        tickets.flatMap((t) => t.kotItems.map((ki) => ki.orderItemId).filter(Boolean))
+      )
+    ) as string[];
+
+    const orderItems = allOrderItemIds.length > 0
+      ? await prisma.orderItem.findMany({
+          where: { id: { in: allOrderItemIds } },
+          select: { id: true, notes: true, seatNumber: true },
+        }).catch(() => [])
+      : [];
+    const orderItemMap = new Map(orderItems.map((oi) => [oi.id, oi]));
+
     const labels = new Map<string, string>();
 
     res.status(200).json(
@@ -166,14 +180,18 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
           (t.order?.diningTable ? labels.get((t.order.diningTable as any)?.mergeGroupId) : null) ||
           t.order?.diningTable?.tableNumber ||
           null,
-        kotItems: t.kotItems.map((ki) => ({
-          id: ki.id,
-          quantity: ki.quantity,
-          notes: ki.notes,
-          course: ki.course,
-          servedAt: ki.servedAt,
-          menuItem: { name: ki.menuItem?.name ?? "Unknown Item" },
-        })),
+        kotItems: t.kotItems.map((ki) => {
+          const linked = ki.orderItemId ? orderItemMap.get(ki.orderItemId) : null;
+          return {
+            id: ki.id,
+            quantity: ki.quantity,
+            notes: ki.notes || linked?.notes || null,
+            course: ki.course,
+            seatNumber: (ki as any).seatNumber ?? (ki as any).seat_number ?? linked?.seatNumber ?? null,
+            servedAt: ki.servedAt,
+            menuItem: { name: ki.menuItem?.name ?? "Unknown Item" },
+          };
+        }),
       }))
     );
   } catch (err) {

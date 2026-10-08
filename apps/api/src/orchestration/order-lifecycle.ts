@@ -39,6 +39,7 @@ export async function onOrderConfirmed(orderId: string, prisma: PrismaClient): P
           notes: item.notes ?? undefined,
           course: item.course ?? undefined,
           orderItemId: item.id,
+          seatNumber: (item as any).seatNumber ?? (item as any).seat_number ?? undefined,
         })),
       },
       new PrismaKotRepository(prisma),

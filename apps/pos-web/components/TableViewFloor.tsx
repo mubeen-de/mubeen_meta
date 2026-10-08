@@ -733,9 +733,21 @@ export default function TableViewFloor({
                 <h4 style={{ margin: "0 0 8px 0", fontSize: "0.875rem" }}>Active Order Items:</h4>
                 <div style={{ maxHeight: "160px", overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: "6px" }}>
                   {inspectOrderDetails.items.map((it: any) => (
-                    <div key={it.id} style={{ display: "flex", justifyContent: "space-between", padding: "6px 10px", borderBottom: "1px solid #f1f5f9", fontSize: "0.8125rem" }}>
-                      <span>{it.quantity}x {it.menuItemName || it.menuItem?.name}</span>
-                      <span>₹{(Number(it.subtotalMinor || 0) / 100).toFixed(2)}</span>
+                    <div key={it.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 10px", borderBottom: "1px solid #f1f5f9", fontSize: "0.8125rem" }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                        <span>{it.quantity}x {it.menuItemName || it.menuItem?.name}</span>
+                        {it.seatNumber != null && (
+                          <span style={{ fontSize: "10px", fontWeight: 800, background: "#2563eb", color: "#ffffff", padding: "1px 5px", borderRadius: "3px" }}>
+                            🪑 Seat {it.seatNumber}
+                          </span>
+                        )}
+                        {it.notes && (
+                          <span style={{ fontSize: "10px", fontWeight: 700, background: "#fef3c7", color: "#b45309", border: "1px solid #fde68a", padding: "1px 5px", borderRadius: "3px" }}>
+                            💬 {it.notes}
+                          </span>
+                        )}
+                      </span>
+                      <span style={{ fontWeight: 600 }}>₹{(Number(it.subtotalMinor || 0) / 100).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>

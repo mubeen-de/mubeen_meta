@@ -9,6 +9,7 @@ import LanServerDiscoveryModal from "../components/LanServerDiscoveryModal";
 import CaptainPinLoginModal from "../components/CaptainPinLoginModal";
 import WaiterCashTipsCalculator from "../components/WaiterCashTipsCalculator";
 import MoveKotModal from "../components/MoveKotModal";
+import CaptainStationModal from "../components/CaptainStationModal";
 import AttractiveMenuItemCard, { MenuItemData } from "../components/menu/AttractiveMenuItemCard";
 import MenuCustomizerModal, { CustomizedItemSelection } from "../components/menu/MenuCustomizerModal";
 import { DietaryFilter } from "../components/menu/CategoryNavbar";
@@ -522,6 +523,11 @@ export default function WaiterDashboard() {
   } | null>(null);
   const [isMoveKotOpen, setIsMoveKotOpen] = useState(false);
 
+  // Captain Station State (Dynamically resolved per waiter)
+  const [stationCode, setStationCode] = useState<string>("cp1");
+  const [autoStationCode, setAutoStationCode] = useState<string>("cp1");
+  const [isStationModalOpen, setIsStationModalOpen] = useState<boolean>(false);
+
   // Load Tables
   const fetchTables = async () => {
     try {
@@ -705,6 +711,70 @@ export default function WaiterDashboard() {
     heartbeat();
     setOfflineCount(loadOfflineQueue().length);
 
+    // Dynamically resolve captain station (permanent staff code from database)
+    if (me?.captainCode) {
+      setStationCode(me.captainCode);
+      setAutoStationCode(me.captainCode);
+      return;
+    }
+
+    if (me?.userId) {
+      const userStorageKey = `kapmeta_station_${me.userId}`;
+      const saved = typeof window !== "undefined" ? localStorage.getItem(userStorageKey) : null;
+      if (saved) {
+        setStationCode(saved);
+      }
+
+      authedFetch("/users")
+        .then((res) => (res.ok ? res.json() : []))
+        .then((users: any[]) => {
+          if (Array.isArray(users) && users.length > 0) {
+            const waiterUsers = users
+              .filter((u) =>
+                u.userRoles?.some((ur: any) =>
+                  ur.roleName?.toUpperCase().includes("WAITER") ||
+                  ur.role?.name?.toUpperCase().includes("WAITER") ||
+                  ur.roleName?.toUpperCase().includes("CAPTAIN") ||
+                  ur.role?.name?.toUpperCase().includes("CAPTAIN") ||
+                  ur.roleName?.toUpperCase().includes("FLOOR")
+                )
+              )
+              .sort((a, b) => (a.id || "").localeCompare(b.id || ""));
+
+            const myIdx = waiterUsers.findIndex((u) => u.id === me.userId);
+            const computed = myIdx !== -1 ? `cp${myIdx + 1}` : "cp1";
+            setAutoStationCode(computed);
+            if (!saved) {
+              setStationCode(computed);
+            }
+            return;
+          }
+
+          let hash = 0;
+          const key = me.userId || me.name || "captain";
+          for (let i = 0; i < key.length; i++) {
+            hash = ((hash << 5) - hash) + key.charCodeAt(i);
+            hash |= 0;
+          }
+          const num = (Math.abs(hash) % 6) + 1;
+          const computed = `cp${num}`;
+          setAutoStationCode(computed);
+          if (!saved) setStationCode(computed);
+        })
+        .catch(() => {
+          let hash = 0;
+          const key = me.userId || me.name || "captain";
+          for (let i = 0; i < key.length; i++) {
+            hash = ((hash << 5) - hash) + key.charCodeAt(i);
+            hash |= 0;
+          }
+          const num = (Math.abs(hash) % 6) + 1;
+          const computed = `cp${num}`;
+          setAutoStationCode(computed);
+          if (!saved) setStationCode(computed);
+        });
+    }
+
     // Real-time 86 Stock Control Listener
     const handleAvailabilityChange = (e: any) => {
       if (e.detail && e.detail.itemId !== undefined) {
@@ -749,6 +819,18 @@ export default function WaiterDashboard() {
 
   useKapmetaSocket(
     (payload) => {
+      // Single active device rule: If account logged in on another device, terminate session here
+      if (payload.topic === "auth.session_revoked" && payload.data?.userId === me?.userId) {
+        showPickupNotification("⚠️ Session transferred: Your account logged in on another device. Logging out...");
+        setTimeout(() => {
+          if (typeof window !== "undefined") {
+            window.localStorage.removeItem("kapmeta_pos_session");
+            window.location.href = "/login?reason=session_transferred";
+          }
+        }, 1200);
+        return;
+      }
+
       const status = payload.data?.status;
       const stage = payload.data?.stage;
       const servedIds = [
@@ -1008,7 +1090,7 @@ export default function WaiterDashboard() {
     const body = {
       action: "KOT",
       status: "KOT_CREATED",
-      terminalNumber: "T-01",
+      terminalNumber: stationCode.toUpperCase(),
       orderType: "DINE_IN",
       diningTableId: activeTable.mergePrimaryTableId || activeTable.id,
       tableNumber: activeTable.tableNumber,
@@ -1665,7 +1747,15 @@ export default function WaiterDashboard() {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-blue-400 text-xs tracking-wider">KAPMETA CAPTAIN</span>
-              <span className="text-[10px] bg-amber-500/20 text-amber-400 font-bold px-1.5 py-0.5 rounded">cp4</span>
+              <button
+                type="button"
+                onClick={() => setIsStationModalOpen(true)}
+                className="text-[10px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-bold px-1.5 py-0.5 rounded flex items-center gap-1 transition-all border border-amber-500/30 cursor-pointer shadow-sm active:scale-95"
+                title="Click to change Captain Station (cp1 - cp6)"
+              >
+                <span>{stationCode}</span>
+                <span className="text-[8px] opacity-70">▼</span>
+              </button>
               {me?.name && (
                 <span className="text-[11px] bg-indigo-950 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
                   👤 {me.name}
@@ -2024,13 +2114,24 @@ export default function WaiterDashboard() {
                           : "Fired tickets"}
                       </div>
                       {manageOrder.items.filter((i) => !i.isVoided).map((i) => (
-                        <div key={i.id} className="flex justify-between items-center text-xs text-slate-300 py-1 border-b border-slate-900 last:border-0">
-                          <span>
-                            {i.menuItemName} <b className="text-indigo-400">x{i.quantity}</b>
-                            <span className="text-slate-400 ml-1.5 text-[11px]">
+                        <div key={i.id} className="flex justify-between items-center text-xs text-slate-300 py-1.5 border-b border-slate-900 last:border-0">
+                          <span className="flex items-center flex-wrap gap-1.5">
+                            <span className="font-semibold text-slate-200">{i.menuItemName}</span>
+                            <b className="text-indigo-400">x{i.quantity}</b>
+                            <span className="text-slate-400 text-[11px]">
                               (₹{(Number(i.subtotalMinor || (Number(i.unitPriceMinor || 0) * (Number(i.quantity) || 1))) / 100).toFixed(2)})
                             </span>
-                            <span className={`ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                            {i.seatNumber != null && (
+                              <span className="text-[10px] font-extrabold bg-blue-900/80 text-blue-200 border border-blue-700/60 px-1.5 py-0.5 rounded" title={`Serve to Seat #${i.seatNumber}`}>
+                                🪑 Seat {i.seatNumber}
+                              </span>
+                            )}
+                            {i.notes && (
+                              <span className="text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-800/50 px-1.5 py-0.5 rounded" title="Special Preparation Note">
+                                💬 {i.notes}
+                              </span>
+                            )}
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                               i.kitchenStatus === "SERVED" ? "bg-emerald-950 text-emerald-400 border border-emerald-800/40" :
                               i.kitchenStatus === "READY" ? "bg-amber-950 text-amber-400 border border-amber-800/40" :
                               i.kitchenStatus === "PREPARING" ? "bg-indigo-950 text-indigo-400 border border-indigo-800/40" : "bg-slate-900 text-slate-400 border border-slate-800"
@@ -2107,7 +2208,7 @@ export default function WaiterDashboard() {
                           <input
                             type="text"
                             placeholder="Chef notes (e.g. less oil, extra crisp)..."
-                            value={ci.notes}
+                            value={ci.notes || ""}
                             onChange={(e) => updateItemNotes(ci.item.id, e.target.value)}
                             className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] text-slate-300 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                           />
@@ -3011,7 +3112,7 @@ export default function WaiterDashboard() {
         isOpen={isCaptainDrawerOpen}
         onClose={() => setIsCaptainDrawerOpen(false)}
         outletName={me?.outlet?.name || "Main Outlet"}
-        stationCode="cp4"
+        stationCode={stationCode}
         staffName={me?.name || "Captain"}
         unsuccessfulCount={offlineCount}
         onNewKot={() => {
@@ -3021,6 +3122,7 @@ export default function WaiterDashboard() {
         }}
         onOpenUnsuccessfulModal={() => setIsUnsuccessfulModalOpen(true)}
         onOpenCashTipsCalculator={() => setIsCashTipsCalculatorOpen(true)}
+        onOpenStationModal={() => setIsStationModalOpen(true)}
         onSyncData={async () => {
           await fetchTables();
           await fetchMenu();
@@ -3034,9 +3136,26 @@ export default function WaiterDashboard() {
         }}
         onOpenServerIpModal={() => setIsServerIpModalOpen(true)}
         onOpenSettings={() => {
-          showPickupNotification("⚙️ Captain Station: cp4 | Mode: High-Reliability Local LAN");
+          showPickupNotification(`⚙️ Captain Station: ${stationCode} | Mode: High-Reliability Local LAN`);
         }}
         onLogout={logout}
+      />
+
+      {/* Captain Station Selection Modal */}
+      <CaptainStationModal
+        isOpen={isStationModalOpen}
+        onClose={() => setIsStationModalOpen(false)}
+        currentStation={stationCode}
+        autoStation={autoStationCode}
+        captainName={me?.name || "Captain"}
+        onSelectStation={(code) => {
+          setStationCode(code);
+          if (me?.userId) {
+            localStorage.setItem(`kapmeta_station_${me.userId}`, code);
+          }
+          localStorage.setItem("kapmeta_captain_station", code);
+          showPickupNotification(`✅ Captain station set to ${code}`);
+        }}
       />
 
       {/* Unsuccessful KOT Sync Modal */}

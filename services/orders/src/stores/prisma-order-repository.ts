@@ -161,6 +161,7 @@ export class PrismaOrderRepository implements OrderRepository {
             subtotal: line.subtotalMinor,
             course: line.course || null,
             seatNumber: line.seatNumber || null,
+            notes: line.notes || null,
           },
         });
       }
@@ -567,7 +568,7 @@ export class PrismaOrderRepository implements OrderRepository {
       items: row.orderItems.map((item) => ({
         id: item.id,
         menuItemId: item.menuItemId,
-        menuItemName: item.item_name || item.menuItem?.name || "Menu Item",
+        menuItemName: (item as any).item_name || item.menuItem?.name || "Menu Item",
         quantity: Number(item.quantity),
         unitPriceMinor: item.unitPrice,
         subtotalMinor: item.subtotal,

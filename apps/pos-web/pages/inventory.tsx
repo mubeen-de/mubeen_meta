@@ -720,7 +720,7 @@ export default function InventoryDashboard() {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-950 text-slate-100 font-sans">
+    <div className="min-h-screen flex bg-slate-50 text-slate-900 font-sans" style={{ background: "var(--bg-base)" }}>
       <Head>
         <title>Inventory & Supply Chain - KapMeta POS</title>
       </Head>
@@ -728,20 +728,20 @@ export default function InventoryDashboard() {
 
       <div className="flex-1 flex flex-col min-w-0 p-6 overflow-y-auto">
         {/* Top Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 border-b border-slate-800 pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 border-b border-slate-200 pb-4">
           <div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Inventory & Recipe BOM</h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Inventory & Recipe BOM</h1>
+            <p className="text-xs text-slate-500 mt-1">
               Automated Recipe Depletion, 86 Item Availability, Raw Materials & Procurement
             </p>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl">
+          <div className="flex items-center bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
             <button
               onClick={() => setActiveTab("AVAILABILITY")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                activeTab === "AVAILABILITY" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-white"
+                activeTab === "AVAILABILITY" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               📦 86 Availability
@@ -749,7 +749,7 @@ export default function InventoryDashboard() {
             <button
               onClick={() => setActiveTab("INGREDIENTS")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                activeTab === "INGREDIENTS" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-white"
+                activeTab === "INGREDIENTS" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               🧂 Raw Ingredients ({ingredients.length})
@@ -757,7 +757,7 @@ export default function InventoryDashboard() {
             <button
               onClick={() => setActiveTab("RECIPES")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                activeTab === "RECIPES" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-white"
+                activeTab === "RECIPES" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               📜 Recipe BOM ({recipes.length})
@@ -765,7 +765,7 @@ export default function InventoryDashboard() {
             <button
               onClick={() => setActiveTab("PROCUREMENT")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                activeTab === "PROCUREMENT" ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-white"
+                activeTab === "PROCUREMENT" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               🚚 Vendors & POs ({vendors.length})
@@ -777,15 +777,15 @@ export default function InventoryDashboard() {
         {activeTab === "AVAILABILITY" && (
           <div className="flex flex-col gap-4">
             {/* Filter Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3 rounded-xl">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-200 p-3 rounded-xl shadow-sm">
               <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                <span className="text-slate-500 text-sm">🔍</span>
+                <span className="text-slate-400 text-sm">🔍</span>
                 <input
                   type="text"
                   placeholder="Search dishes to toggle 86 status..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 flex-1 focus:outline-none focus:border-indigo-500"
+                  className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 flex-1 focus:outline-none focus:border-blue-500 focus:bg-white"
                 />
               </div>
 
@@ -795,7 +795,7 @@ export default function InventoryDashboard() {
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                      selectedCategory === cat ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400 hover:text-white"
+                      selectedCategory === cat ? "bg-blue-600 text-white font-bold shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
                     }`}
                   >
                     {cat}
@@ -805,7 +805,7 @@ export default function InventoryDashboard() {
 
               <button
                 onClick={handleExport86}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
                 title="Export filtered items to CSV / Excel sheet"
               >
                 <span>📥</span> Export 86 Sheet (CSV)
@@ -817,44 +817,44 @@ export default function InventoryDashboard() {
               {filteredItems.map((item) => (
                 <div
                   key={item.id}
-                  className={`bg-slate-900 border rounded-xl p-4 flex flex-col justify-between transition ${
-                    item.isStocked ? "border-slate-800" : "border-rose-900/40 bg-rose-950/10"
+                  className={`bg-white border rounded-xl p-4 flex flex-col justify-between transition shadow-sm hover:shadow ${
+                    item.isStocked ? "border-slate-200" : "border-rose-200 bg-rose-50/40"
                   }`}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs">{item.menuItem.isVeg ? "🟢" : "🔴"}</span>
-                        <h3 className="font-bold text-sm text-slate-100">{item.menuItem.name}</h3>
+                        <h3 className="font-bold text-sm text-slate-900">{item.menuItem.name}</h3>
                       </div>
-                      <span className="text-[10px] text-slate-400">{item.category} • {item.menuItem.priceFormatted}</span>
+                      <span className="text-[10px] text-slate-500">{item.category} • {item.menuItem.priceFormatted}</span>
                     </div>
 
                     <button
                       onClick={() => patchAvailability(item.id, !item.isStocked, item.stockQty, item.version)}
                       className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase transition ${
                         item.isStocked
-                          ? "bg-emerald-950 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-900"
-                          : "bg-rose-950 text-rose-400 border border-rose-500/30 hover:bg-rose-900"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
+                          : "bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100"
                       }`}
                     >
                       {item.isStocked ? "In Stock" : "86'd (Out)"}
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between border-t border-slate-800 pt-3 mt-2">
-                    <span className="text-xs text-slate-400">Available Portions:</span>
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-2">
+                    <span className="text-xs text-slate-500">Available Portions:</span>
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => patchAvailability(item.id, item.isStocked, Math.max(0, item.stockQty - 1), item.version)}
-                        className="w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded text-xs font-bold"
+                        className="w-6 h-6 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded text-xs font-bold"
                       >
                         −
                       </button>
-                      <span className="text-xs font-bold px-2">{item.stockQty}</span>
+                      <span className="text-xs font-bold px-2 text-slate-900">{item.stockQty}</span>
                       <button
                         onClick={() => patchAvailability(item.id, item.isStocked, item.stockQty + 1, item.version)}
-                        className="w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded text-xs font-bold"
+                        className="w-6 h-6 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded text-xs font-bold"
                       >
                         +
                       </button>
@@ -869,36 +869,36 @@ export default function InventoryDashboard() {
         {/* TAB 2: RAW INGREDIENTS */}
         {activeTab === "INGREDIENTS" && (
           <div className="flex flex-col gap-4">
-            <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-3 rounded-xl">
+            <div className="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-xl shadow-sm">
               <div>
-                <h2 className="text-sm font-bold text-slate-100">Raw Material Inventory</h2>
-                <p className="text-[11px] text-slate-400">Track raw bulk items deducted via Recipe BOMs</p>
+                <h2 className="text-sm font-bold text-slate-900">Raw Material Inventory</h2>
+                <p className="text-[11px] text-slate-500">Track raw bulk items deducted via Recipe BOMs</p>
               </div>
               <button
                 onClick={() => setShowAddIngModal(true)}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
               >
                 <span>+</span> Add Raw Material
               </button>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-950 border-b border-slate-800 text-slate-400 font-bold uppercase text-[10px]">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px]">
                   <tr>
-                    <th className="p-3">Ingredient Name</th>
-                    <th className="p-3">Unit</th>
-                    <th className="p-3">Unit Cost (₹)</th>
-                    <th className="p-3">Reorder Threshold</th>
-                    <th className="p-3">Current Stock</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3 text-right">Actions</th>
+                    <th className="p-3 whitespace-nowrap align-middle">Ingredient Name</th>
+                    <th className="p-3 whitespace-nowrap align-middle">Unit</th>
+                    <th className="p-3 whitespace-nowrap align-middle">Unit Cost (₹)</th>
+                    <th className="p-3 whitespace-nowrap align-middle">Reorder Threshold</th>
+                    <th className="p-3 whitespace-nowrap align-middle">Current Stock</th>
+                    <th className="p-3 whitespace-nowrap align-middle">Status</th>
+                    <th className="p-3 whitespace-nowrap align-middle text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                <tbody className="divide-y divide-slate-100 text-slate-700">
                   {ingredients.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="p-6 text-center text-slate-500">
+                      <td colSpan={7} className="p-6 text-center text-slate-400">
                         No raw ingredients configured. Click "+ Add Raw Material" above.
                       </td>
                     </tr>
@@ -906,31 +906,31 @@ export default function InventoryDashboard() {
                     ingredients.map((ing) => {
                       const isLow = ing.currentStock <= ing.reorderLevel;
                       return (
-                        <tr key={ing.id} className="hover:bg-slate-800/40 transition">
-                          <td className="p-3 font-semibold text-slate-100">{ing.name}</td>
-                          <td className="p-3">{ing.unitOfMeasure}</td>
-                          <td className="p-3">₹{ing.unitCost.toFixed(2)}</td>
-                          <td className="p-3">{ing.reorderLevel} {ing.unitOfMeasure}</td>
-                          <td className="p-3 font-bold text-slate-100">{ing.currentStock} {ing.unitOfMeasure}</td>
-                          <td className="p-3">
+                        <tr key={ing.id} className="hover:bg-slate-50 transition">
+                          <td className="p-3 font-semibold text-slate-900 align-middle">{ing.name}</td>
+                          <td className="p-3 align-middle">{ing.unitOfMeasure}</td>
+                          <td className="p-3 align-middle">₹{ing.unitCost.toFixed(2)}</td>
+                          <td className="p-3 align-middle">{ing.reorderLevel} {ing.unitOfMeasure}</td>
+                          <td className="p-3 font-bold text-slate-900 align-middle">{ing.currentStock} {ing.unitOfMeasure}</td>
+                          <td className="p-3 align-middle">
                             {isLow ? (
-                              <span className="bg-amber-950 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
+                              <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-bold">
                                 ⚠️ Low Stock
                               </span>
                             ) : (
-                              <span className="bg-emerald-950 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-[10px] font-bold">
+                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold">
                                 Healthy
                               </span>
                             )}
                           </td>
-                          <td className="p-3 text-right">
+                          <td className="p-3 text-right align-middle">
                             <button
                               onClick={() => {
                                 setAdjustModalIng(ing);
                                 setAdjustQty("10");
                                 setAdjustType("ADD");
                               }}
-                              className="bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-slate-700 px-2.5 py-1 rounded-lg text-[10px] font-bold transition"
+                              className="bg-slate-100 hover:bg-slate-200 text-blue-600 border border-slate-200 px-2.5 py-1 rounded-lg text-[10px] font-bold transition shadow-sm"
                             >
                               ± Adjust Stock
                             </button>
@@ -948,14 +948,14 @@ export default function InventoryDashboard() {
         {/* TAB 3: RECIPE BOM */}
         {activeTab === "RECIPES" && (
           <div className="flex flex-col gap-4">
-            <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-3 rounded-xl">
+            <div className="flex justify-between items-center bg-white border border-slate-200 p-3 rounded-xl shadow-sm">
               <div>
-                <h2 className="text-sm font-bold text-slate-100">Recipe Bill of Materials (BOM)</h2>
-                <p className="text-[11px] text-slate-400">Map menu dishes to raw ingredients for automatic depletion on KOT firing</p>
+                <h2 className="text-sm font-bold text-slate-900">Recipe Bill of Materials (BOM)</h2>
+                <p className="text-[11px] text-slate-500">Map menu dishes to raw ingredients for automatic depletion on KOT firing</p>
               </div>
               <button
                 onClick={() => setShowAddRecipeModal(true)}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
               >
                 <span>+</span> Link Recipe to Dish
               </button>
@@ -963,25 +963,25 @@ export default function InventoryDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {recipes.length === 0 ? (
-                <div className="col-span-full bg-slate-900 border border-slate-800 p-8 rounded-xl text-center text-slate-500">
+                <div className="col-span-full bg-white border border-slate-200 p-8 rounded-xl text-center text-slate-400 shadow-sm">
                   No recipes configured yet. Click "+ Link Recipe to Dish" to create your first recipe BOM.
                 </div>
               ) : (
                 recipes.map((rec) => (
-                  <div key={rec.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+                  <div key={rec.id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:shadow">
                     <div>
-                      <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                        <span className="font-bold text-sm text-slate-100">{rec.menuItem?.name || "Dish"}</span>
-                        <span className="text-[10px] bg-indigo-950 text-indigo-400 border border-indigo-500/30 px-1.5 py-0.5 rounded font-bold">
+                      <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+                        <span className="font-bold text-sm text-slate-900">{rec.menuItem?.name || "Dish"}</span>
+                        <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded font-bold">
                           BOM v{rec.version}
                         </span>
                       </div>
 
                       <div className="flex flex-col gap-1.5 mb-3">
                         {(rec.recipeIngredients || (rec as any).ingredients || []).map((ri: any) => (
-                          <div key={ri.id || ri.ingredientId} className="flex justify-between text-xs text-slate-300">
+                          <div key={ri.id || ri.ingredientId} className="flex justify-between text-xs text-slate-600">
                             <span>{ri.ingredient?.name || ri.ingredientName || "Ingredient"}</span>
-                            <span className="font-bold text-indigo-400">
+                            <span className="font-bold text-blue-600">
                               {ri.quantity} {ri.ingredient?.unitOfMeasure || ri.unit || "g"} ({ri.yieldPercent || 100}%)
                             </span>
                           </div>
@@ -989,22 +989,22 @@ export default function InventoryDashboard() {
                       </div>
                     </div>
 
-                    <div className="border-t border-slate-800 pt-2 text-[10px] text-slate-500 flex justify-between items-center mb-2">
+                    <div className="border-t border-slate-100 pt-2 text-[10px] text-slate-500 flex justify-between items-center mb-2">
                       <span>Status: Active</span>
-                      <span className="text-emerald-400 font-bold">● Auto-depletes on KOT</span>
+                      <span className="text-emerald-600 font-bold">● Auto-depletes on KOT</span>
                     </div>
 
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => openEditRecipe(rec)}
-                        className="flex-1 bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-slate-700 py-1.5 rounded-lg text-[10px] font-bold transition"
+                        className="flex-1 bg-slate-100 hover:bg-slate-200 text-blue-600 border border-slate-200 py-1.5 rounded-lg text-[10px] font-bold transition shadow-sm"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDeleteRecipe(rec)}
                         disabled={deletingRecipeId === rec.id}
-                        className="flex-1 bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 py-1.5 rounded-lg text-[10px] font-bold transition disabled:opacity-50"
+                        className="flex-1 bg-slate-100 hover:bg-slate-200 text-rose-600 border border-slate-200 py-1.5 rounded-lg text-[10px] font-bold transition disabled:opacity-50 shadow-sm"
                       >
                         {deletingRecipeId === rec.id ? "Deleting..." : "Delete"}
                       </button>
@@ -1019,21 +1019,21 @@ export default function InventoryDashboard() {
         {/* TAB 4: VENDORS & PROCUREMENT */}
         {activeTab === "PROCUREMENT" && (
           <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap justify-between items-center bg-slate-900 border border-slate-800 p-3 rounded-xl gap-2">
+            <div className="flex flex-wrap justify-between items-center bg-white border border-slate-200 p-3 rounded-xl gap-2 shadow-sm">
               <div>
-                <h2 className="text-sm font-bold text-slate-100">Vendors & Purchase Orders (Procurement)</h2>
-                <p className="text-[11px] text-slate-400">Manage supplier directories, create POs, and receive stock via Goods Received Notes (GRN)</p>
+                <h2 className="text-sm font-bold text-slate-900">Vendors & Purchase Orders (Procurement)</h2>
+                <p className="text-[11px] text-slate-500">Manage supplier directories, create POs, and receive stock via Goods Received Notes (GRN)</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowAddVendorModal(true)}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                  className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
                 >
                   <span>+</span> Register Vendor
                 </button>
                 <button
                   onClick={() => setShowAddPoModal(true)}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
                 >
                   <span>+</span> Create Purchase Order (PO)
                 </button>
@@ -1042,34 +1042,34 @@ export default function InventoryDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Vendor List */}
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-3 flex justify-between items-center">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600 mb-3 flex justify-between items-center">
                   <span>Registered Suppliers</span>
-                  <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">{vendors.length}</span>
+                  <span className="text-[10px] bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 font-bold">{vendors.length}</span>
                 </h3>
                 <div className="flex flex-col gap-2 max-h-96 overflow-y-auto">
                   {vendors.length === 0 ? (
-                    <p className="text-xs text-slate-500 p-4 text-center">No suppliers registered. Click "+ Register Vendor" above.</p>
+                    <p className="text-xs text-slate-400 p-4 text-center">No suppliers registered. Click "+ Register Vendor" above.</p>
                   ) : (
                     vendors.map((v) => (
-                      <div key={v.id} className="bg-slate-950 p-3 rounded-lg border border-slate-800/80 flex justify-between items-center gap-2">
+                      <div key={v.id} className="bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between items-center gap-2">
                         <div className="min-w-0">
-                          <div className="font-bold text-xs text-slate-200">{v.name}</div>
-                          <div className="text-[11px] text-slate-400">
+                          <div className="font-bold text-xs text-slate-900">{v.name}</div>
+                          <div className="text-[11px] text-slate-500">
                             {v.contactPhone || v.phone} {(v.contactEmail || v.email) ? `• ${v.contactEmail || v.email}` : ""}
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <button
                             onClick={() => openEditVendor(v)}
-                            className="bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-slate-700 px-2 py-1 rounded-lg text-[10px] font-bold transition"
+                            className="bg-white hover:bg-slate-100 text-blue-600 border border-slate-200 px-2 py-1 rounded-lg text-[10px] font-bold transition shadow-sm"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteVendor(v)}
                             disabled={deletingVendorId === v.id}
-                            className="bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 px-2 py-1 rounded-lg text-[10px] font-bold transition disabled:opacity-50"
+                            className="bg-white hover:bg-slate-100 text-rose-600 border border-slate-200 px-2 py-1 rounded-lg text-[10px] font-bold transition disabled:opacity-50 shadow-sm"
                           >
                             {deletingVendorId === v.id ? "..." : "Delete"}
                           </button>
@@ -1081,55 +1081,55 @@ export default function InventoryDashboard() {
               </div>
 
               {/* Purchase Orders List */}
-              <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-4">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-3 flex justify-between items-center">
+              <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <h3 className="font-bold text-xs uppercase tracking-wider text-slate-600 mb-3 flex justify-between items-center">
                   <span>Purchase Orders & Goods Receipt (GRN)</span>
-                  <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300">{purchaseOrders.length} POs</span>
+                  <span className="text-[10px] bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 font-bold">{purchaseOrders.length} POs</span>
                 </h3>
                 <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
                   {purchaseOrders.length === 0 ? (
-                    <div className="bg-slate-950 p-8 rounded-lg text-center text-slate-500 text-xs">
+                    <div className="bg-slate-50 border border-slate-200 p-8 rounded-lg text-center text-slate-400 text-xs">
                       No purchase orders recorded yet. Click "+ Create Purchase Order (PO)" above to create your first order.
                     </div>
                   ) : (
                     purchaseOrders.map((po) => {
                       const isReceived = po.status === "RECEIVED";
                       return (
-                        <div key={po.id} className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col gap-3">
+                        <div key={po.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col gap-3">
                           <div className="flex justify-between items-start">
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-sm text-slate-100">{po.poNumber}</span>
+                                <span className="font-bold text-sm text-slate-900">{po.poNumber}</span>
                                 <span className={`text-[10px] px-2 py-0.5 rounded font-bold border ${
                                   isReceived 
-                                    ? "bg-emerald-950 text-emerald-400 border-emerald-500/30" 
-                                    : "bg-indigo-950 text-indigo-400 border-indigo-500/30"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                                    : "bg-blue-50 text-blue-700 border-blue-200"
                                 }`}>
                                   {po.status}
                                 </span>
                               </div>
-                              <p className="text-xs text-slate-400 mt-0.5">Supplier: <strong>{(po as any).vendorName || po.vendor?.name || "Vendor"}</strong> • {new Date(po.createdAt).toLocaleDateString()}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">Supplier: <strong>{(po as any).vendorName || po.vendor?.name || "Vendor"}</strong> • {new Date(po.createdAt).toLocaleDateString()}</p>
                             </div>
 
                             <div className="text-right">
-                              <span className="text-xs text-slate-400 block">Total Amount</span>
-                              <span className="font-black text-sm text-emerald-400">₹{po.totalAmount.toFixed(2)}</span>
+                              <span className="text-xs text-slate-500 block">Total Amount</span>
+                              <span className="font-black text-sm text-emerald-600">₹{po.totalAmount.toFixed(2)}</span>
                             </div>
                           </div>
 
                           {/* Items summary */}
                           {po.items && po.items.length > 0 && (
-                            <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/60 flex flex-col gap-1 text-xs">
+                            <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col gap-1 text-xs">
                               {po.items.map((it, idx) => (
-                                <div key={idx} className="flex justify-between text-slate-300">
+                                <div key={idx} className="flex justify-between text-slate-700">
                                   <span>{it.quantity}x {(it as any).ingredientName || it.ingredient?.name || "Raw Material"}</span>
-                                  <span className="font-mono text-slate-400">@ ₹{(it as any).unitPrice || it.unitCost} = ₹{((it as any).total || it.totalCost || (it.quantity * ((it as any).unitPrice || it.unitCost || 0))).toFixed(2)}</span>
+                                  <span className="font-mono text-slate-500">@ ₹{(it as any).unitPrice || it.unitCost} = ₹{((it as any).total || it.totalCost || (it.quantity * ((it as any).unitPrice || it.unitCost || 0))).toFixed(2)}</span>
                                 </div>
                               ))}
                             </div>
                           )}
 
-                          <div className="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-800/80">
+                          <div className="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-200">
                             <span className="text-[11px] text-slate-500">
                               {isReceived ? "Stock updated and verified via GRN" : "Physical shipment pending receipt"}
                             </span>
@@ -1139,14 +1139,14 @@ export default function InventoryDashboard() {
                                 <>
                                   <button
                                     onClick={() => openEditPo(po)}
-                                    className="bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-slate-700 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition"
+                                    className="bg-white hover:bg-slate-100 text-blue-600 border border-slate-200 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition shadow-sm"
                                   >
                                     Edit
                                   </button>
                                   <button
                                     onClick={() => handleCancelPo(po)}
                                     disabled={cancellingPoId === po.id}
-                                    className="bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition disabled:opacity-50"
+                                    className="bg-white hover:bg-slate-100 text-rose-600 border border-slate-200 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition disabled:opacity-50 shadow-sm"
                                   >
                                     {cancellingPoId === po.id ? "Cancelling..." : "Cancel"}
                                   </button>
@@ -1157,12 +1157,12 @@ export default function InventoryDashboard() {
                                 <button
                                   onClick={() => handleReceivePO(po.id)}
                                   disabled={receivingPoId === po.id}
-                                  className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                                  className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
                                 >
                                   <span>📥</span> {receivingPoId === po.id ? "Receiving..." : "Receive Goods (GRN)"}
                                 </button>
                               ) : (
-                                <span className="text-emerald-400 font-bold text-xs flex items-center gap-1">
+                                <span className="text-emerald-600 font-bold text-xs flex items-center gap-1">
                                   <span>✅</span> Goods Received & Stock Incremented
                                 </span>
                               )}
@@ -1181,29 +1181,29 @@ export default function InventoryDashboard() {
 
       {/* MODAL: ADD RAW MATERIAL */}
       {showAddIngModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowAddIngModal(false)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-bold text-base text-slate-100 mb-4">Add Raw Material Ingredient</h2>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAddIngModal(false)}>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-bold text-base text-slate-900 mb-4">Add Raw Material Ingredient</h2>
             <form onSubmit={handleCreateIngredient} className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Ingredient Name</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Ingredient Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Rice Batter, Pure Ghee, Paneer"
                   value={newIngName}
                   onChange={(e) => setNewIngName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold uppercase">Unit of Measure</label>
+                  <label className="text-[10px] text-slate-600 font-bold uppercase">Unit of Measure</label>
                   <select
                     value={newIngUom}
                     onChange={(e) => setNewIngUom(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                   >
                     <option value="g">Grams (g)</option>
                     <option value="kg">Kilograms (kg)</option>
@@ -1213,35 +1213,35 @@ export default function InventoryDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold uppercase">Unit Cost (₹)</label>
+                  <label className="text-[10px] text-slate-600 font-bold uppercase">Unit Cost (₹)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={newIngUnitCost}
                     onChange={(e) => setNewIngUnitCost(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold uppercase">Initial Stock</label>
+                  <label className="text-[10px] text-slate-600 font-bold uppercase">Initial Stock</label>
                   <input
                     type="number"
                     value={newIngStock}
                     onChange={(e) => setNewIngStock(e.target.value)}
                     placeholder="e.g. 100"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold uppercase">Reorder Alert Threshold</label>
+                  <label className="text-[10px] text-slate-600 font-bold uppercase">Reorder Alert Threshold</label>
                   <input
                     type="number"
                     value={newIngReorder}
                     onChange={(e) => setNewIngReorder(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -1250,13 +1250,13 @@ export default function InventoryDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowAddIngModal(false)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold border border-slate-200 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-bold shadow-sm"
                 >
                   Save Ingredient
                 </button>
@@ -1268,22 +1268,22 @@ export default function InventoryDashboard() {
 
       {/* MODAL: ADJUST STOCK */}
       {adjustModalIng && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setAdjustModalIng(null)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-bold text-base text-slate-100 mb-1">Adjust Ingredient Stock</h2>
-            <p className="text-xs text-slate-400 mb-4">{adjustModalIng.name} (Current: {adjustModalIng.currentStock} {adjustModalIng.unitOfMeasure})</p>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setAdjustModalIng(null)}>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-bold text-base text-slate-900 mb-1">Adjust Ingredient Stock</h2>
+            <p className="text-xs text-slate-500 mb-4">{adjustModalIng.name} (Current: {adjustModalIng.currentStock} {adjustModalIng.unitOfMeasure})</p>
 
             <form onSubmit={handleAdjustStock} className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Adjustment Type</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Adjustment Type</label>
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   <button
                     type="button"
                     onClick={() => setAdjustType("ADD")}
                     className={`py-1.5 rounded-lg text-xs font-bold transition border ${
                       adjustType === "ADD"
-                        ? "bg-emerald-950 text-emerald-300 border-emerald-500/50"
-                        : "bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-300 font-bold shadow-sm"
+                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                     }`}
                   >
                     + Add / Receive
@@ -1293,8 +1293,8 @@ export default function InventoryDashboard() {
                     onClick={() => setAdjustType("DEDUCT")}
                     className={`py-1.5 rounded-lg text-xs font-bold transition border ${
                       adjustType === "DEDUCT"
-                        ? "bg-rose-950 text-rose-300 border-rose-500/50"
-                        : "bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800"
+                        ? "bg-rose-50 text-rose-700 border-rose-300 font-bold shadow-sm"
+                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                     }`}
                   >
                     − Deduct / Wastage
@@ -1303,7 +1303,7 @@ export default function InventoryDashboard() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Quantity ({adjustModalIng.unitOfMeasure})</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Quantity ({adjustModalIng.unitOfMeasure})</label>
                 <input
                   type="number"
                   step="0.01"
@@ -1311,7 +1311,7 @@ export default function InventoryDashboard() {
                   placeholder="e.g. 10"
                   value={adjustQty}
                   onChange={(e) => setAdjustQty(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -1319,13 +1319,13 @@ export default function InventoryDashboard() {
                 <button
                   type="button"
                   onClick={() => setAdjustModalIng(null)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold border border-slate-200 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-bold shadow-sm"
                 >
                   Confirm Adjustment
                 </button>
@@ -1337,17 +1337,17 @@ export default function InventoryDashboard() {
 
       {/* MODAL: LINK RECIPE BOM */}
       {showAddRecipeModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowAddRecipeModal(false)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-bold text-base text-slate-100 mb-4">Link Recipe Bill of Materials (BOM)</h2>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAddRecipeModal(false)}>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-bold text-base text-slate-900 mb-4">Link Recipe Bill of Materials (BOM)</h2>
             <form onSubmit={handleCreateRecipe} className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Select Menu Dish</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Select Menu Dish</label>
                 <select
                   required
                   value={selectedMenuItemId}
                   onChange={(e) => setSelectedMenuItemId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">-- Choose Menu Dish --</option>
                   {items.map((it) => (
@@ -1359,17 +1359,17 @@ export default function InventoryDashboard() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase mb-2 block">Ingredients Breakdown</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase mb-2 block">Ingredients Breakdown</label>
                 <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
                   {recipeLines.map((line, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800">
+                    <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
                       <select
                         value={line.ingredientId}
                         onChange={(e) => {
                           const val = e.target.value;
                           setRecipeLines((prev) => prev.map((l, i) => (i === idx ? { ...l, ingredientId: val } : l)));
                         }}
-                        className="flex-1 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white"
+                        className="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900"
                       >
                         <option value="">-- Select Raw Item --</option>
                         {ingredients.map((ing) => (
@@ -1387,13 +1387,13 @@ export default function InventoryDashboard() {
                           const val = parseFloat(e.target.value) || 0;
                           setRecipeLines((prev) => prev.map((l, i) => (i === idx ? { ...l, quantity: val } : l)));
                         }}
-                        className="w-20 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white"
+                        className="w-20 bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900"
                       />
 
                       <button
                         type="button"
                         onClick={() => setRecipeLines((prev) => prev.filter((_, i) => i !== idx))}
-                        className="text-rose-400 hover:text-rose-300 px-1 font-bold text-xs"
+                        className="text-rose-500 hover:text-rose-700 px-1 font-bold text-xs"
                       >
                         ✕
                       </button>
@@ -1403,7 +1403,7 @@ export default function InventoryDashboard() {
                 <button
                   type="button"
                   onClick={() => setRecipeLines((prev) => [...prev, { ingredientId: "", quantity: 10, yieldPercent: 100 }])}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-bold mt-2 inline-block"
+                  className="text-xs text-blue-600 hover:text-blue-700 font-bold mt-2 inline-block"
                 >
                   + Add Ingredient Line
                 </button>
@@ -1413,13 +1413,13 @@ export default function InventoryDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowAddRecipeModal(false)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold border border-slate-200 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-bold shadow-sm"
                 >
                   Save Recipe BOM
                 </button>
@@ -1431,42 +1431,42 @@ export default function InventoryDashboard() {
 
       {/* MODAL: ADD VENDOR */}
       {showAddVendorModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowAddVendorModal(false)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-bold text-base text-slate-100 mb-4">Register Supplier / Vendor</h2>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAddVendorModal(false)}>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-bold text-base text-slate-900 mb-4">Register Supplier / Vendor</h2>
             <form onSubmit={handleCreateVendor} className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Supplier Name</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Supplier Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Sri Lakshmi Dairy, Metro Cash & Carry"
                   value={newVendorName}
                   onChange={(e) => setNewVendorName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Phone Number</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Phone Number</label>
                 <input
                   type="tel"
                   required
                   placeholder="e.g. +91 9876543210"
                   value={newVendorPhone}
                   onChange={(e) => setNewVendorPhone(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Email (Optional)</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Email (Optional)</label>
                 <input
                   type="email"
                   placeholder="vendor@supplies.com"
                   value={newVendorEmail}
                   onChange={(e) => setNewVendorEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -1474,13 +1474,13 @@ export default function InventoryDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowAddVendorModal(false)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold border border-slate-200 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-bold shadow-sm"
                 >
                   Register Vendor
                 </button>
@@ -1492,19 +1492,19 @@ export default function InventoryDashboard() {
 
       {/* MODAL: CREATE PURCHASE ORDER (PO) */}
       {showAddPoModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowAddPoModal(false)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-bold text-base text-slate-100 mb-1">Create Purchase Order (PO)</h2>
-            <p className="text-xs text-slate-400 mb-4">Select a supplier and add raw materials to order</p>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAddPoModal(false)}>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-bold text-base text-slate-900 mb-1">Create Purchase Order (PO)</h2>
+            <p className="text-xs text-slate-500 mb-4">Select a supplier and add raw materials to order</p>
 
             <form onSubmit={handleCreatePO} className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Select Supplier / Vendor</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Select Supplier / Vendor</label>
                 <select
                   required
                   value={newPoVendorId}
                   onChange={(e) => setNewPoVendorId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">-- Choose Registered Vendor --</option>
                   {vendors.map((v) => (
@@ -1516,10 +1516,10 @@ export default function InventoryDashboard() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase mb-2 block">Order Line Items</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase mb-2 block">Order Line Items</label>
                 <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
                   {newPoLines.map((line, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800">
+                    <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
                       <select
                         value={line.ingredientId}
                         onChange={(e) => {
@@ -1533,7 +1533,7 @@ export default function InventoryDashboard() {
                             )
                           );
                         }}
-                        className="flex-1 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white"
+                        className="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900"
                       >
                         <option value="">-- Raw Material --</option>
                         {ingredients.map((ing) => (
@@ -1552,15 +1552,15 @@ export default function InventoryDashboard() {
                             const val = parseFloat(e.target.value) || 0;
                             setNewPoLines((prev) => prev.map((l, i) => (i === idx ? { ...l, quantity: val } : l)));
                           }}
-                          className="w-16 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white text-right"
+                          className="w-16 bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900 text-right"
                         />
-                        <span className="text-[10px] text-slate-400 font-mono">
+                        <span className="text-[10px] text-slate-500 font-mono">
                           {ingredients.find((ing) => ing.id === line.ingredientId)?.unitOfMeasure || "u"}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-1">
-                        <span className="text-[10px] text-slate-400">@₹</span>
+                        <span className="text-[10px] text-slate-500">@₹</span>
                         <input
                           type="number"
                           step="0.01"
@@ -1570,14 +1570,14 @@ export default function InventoryDashboard() {
                             const val = parseFloat(e.target.value) || 0;
                             setNewPoLines((prev) => prev.map((l, i) => (i === idx ? { ...l, unitPrice: val } : l)));
                           }}
-                          className="w-16 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white text-right"
+                          className="w-16 bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900 text-right"
                         />
                       </div>
 
                       <button
                         type="button"
                         onClick={() => setNewPoLines((prev) => prev.filter((_, i) => i !== idx))}
-                        className="text-rose-400 hover:text-rose-300 px-1 font-bold text-xs"
+                        className="text-rose-500 hover:text-rose-700 px-1 font-bold text-xs"
                       >
                         ✕
                       </button>
@@ -1591,13 +1591,13 @@ export default function InventoryDashboard() {
                     onClick={() =>
                       setNewPoLines((prev) => [...prev, { ingredientId: "", quantity: 10, unitPrice: 50 }])
                     }
-                    className="text-xs text-indigo-400 hover:text-indigo-300 font-bold"
+                    className="text-xs text-blue-600 hover:text-blue-700 font-bold"
                   >
                     + Add Item Line
                   </button>
 
-                  <span className="text-xs font-bold text-slate-300">
-                    Est. Total: <strong className="text-emerald-400">₹{newPoLines.reduce((sum, l) => sum + (l.quantity || 0) * (l.unitPrice || 0), 0).toFixed(2)}</strong>
+                  <span className="text-xs font-bold text-slate-700">
+                    Est. Total: <strong className="text-emerald-600">₹{newPoLines.reduce((sum, l) => sum + (l.quantity || 0) * (l.unitPrice || 0), 0).toFixed(2)}</strong>
                   </span>
                 </div>
               </div>
@@ -1606,13 +1606,13 @@ export default function InventoryDashboard() {
                 <button
                   type="button"
                   onClick={() => setShowAddPoModal(false)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold border border-slate-200 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-bold shadow-sm"
                 >
                   Create Purchase Order
                 </button>
@@ -1624,50 +1624,50 @@ export default function InventoryDashboard() {
 
       {/* MODAL: EDIT VENDOR */}
       {editingVendor && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setEditingVendor(null)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-bold text-base text-slate-100 mb-4">Edit Supplier / Vendor</h2>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setEditingVendor(null)}>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-bold text-base text-slate-900 mb-4">Edit Supplier / Vendor</h2>
             <form onSubmit={handleEditVendor} className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Supplier Name</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Supplier Name</label>
                 <input
                   type="text"
                   required
                   value={editVendorName}
                   onChange={(e) => setEditVendorName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Phone Number</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Phone Number</label>
                 <input
                   type="tel"
                   value={editVendorPhone}
                   onChange={(e) => setEditVendorPhone(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Email (Optional)</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Email (Optional)</label>
                 <input
                   type="email"
                   value={editVendorEmail}
                   onChange={(e) => setEditVendorEmail(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 />
               </div>
               <div className="flex gap-2 mt-4">
                 <button
                   type="button"
                   onClick={() => setEditingVendor(null)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold border border-slate-200 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingVendorEdit}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-2 rounded-lg text-xs font-bold shadow-sm"
                 >
                   {savingVendorEdit ? "Saving..." : "Save Changes"}
                 </button>
@@ -1679,23 +1679,23 @@ export default function InventoryDashboard() {
 
       {/* MODAL: EDIT RECIPE BOM */}
       {editingRecipe && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setEditingRecipe(null)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-bold text-base text-slate-100 mb-1">Edit Recipe BOM</h2>
-            <p className="text-xs text-slate-400 mb-4">{editingRecipe.menuItem?.name || "Dish"}</p>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setEditingRecipe(null)}>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-bold text-base text-slate-900 mb-1">Edit Recipe BOM</h2>
+            <p className="text-xs text-slate-500 mb-4">{editingRecipe.menuItem?.name || "Dish"}</p>
             <form onSubmit={handleEditRecipe} className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase mb-2 block">Ingredients Breakdown</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase mb-2 block">Ingredients Breakdown</label>
                 <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
                   {editRecipeLines.map((line, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800">
+                    <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
                       <select
                         value={line.ingredientId}
                         onChange={(e) => {
                           const val = e.target.value;
                           setEditRecipeLines((prev) => prev.map((l, i) => (i === idx ? { ...l, ingredientId: val } : l)));
                         }}
-                        className="flex-1 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white"
+                        className="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900"
                       >
                         <option value="">-- Select Raw Item --</option>
                         {ingredients.map((ing) => (
@@ -1713,13 +1713,13 @@ export default function InventoryDashboard() {
                           const val = parseFloat(e.target.value) || 0;
                           setEditRecipeLines((prev) => prev.map((l, i) => (i === idx ? { ...l, quantity: val } : l)));
                         }}
-                        className="w-20 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white"
+                        className="w-20 bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900"
                       />
 
                       <button
                         type="button"
                         onClick={() => setEditRecipeLines((prev) => prev.filter((_, i) => i !== idx))}
-                        className="text-rose-400 hover:text-rose-300 px-1 font-bold text-xs"
+                        className="text-rose-500 hover:text-rose-700 px-1 font-bold text-xs"
                       >
                         ✕
                       </button>
@@ -1729,7 +1729,7 @@ export default function InventoryDashboard() {
                 <button
                   type="button"
                   onClick={() => setEditRecipeLines((prev) => [...prev, { ingredientId: "", quantity: 10, yieldPercent: 100 }])}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-bold mt-2 inline-block"
+                  className="text-xs text-blue-600 hover:text-blue-700 font-bold mt-2 inline-block"
                 >
                   + Add Ingredient Line
                 </button>
@@ -1739,14 +1739,14 @@ export default function InventoryDashboard() {
                 <button
                   type="button"
                   onClick={() => setEditingRecipe(null)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold border border-slate-200 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingRecipeEdit}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-2 rounded-lg text-xs font-bold shadow-sm"
                 >
                   {savingRecipeEdit ? "Saving..." : "Save Recipe BOM"}
                 </button>
@@ -1758,19 +1758,19 @@ export default function InventoryDashboard() {
 
       {/* MODAL: EDIT PURCHASE ORDER (PO) */}
       {editingPo && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setEditingPo(null)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-bold text-base text-slate-100 mb-1">Edit Purchase Order ({editingPo.poNumber})</h2>
-            <p className="text-xs text-slate-400 mb-4">Only DRAFT purchase orders can be edited</p>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setEditingPo(null)}>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-bold text-base text-slate-900 mb-1">Edit Purchase Order ({editingPo.poNumber})</h2>
+            <p className="text-xs text-slate-500 mb-4">Only DRAFT purchase orders can be edited</p>
 
             <form onSubmit={handleEditPo} className="flex flex-col gap-3">
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase">Select Supplier / Vendor</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase">Select Supplier / Vendor</label>
                 <select
                   required
                   value={editPoVendorId}
                   onChange={(e) => setEditPoVendorId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white mt-1"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 mt-1 focus:bg-white focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">-- Choose Registered Vendor --</option>
                   {vendors.map((v) => (
@@ -1782,17 +1782,17 @@ export default function InventoryDashboard() {
               </div>
 
               <div>
-                <label className="text-[10px] text-slate-400 font-bold uppercase mb-2 block">Order Line Items</label>
+                <label className="text-[10px] text-slate-600 font-bold uppercase mb-2 block">Order Line Items</label>
                 <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
                   {editPoLines.map((line, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800">
+                    <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
                       <select
                         value={line.ingredientId}
                         onChange={(e) => {
                           const val = e.target.value;
                           setEditPoLines((prev) => prev.map((l, i) => (i === idx ? { ...l, ingredientId: val } : l)));
                         }}
-                        className="flex-1 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white"
+                        className="flex-1 bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900"
                       >
                         <option value="">-- Raw Material --</option>
                         {ingredients.map((ing) => (
@@ -1810,11 +1810,11 @@ export default function InventoryDashboard() {
                           const val = parseFloat(e.target.value) || 0;
                           setEditPoLines((prev) => prev.map((l, i) => (i === idx ? { ...l, quantity: val } : l)));
                         }}
-                        className="w-16 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white text-right"
+                        className="w-16 bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900 text-right"
                       />
 
                       <div className="flex items-center gap-1">
-                        <span className="text-[10px] text-slate-400">@₹</span>
+                        <span className="text-[10px] text-slate-500">@₹</span>
                         <input
                           type="number"
                           step="0.01"
@@ -1824,14 +1824,14 @@ export default function InventoryDashboard() {
                             const val = parseFloat(e.target.value) || 0;
                             setEditPoLines((prev) => prev.map((l, i) => (i === idx ? { ...l, unitPrice: val } : l)));
                           }}
-                          className="w-16 bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white text-right"
+                          className="w-16 bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-900 text-right"
                         />
                       </div>
 
                       <button
                         type="button"
                         onClick={() => setEditPoLines((prev) => prev.filter((_, i) => i !== idx))}
-                        className="text-rose-400 hover:text-rose-300 px-1 font-bold text-xs"
+                        className="text-rose-500 hover:text-rose-700 px-1 font-bold text-xs"
                       >
                         ✕
                       </button>
@@ -1845,13 +1845,13 @@ export default function InventoryDashboard() {
                     onClick={() =>
                       setEditPoLines((prev) => [...prev, { ingredientId: "", quantity: 10, unitPrice: 50 }])
                     }
-                    className="text-xs text-indigo-400 hover:text-indigo-300 font-bold"
+                    className="text-xs text-blue-600 hover:text-blue-700 font-bold"
                   >
                     + Add Item Line
                   </button>
 
-                  <span className="text-xs font-bold text-slate-300">
-                    Est. Total: <strong className="text-emerald-400">₹{editPoLines.reduce((sum, l) => sum + (l.quantity || 0) * (l.unitPrice || 0), 0).toFixed(2)}</strong>
+                  <span className="text-xs font-bold text-slate-700">
+                    Est. Total: <strong className="text-emerald-600">₹{editPoLines.reduce((sum, l) => sum + (l.quantity || 0) * (l.unitPrice || 0), 0).toFixed(2)}</strong>
                   </span>
                 </div>
               </div>
@@ -1860,14 +1860,14 @@ export default function InventoryDashboard() {
                 <button
                   type="button"
                   onClick={() => setEditingPo(null)}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold border border-slate-200 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={savingPoEdit}
-                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white py-2 rounded-lg text-xs font-bold"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-2 rounded-lg text-xs font-bold shadow-sm"
                 >
                   {savingPoEdit ? "Saving..." : "Save Purchase Order"}
                 </button>

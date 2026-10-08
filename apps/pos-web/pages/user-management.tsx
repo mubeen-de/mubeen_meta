@@ -801,15 +801,7 @@ export default function UserManagement() {
                     <Link
                       href="/role-management"
                       className="export-action-btn"
-                      style={{
-                        textDecoration: "none",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        background: "#4f46e5",
-                        borderColor: "#6366f1",
-                        color: "#ffffff",
-                      }}
+                      style={{ textDecoration: "none" }}
                     >
                       🛡️ Role Management →
                     </Link>
@@ -1506,13 +1498,13 @@ export default function UserManagement() {
                               {!canManageUsers && (
                                 <div
                                   style={{
-                                    background: "rgba(59, 130, 246, 0.12)",
-                                    border: "1px solid rgba(59, 130, 246, 0.3)",
+                                    background: "rgba(37, 99, 235, 0.08)",
+                                    border: "1px solid rgba(37, 99, 235, 0.2)",
                                     borderRadius: "6px",
                                     padding: "6px 12px",
                                     marginTop: "6px",
                                     fontSize: "0.82rem",
-                                    color: "#93c5fd",
+                                    color: "var(--accent, #2563eb)",
                                     display: "inline-flex",
                                     alignItems: "center",
                                     gap: "6px",
@@ -1560,9 +1552,9 @@ export default function UserManagement() {
                                 <button
                                   className="add-user-btn"
                                   style={{
-                                    background: "#334155",
-                                    borderColor: "#475569",
-                                    color: "#94a3b8",
+                                    background: "var(--btn-secondary-bg, #f1f5f9)",
+                                    borderColor: "var(--border, #cbd5e1)",
+                                    color: "var(--text-secondary, #475569)",
                                     cursor: "pointer",
                                   }}
                                   title="Admin account required to add new staff"
@@ -1582,14 +1574,14 @@ export default function UserManagement() {
                             <table className="clean-table">
                               <thead>
                                 <tr>
-                                  <th>User Name</th>
-                                  <th>Email</th>
-                                  <th>Phone</th>
-                                  <th>Assigned Roles</th>
-                                  {canManageUsers && <th>Assign Role</th>}
-                                  {canManageUsers && <th>Outlet Scope</th>}
-                                  {canManageUsers && <th>Assign</th>}
-                                  <th style={{ textAlign: "right" }}>Actions</th>
+                                  <th style={{ minWidth: "160px" }}>User Name</th>
+                                  <th style={{ minWidth: "190px" }}>Email</th>
+                                  <th style={{ minWidth: "110px" }}>Phone</th>
+                                  <th style={{ minWidth: "180px" }}>Assigned Roles</th>
+                                  {canManageUsers && <th style={{ minWidth: "160px" }}>Assign Role</th>}
+                                  {canManageUsers && <th style={{ minWidth: "170px" }}>Outlet Scope</th>}
+                                  {canManageUsers && <th style={{ width: "90px" }}>Assign</th>}
+                                  <th style={{ minWidth: "140px", textAlign: "right" }}>Actions</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1747,25 +1739,26 @@ export default function UserManagement() {
                           style={{
                             marginTop: "20px",
                             padding: "20px 24px",
-                            background: "#1e293b",
+                            background: "var(--bg-card)",
                             borderRadius: "12px",
-                            border: "1px solid #334155",
+                            border: "1px solid var(--border)",
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
                             flexWrap: "wrap",
                             gap: "16px",
+                            boxShadow: "var(--shadow-sm)",
                           }}
                         >
                           <div>
                             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                               <span style={{ fontSize: "1.2rem" }}>🛡️</span>
-                              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#f8fafc" }}>
+                              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)" }}>
                                 RBAC Roles &amp; Permissions Management
                               </h3>
                               <span className="counter-pill">{roles.length} Roles Defined</span>
                             </div>
-                            <p style={{ margin: 0, color: "#94a3b8", fontSize: "0.82rem", maxWidth: "680px", lineHeight: "1.5" }}>
+                            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: "0.82rem", maxWidth: "680px", lineHeight: "1.5" }}>
                               System roles and granular permission matrices are organized in the dedicated Role Management section. Create custom roles, toggle fine-grained permission flags, and audit assigned staff.
                             </p>
                           </div>
@@ -1774,7 +1767,7 @@ export default function UserManagement() {
                               <button
                                 className="add-user-btn"
                                 onClick={openCreateRole}
-                                style={{ background: "#334155", border: "1px solid #475569" }}
+                                style={{ background: "var(--btn-secondary-bg, #f1f5f9)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
                               >
                                 + Quick Role
                               </button>
@@ -1782,7 +1775,7 @@ export default function UserManagement() {
                             <Link
                               href="/role-management"
                               style={{
-                                background: "#4f46e5",
+                                background: "var(--btn-primary-bg, #2563eb)",
                                 color: "#ffffff",
                                 padding: "8px 18px",
                                 borderRadius: "8px",
@@ -2028,8 +2021,8 @@ export default function UserManagement() {
           display: flex;
           flex-direction: column;
           height: 100vh;
-          background: #0f172a;
-          color: #f8fafc;
+          background: var(--bg-base);
+          color: var(--text-primary);
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
           overflow: hidden;
         }
@@ -2039,8 +2032,8 @@ export default function UserManagement() {
           align-items: center;
           justify-content: space-between;
           padding: 12px 24px;
-          background: #1e293b;
-          border-bottom: 1px solid #334155;
+          background: var(--bg-card);
+          border-bottom: 1px solid var(--border);
           flex-shrink: 0;
         }
 
@@ -2052,14 +2045,14 @@ export default function UserManagement() {
 
         .brand-icon {
           font-size: 1.25rem;
-          color: #38bdf8;
+          color: var(--accent);
         }
 
         .brand-name {
           font-size: 1.125rem;
           font-weight: 800;
           letter-spacing: -0.025em;
-          color: #f1f5f9;
+          color: var(--text-primary);
         }
 
         .topbar-right {
@@ -2071,9 +2064,9 @@ export default function UserManagement() {
         .view-mode-tag {
           font-size: 0.75rem;
           font-weight: 700;
-          background: rgba(56, 189, 248, 0.12);
-          border: 1px solid rgba(56, 189, 248, 0.3);
-          color: #38bdf8;
+          background: rgba(37, 99, 235, 0.08);
+          border: 1px solid rgba(37, 99, 235, 0.2);
+          color: var(--accent);
           padding: 4px 10px;
           border-radius: 9999px;
         }
@@ -2088,13 +2081,14 @@ export default function UserManagement() {
           width: 36px;
           height: 36px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: var(--btn-primary-bg, #2563eb);
           color: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 700;
           font-size: 0.875rem;
+          box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
         }
 
         .user-info-text {
@@ -2105,12 +2099,12 @@ export default function UserManagement() {
         .user-name {
           font-size: 0.875rem;
           font-weight: 700;
-          color: #f8fafc;
+          color: var(--text-primary);
         }
 
         .user-role {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: var(--text-secondary);
           text-transform: uppercase;
         }
 
@@ -2124,7 +2118,7 @@ export default function UserManagement() {
 
         .dashboard-greeting-row {
           display: flex;
-          align-items: flex-start;
+          align-items: center;
           justify-content: space-between;
           flex-wrap: wrap;
           gap: 16px;
@@ -2135,19 +2129,19 @@ export default function UserManagement() {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: #38bdf8;
+          color: var(--accent, #2563eb);
         }
 
         .greeting-title {
           font-size: 1.75rem;
           font-weight: 800;
           margin: 4px 0 6px 0;
-          color: #f8fafc;
+          color: var(--text-primary);
         }
 
         .greeting-subtitle {
           font-size: 0.9375rem;
-          color: #94a3b8;
+          color: var(--text-secondary);
           max-width: 820px;
           margin: 0;
           line-height: 1.5;
@@ -2160,74 +2154,93 @@ export default function UserManagement() {
         }
 
         .export-action-btn {
-          padding: 8px 16px;
+          height: 38px;
+          padding: 0 16px;
           font-size: 0.8125rem;
-          font-weight: 700;
+          font-weight: 600;
           border-radius: 8px;
           cursor: pointer;
-          background: #334155;
-          color: #f8fafc;
-          border: 1px solid #475569;
+          background: var(--bg-card);
+          color: var(--text-secondary);
+          border: 1px solid var(--border);
+          box-shadow: var(--shadow-sm);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          box-sizing: border-box;
           transition: all 0.15s ease;
         }
 
         .export-action-btn:hover {
-          background: #475569;
+          background: var(--bg-subtle);
+          color: var(--text-primary);
         }
 
         .export-action-btn.primary {
           background: #2563eb;
-          border-color: #3b82f6;
+          border-color: #2563eb;
           color: #ffffff;
         }
 
         .export-action-btn.primary:hover {
           background: #1d4ed8;
+          border-color: #1d4ed8;
         }
 
         /* Tabs Header */
         .tabs-header-container {
           display: flex;
-          gap: 8px;
-          border-bottom: 1px solid #334155;
-          padding-bottom: 2px;
+          gap: 4px;
+          border-bottom: 2px solid var(--border);
+          padding: 0;
+          margin-bottom: 20px;
         }
 
         .tab-item-btn {
-          display: flex;
+          display: inline-flex;
           align-items: center;
           gap: 8px;
-          padding: 10px 20px;
-          font-size: 0.9375rem;
-          font-weight: 700;
+          height: 44px;
+          padding: 0 18px;
+          font-size: 0.875rem;
+          font-weight: 600;
           border: none;
           background: transparent;
-          color: #94a3b8;
+          color: var(--text-secondary);
           border-bottom: 3px solid transparent;
+          margin-bottom: -2px;
           cursor: pointer;
+          text-decoration: none;
+          white-space: nowrap;
+          box-sizing: border-box;
           transition: all 0.15s ease;
         }
 
         .tab-item-btn:hover {
-          color: #f1f5f9;
+          color: var(--text-primary);
+          border-bottom-color: var(--border-hover, #cbd5e1);
         }
 
         .tab-item-btn.active {
-          color: #38bdf8;
-          border-bottom-color: #38bdf8;
+          color: var(--accent, #2563eb);
+          border-bottom-color: var(--accent, #2563eb);
+          font-weight: 700;
         }
 
         .tab-pill {
           font-size: 0.6875rem;
-          padding: 2px 6px;
+          padding: 2px 8px;
           border-radius: 9999px;
-          background: rgba(255, 255, 255, 0.1);
-          color: #e2e8f0;
+          background: var(--bg-subtle);
+          color: var(--text-secondary);
+          font-weight: 700;
+          line-height: 1.2;
         }
 
         .tab-item-btn.active .tab-pill {
-          background: rgba(56, 189, 248, 0.2);
-          color: #38bdf8;
+          background: rgba(37, 99, 235, 0.1);
+          color: var(--accent, #2563eb);
         }
 
         /* Report Controls Bar */
@@ -2235,11 +2248,12 @@ export default function UserManagement() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           padding: 10px 16px;
           border-radius: 10px;
           margin-bottom: 16px;
+          box-shadow: var(--shadow-sm);
         }
 
         .date-presets-group {
@@ -2251,38 +2265,48 @@ export default function UserManagement() {
         .controls-label {
           font-size: 0.8125rem;
           font-weight: 700;
-          color: #94a3b8;
+          color: var(--text-secondary);
           text-transform: uppercase;
         }
 
         .preset-btn {
-          padding: 6px 12px;
+          height: 34px;
+          padding: 0 14px;
           font-size: 0.8125rem;
           font-weight: 600;
           border-radius: 6px;
-          border: 1px solid #475569;
-          background: #0f172a;
-          color: #cbd5e1;
+          border: 1px solid var(--border);
+          background: var(--bg-card);
+          color: var(--text-secondary);
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
           transition: all 0.15s;
         }
 
         .preset-btn.active {
-          background: #38bdf8;
-          color: #0f172a;
-          border-color: #38bdf8;
+          background: #2563eb;
+          color: #ffffff;
+          border-color: #2563eb;
           font-weight: 700;
         }
 
         .refresh-btn {
-          padding: 6px 12px;
+          height: 34px;
+          padding: 0 14px;
           font-size: 0.8125rem;
           font-weight: 700;
           border-radius: 6px;
-          border: 1px solid #475569;
-          background: #334155;
-          color: #f1f5f9;
+          border: 1px solid var(--border);
+          background: var(--bg-subtle);
+          color: var(--text-primary);
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
         }
 
         /* KPI Cards Grid */
@@ -2294,30 +2318,31 @@ export default function UserManagement() {
         }
 
         .kpi-card {
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           padding: 16px;
           border-radius: 12px;
           display: flex;
           align-items: center;
           gap: 14px;
+          box-shadow: var(--shadow-card);
         }
 
         .kpi-card.highlight {
           border-color: #f59e0b;
-          background: linear-gradient(135deg, #1e293b 0%, rgba(245, 158, 11, 0.08) 100%);
+          background: linear-gradient(135deg, var(--bg-card) 0%, rgba(245, 158, 11, 0.06) 100%);
         }
 
         .kpi-icon {
           font-size: 1.75rem;
-          background: #0f172a;
+          background: var(--bg-subtle);
           width: 48px;
           height: 48px;
           display: flex;
           align-items: center;
           justify-content: center;
           border-radius: 10px;
-          border: 1px solid #334155;
+          border: 1px solid var(--border);
         }
 
         .kpi-content {
@@ -2329,28 +2354,29 @@ export default function UserManagement() {
           font-size: 0.75rem;
           font-weight: 700;
           text-transform: uppercase;
-          color: #94a3b8;
+          color: var(--text-secondary);
         }
 
         .kpi-value {
           font-size: 1.25rem;
           font-weight: 800;
-          color: #f8fafc;
+          color: var(--text-primary);
           margin: 2px 0;
         }
 
         .kpi-sub {
           font-size: 0.75rem;
-          color: #64748b;
+          color: var(--text-muted);
         }
 
         /* Panel Card Styles */
         .panel-card {
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 12px;
           padding: 20px;
           margin-bottom: 20px;
+          box-shadow: var(--shadow-card);
         }
 
         .panel-header {
@@ -2358,8 +2384,8 @@ export default function UserManagement() {
           align-items: center;
           justify-content: space-between;
           flex-wrap: wrap;
-          gap: 12px;
-          margin-bottom: 16px;
+          gap: 16px;
+          margin-bottom: 18px;
         }
 
         .panel-title-icon {
@@ -2369,51 +2395,59 @@ export default function UserManagement() {
         .panel-header h3 {
           font-size: 1.125rem;
           font-weight: 800;
-          color: #f8fafc;
+          color: var(--text-primary);
           margin: 0;
         }
 
         .panel-sub {
           font-size: 0.8125rem;
-          color: #94a3b8;
+          color: var(--text-secondary);
           margin: 2px 0 0 0;
         }
 
         .panel-actions {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
         }
 
         .search-input {
-          background: #0f172a;
-          border: 1px solid #334155;
-          padding: 6px 12px;
-          border-radius: 6px;
-          color: #f8fafc;
+          height: 38px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          padding: 0 12px;
+          border-radius: 8px;
+          color: var(--text-primary);
           font-size: 0.8125rem;
           min-width: 220px;
+          box-sizing: border-box;
         }
 
         .search-input:focus {
           outline: none;
-          border-color: #38bdf8;
+          border-color: #2563eb;
+          box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
         }
 
         .btn-download {
-          padding: 6px 12px;
-          font-size: 0.75rem;
-          font-weight: 700;
-          border-radius: 6px;
+          height: 38px;
+          padding: 0 16px;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          border-radius: 8px;
           cursor: pointer;
-          border: 1px solid transparent;
-          transition: all 0.15s;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          box-sizing: border-box;
+          transition: all 0.15s ease;
         }
 
         .btn-download.csv {
           background: #047857;
-          color: #ecfdf5;
-          border-color: #059669;
+          color: #ffffff;
+          border: 1px solid #059669;
         }
 
         .btn-download.csv:hover {
@@ -2421,13 +2455,14 @@ export default function UserManagement() {
         }
 
         .btn-download.json {
-          background: #4f46e5;
-          color: #eef2ff;
-          border-color: #6366f1;
+          background: var(--bg-card);
+          color: var(--text-secondary);
+          border: 1px solid var(--border);
         }
 
         .btn-download.json:hover {
-          background: #6366f1;
+          background: var(--bg-subtle);
+          color: var(--text-primary);
         }
 
         /* Clean Table */
@@ -2443,28 +2478,33 @@ export default function UserManagement() {
 
         .clean-table th {
           text-align: left;
-          padding: 10px 12px;
-          background: #0f172a;
-          color: #94a3b8;
+          padding: 12px 14px;
+          background: var(--bg-subtle);
+          color: var(--text-secondary);
           font-weight: 700;
           font-size: 0.75rem;
           text-transform: uppercase;
-          border-bottom: 2px solid #334155;
+          letter-spacing: 0.04em;
+          border-bottom: 2px solid var(--border);
+          vertical-align: middle;
+          white-space: nowrap;
         }
 
         .clean-table td {
-          padding: 12px;
-          border-bottom: 1px solid #334155;
-          color: #cbd5e1;
+          padding: 12px 14px;
+          border-bottom: 1px solid var(--border);
+          color: var(--text-primary);
+          vertical-align: middle;
+          font-size: 0.875rem;
         }
 
         .clean-table tr:hover td {
-          background: rgba(255, 255, 255, 0.02);
+          background: var(--bg-subtle);
         }
 
         .highlight-amount {
           font-weight: 800;
-          color: #38bdf8;
+          color: #2563eb;
         }
 
         .repeat-badge {
@@ -2472,9 +2512,9 @@ export default function UserManagement() {
           margin-left: 6px;
           font-size: 0.6875rem;
           font-weight: 700;
-          background: rgba(16, 185, 129, 0.15);
-          color: #34d399;
-          border: 1px solid rgba(16, 185, 129, 0.3);
+          background: rgba(16, 185, 129, 0.12);
+          color: #059669;
+          border: 1px solid rgba(16, 185, 129, 0.25);
           padding: 2px 6px;
           border-radius: 4px;
         }
@@ -2485,44 +2525,45 @@ export default function UserManagement() {
           font-size: 0.75rem;
           padding: 2px 6px;
           border-radius: 4px;
-          background: #334155;
-          color: #f1f5f9;
+          background: var(--bg-subtle);
+          color: var(--text-primary);
         }
 
         .rank-badge.gold {
-          background: #eab308;
-          color: #000;
+          background: #fef08a;
+          color: #854d0e;
         }
 
         .rank-badge.silver {
-          background: #94a3b8;
-          color: #000;
+          background: #e2e8f0;
+          color: #334155;
         }
 
         .rank-badge.bronze {
-          background: #b45309;
-          color: #fff;
+          background: #fed7aa;
+          color: #9a3412;
         }
 
         .counter-pill {
-          background: #0f172a;
-          border: 1px solid #334155;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border);
           padding: 2px 8px;
           border-radius: 9999px;
           font-size: 0.75rem;
           font-weight: 700;
+          color: var(--text-secondary);
         }
 
         .counter-pill.bold {
-          background: rgba(56, 189, 248, 0.15);
-          color: #38bdf8;
-          border-color: rgba(56, 189, 248, 0.3);
+          background: rgba(37, 99, 235, 0.08);
+          color: #2563eb;
+          border-color: rgba(37, 99, 235, 0.25);
         }
 
         .loyalty-pill {
-          background: rgba(245, 158, 11, 0.15);
-          color: #fbbf24;
-          border: 1px solid rgba(245, 158, 11, 0.3);
+          background: rgba(245, 158, 11, 0.1);
+          color: #b45309;
+          border: 1px solid rgba(245, 158, 11, 0.25);
           padding: 2px 8px;
           border-radius: 9999px;
           font-size: 0.75rem;
@@ -2537,60 +2578,67 @@ export default function UserManagement() {
         }
 
         .velocity-tag.hot {
-          background: rgba(239, 68, 68, 0.15);
-          color: #f87171;
-          border: 1px solid rgba(239, 68, 68, 0.3);
+          background: rgba(239, 68, 68, 0.1);
+          color: #dc2626;
+          border: 1px solid rgba(239, 68, 68, 0.25);
         }
 
         .velocity-tag.normal {
-          background: rgba(148, 163, 184, 0.15);
-          color: #94a3b8;
-          border: 1px solid rgba(148, 163, 184, 0.3);
+          background: var(--bg-subtle);
+          color: var(--text-secondary);
+          border: 1px solid var(--border);
         }
 
         .role-tag {
-          background: #0f172a;
-          border: 1px solid #334155;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border);
           padding: 2px 6px;
           border-radius: 4px;
           font-size: 0.75rem;
-          color: #cbd5e1;
+          color: var(--text-secondary);
         }
 
         .variance-tag.warning {
-          color: #f87171;
+          color: #dc2626;
           font-weight: 700;
         }
 
         .variance-tag.zero {
-          color: #64748b;
+          color: var(--text-muted);
         }
 
         /* Action Buttons */
         .btn-table-action {
-          padding: 4px 8px;
-          border-radius: 4px;
+          height: 32px;
+          padding: 0 10px;
+          border-radius: 6px;
           font-size: 0.75rem;
-          font-weight: 700;
+          font-weight: 600;
           cursor: pointer;
-          border: 1px solid #475569;
-          background: #334155;
-          color: #f8fafc;
+          border: 1px solid var(--border);
+          background: var(--bg-subtle);
+          color: var(--text-primary);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          box-sizing: border-box;
+          vertical-align: middle;
           transition: all 0.15s;
         }
 
         .btn-table-action.view {
-          background: rgba(56, 189, 248, 0.15);
-          border-color: rgba(56, 189, 248, 0.4);
-          color: #38bdf8;
+          background: rgba(37, 99, 235, 0.08);
+          border-color: rgba(37, 99, 235, 0.25);
+          color: #2563eb;
         }
 
         .btn-table-action.view:hover {
-          background: rgba(56, 189, 248, 0.3);
+          background: rgba(37, 99, 235, 0.15);
         }
 
         .btn-table-action.dl:hover {
-          background: #475569;
+          background: var(--bg-hover);
         }
 
         /* Split Grid Row */
@@ -2605,12 +2653,16 @@ export default function UserManagement() {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          background: #0f172a;
-          border: 1px solid #334155;
-          padding: 2px 8px;
-          border-radius: 4px;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border);
+          padding: 4px 8px;
+          border-radius: 6px;
           font-size: 0.75rem;
-          margin: 2px 4px 2px 0;
+          font-weight: 500;
+          color: var(--text-primary);
+          line-height: 1.2;
+          box-sizing: border-box;
+          vertical-align: middle;
         }
 
         .revoke-btn {
@@ -2619,62 +2671,140 @@ export default function UserManagement() {
           color: #ef4444;
           cursor: pointer;
           font-weight: bold;
+          padding: 0 2px;
+          font-size: 0.8rem;
+          line-height: 1;
+        }
+
+        .revoke-btn:hover {
+          color: #dc2626;
         }
 
         .role-select, .outlet-input {
-          background: #0f172a;
-          border: 1px solid #334155;
-          color: #f8fafc;
-          padding: 6px 10px;
-          border-radius: 6px;
+          height: 38px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          color: var(--text-primary);
+          padding: 0 10px;
+          border-radius: 8px;
           font-size: 0.8125rem;
+          box-sizing: border-box;
+          vertical-align: middle;
+          width: 100%;
+        }
+
+        .role-select:focus, .outlet-input:focus {
+          outline: none;
+          border-color: #2563eb;
+          box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
         }
 
         .assign-btn {
+          height: 38px;
           background: #2563eb;
           color: #fff;
-          border: none;
-          padding: 6px 12px;
-          border-radius: 6px;
+          border: 1px solid #2563eb;
+          padding: 0 16px;
+          border-radius: 8px;
           font-weight: 700;
           font-size: 0.75rem;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+          vertical-align: middle;
+          transition: all 0.15s ease;
+        }
+
+        .assign-btn:hover:not(:disabled) {
+          background: #1d4ed8;
+          border-color: #1d4ed8;
+        }
+
+        .assign-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
         .edit-btn {
-          background: #334155;
-          color: #f8fafc;
-          border: 1px solid #475569;
-          padding: 4px 8px;
-          border-radius: 4px;
+          height: 32px;
+          padding: 0 10px;
+          border-radius: 6px;
           font-size: 0.75rem;
+          font-weight: 600;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          box-sizing: border-box;
+          vertical-align: middle;
+          background: var(--bg-subtle);
+          color: var(--text-secondary);
+          border: 1px solid var(--border);
+          transition: all 0.15s;
+        }
+
+        .edit-btn:hover {
+          background: var(--bg-hover);
+          color: var(--text-primary);
         }
 
         .delete-btn {
-          background: rgba(239, 68, 68, 0.15);
-          color: #f87171;
-          border: 1px solid rgba(239, 68, 68, 0.4);
-          padding: 4px 8px;
-          border-radius: 4px;
+          height: 32px;
+          padding: 0 8px;
+          border-radius: 6px;
           font-size: 0.75rem;
+          font-weight: 600;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+          vertical-align: middle;
+          background: rgba(239, 68, 68, 0.08);
+          color: #dc2626;
+          border: 1px solid rgba(239, 68, 68, 0.25);
+          transition: all 0.15s;
+        }
+
+        .delete-btn:hover:not(:disabled) {
+          background: rgba(239, 68, 68, 0.18);
+        }
+
+        .delete-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
         }
 
         .add-user-btn {
+          height: 38px;
           background: #2563eb;
-          color: #fff;
-          border: none;
-          padding: 8px 16px;
+          color: #ffffff;
+          border: 1px solid #2563eb;
+          padding: 0 18px;
           border-radius: 8px;
           font-weight: 700;
           font-size: 0.8125rem;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          box-sizing: border-box;
+          box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+          transition: all 0.15s ease;
+        }
+
+        .add-user-btn:hover {
+          background: #1d4ed8;
+          border-color: #1d4ed8;
         }
 
         .inactive-tag {
           font-size: 0.6875rem;
-          color: #f87171;
+          color: #dc2626;
           font-weight: 700;
         }
 
@@ -2685,7 +2815,7 @@ export default function UserManagement() {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.75);
+          background: rgba(15, 23, 42, 0.5);
           backdrop-filter: blur(4px);
           display: flex;
           align-items: center;
@@ -2695,8 +2825,8 @@ export default function UserManagement() {
         }
 
         .modal-content {
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 14px;
           padding: 24px;
           width: 100%;
@@ -2704,7 +2834,7 @@ export default function UserManagement() {
           max-height: 90vh;
           display: flex;
           flex-direction: column;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+          box-shadow: var(--shadow-modal);
         }
 
         .modal-content.modal-lg {
@@ -2721,26 +2851,26 @@ export default function UserManagement() {
           justify-content: space-between;
           margin-bottom: 16px;
           padding-bottom: 12px;
-          border-bottom: 1px solid #334155;
+          border-bottom: 1px solid var(--border);
         }
 
         .modal-header h4 {
           font-size: 1.25rem;
           font-weight: 800;
-          color: #f8fafc;
+          color: var(--text-primary);
           margin: 0;
         }
 
         .modal-subtitle {
           font-size: 0.75rem;
-          color: #94a3b8;
+          color: var(--text-muted);
           font-family: monospace;
         }
 
         .close-modal-btn {
           background: transparent;
           border: none;
-          color: #94a3b8;
+          color: var(--text-muted);
           font-size: 1.25rem;
           cursor: pointer;
         }
@@ -2758,8 +2888,8 @@ export default function UserManagement() {
         }
 
         .detail-item {
-          background: #0f172a;
-          border: 1px solid #334155;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border);
           border-radius: 8px;
           padding: 10px 14px;
           display: flex;
@@ -2772,13 +2902,13 @@ export default function UserManagement() {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: #38bdf8;
+          color: var(--accent);
         }
 
         .detail-value {
           font-size: 0.9375rem;
           font-weight: 600;
-          color: #f8fafc;
+          color: var(--text-primary);
         }
 
         .modal-actions {
@@ -2786,13 +2916,13 @@ export default function UserManagement() {
           justify-content: flex-end;
           gap: 12px;
           padding-top: 14px;
-          border-top: 1px solid #334155;
+          border-top: 1px solid var(--border);
         }
 
         .cancel-modal-btn {
-          background: #334155;
-          border: 1px solid #475569;
-          color: #f8fafc;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border);
+          color: var(--text-secondary);
           padding: 8px 16px;
           border-radius: 6px;
           cursor: pointer;
@@ -2825,17 +2955,17 @@ export default function UserManagement() {
         .form-group label {
           font-size: 0.75rem;
           font-weight: 700;
-          color: #94a3b8;
+          color: var(--text-secondary);
           text-transform: uppercase;
         }
 
         .form-group input, .form-group select {
           padding: 8px 12px;
-          border: 1px solid #334155;
+          border: 1px solid var(--border);
           border-radius: 6px;
           font-size: 0.875rem;
-          background: #0f172a;
-          color: #f8fafc;
+          background: var(--bg-card);
+          color: var(--text-primary);
         }
 
         .form-group-checkbox {
@@ -2850,8 +2980,8 @@ export default function UserManagement() {
           gap: 4px;
           max-height: 260px;
           overflow-y: auto;
-          background: #0f172a;
-          border: 1px solid #334155;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border);
           border-radius: 6px;
           padding: 8px;
         }
@@ -2866,32 +2996,32 @@ export default function UserManagement() {
         }
 
         .permission-row:hover {
-          background: rgba(255, 255, 255, 0.05);
+          background: var(--bg-card);
         }
 
         .permission-action {
           font-family: monospace;
           font-weight: 700;
-          color: #38bdf8;
+          color: var(--accent);
         }
 
         .permission-desc {
-          color: #94a3b8;
+          color: var(--text-secondary);
           font-size: 0.75rem;
         }
 
         .error-banner {
-          background: rgba(239, 68, 68, 0.15);
+          background: rgba(239, 68, 68, 0.08);
           border: 1px solid #ef4444;
-          color: #f87171;
+          color: #dc2626;
           padding: 8px 12px;
           border-radius: 6px;
           font-size: 0.8125rem;
         }
 
         .empty-state-card {
-          background: #1e293b;
-          border: 1px solid #334155;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
           border-radius: 12px;
           padding: 32px;
           text-align: center;
@@ -2899,6 +3029,7 @@ export default function UserManagement() {
           flex-direction: column;
           align-items: center;
           gap: 12px;
+          box-shadow: var(--shadow-card);
         }
 
         .empty-icon {

@@ -209,6 +209,7 @@ export function priceOrder(
       modifiers,
       course: line.course,
       seatNumber: line.seatNumber,
+      notes: line.notes,
     });
     subtotalMinor += lineSubtotalMinor;
     taxTotalMinor += lineTaxMinor;
