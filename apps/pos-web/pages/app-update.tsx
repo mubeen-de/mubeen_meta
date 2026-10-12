@@ -120,7 +120,7 @@ export default function AppUpdatePage() {
       const data: GitStatusInfo = await res.json();
       setStatus(data);
       if (!selectedBranch) {
-        setSelectedBranch(data.branch || "main");
+        setSelectedBranch("main");
       }
       if (data.remotes.length > 0 && !selectedRemote) {
         setSelectedRemote(data.remotes[0].name || "origin");
@@ -547,11 +547,14 @@ export default function AppUpdatePage() {
                       {status?.branches && status.branches.length > 0 ? (
                         status.branches.map((b) => (
                           <option key={b} value={b}>
-                            {b} {b === status.branch ? "(active)" : ""}
+                            {b === "main" ? "main (Production Client — Recommended)" : b === "beta" ? "beta (Testing Channel)" : b} {b === status.branch ? "(active)" : ""}
                           </option>
                         ))
                       ) : (
-                        <option value={status?.branch || "main"}>{status?.branch || "main"}</option>
+                        <>
+                          <option value="main">main (Production Client — Recommended)</option>
+                          <option value="beta">beta (Testing Channel)</option>
+                        </>
                       )}
                     </select>
                   </div>

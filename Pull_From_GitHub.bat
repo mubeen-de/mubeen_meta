@@ -40,9 +40,19 @@ echo  - Target Remote : origin (%REMOTE_URL%)
 echo =======================================================================
 echo.
 
-:: 4. Select Target Branch to Pull
-set TARGET_BRANCH=!CURRENT_BRANCH!
-echo [STEP 1/2] Branch to pull: [!TARGET_BRANCH!]
+:: 4. Select Target Branch to Pull (CLIENT PRODUCTION DEFAULTS TO 'main')
+echo [STEP 1/2] SELECT UPDATE CHANNEL TO PULL:
+echo  [1] Production Stable (main)  - Recommended for Client Deployments [DEFAULT]
+echo  [2] Beta Testing (beta)       - Developer Testing Builds
+echo  [3] Current Local Branch      - [!CURRENT_BRANCH!]
+echo.
+set TARGET_BRANCH=main
+set /p BRANCH_CHOICE="Select channel [Press ENTER for 1 (main)]: "
+if "%BRANCH_CHOICE%"=="2" set TARGET_BRANCH=beta
+if "%BRANCH_CHOICE%"=="3" set TARGET_BRANCH=!CURRENT_BRANCH!
+if "%BRANCH_CHOICE%"=="" set TARGET_BRANCH=main
+echo.
+echo Target branch to pull: [!TARGET_BRANCH!]
 echo.
 
 :: 5. Execute Verbose Pull & Capture Logs
