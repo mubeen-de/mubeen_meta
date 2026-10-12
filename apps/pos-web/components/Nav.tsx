@@ -157,6 +157,7 @@ export const SIDEBAR_GROUPS: SidebarGroupDef[] = [
       { href: "/user-management", permission: "users.manage", label: "User Management", alwaysVisible: true },
       { href: "/role-management", permission: "users.manage", label: "Role Management", alwaysVisible: true },
       { href: "/settings/company", permission: "settings.manage", label: "Company Details", alwaysVisible: true },
+      { href: "/app-update", permission: "settings.manage", label: "App Update & Pull", alwaysVisible: true },
       // pages/table-management.tsx guards on menu.category.manage
       { href: "/table-management", permission: "menu.category.manage", label: "Table Management" },
       { href: "/admin", permission: "report.read", label: "Admin Overview Hub" },
@@ -579,16 +580,16 @@ export default function Nav({ variant = "pill" }: NavProps): JSX.Element | null 
             );
           })}
 
-          {/* Drawer-only item: Check Updates */}
+          {/* Drawer-only item: Check Updates / App Update */}
           <button
             type="button"
             className="menu-row-item"
             onClick={() => {
-              alert(`Checking kapMeta POS System Updates...\n\nCurrent Version: ${appVersion || "0.1.0"}\nDatabase: Synchronized\nStatus: Up to date (Latest Stable Release).`);
+              router.push("/app-update");
             }}
           >
             <div className="item-icon-col">{drawerGroupIcon("updates")}</div>
-            <span className="item-label-text">Check Updates</span>
+            <span className="item-label-text">App Update & Pull</span>
           </button>
 
           {/* Drawer-only item: Logout */}

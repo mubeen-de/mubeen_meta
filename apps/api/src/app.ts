@@ -25,6 +25,7 @@ import { ordersRouter } from './routes/orders';
 import { settingsRouter } from './routes/settings';
 import { taxSettingsRouter } from './routes/tax-settings';
 import { adminRouter } from './routes/admin';
+import { appUpdateRouter } from './routes/app-update';
 import { mapDomainError } from './errors';
 
 // Global BigInt JSON serialization support for Express
@@ -45,6 +46,7 @@ export function createApp(): Express {
 
   // --- Real service routers (top-level prefixes per API_AND_EVENTS_CATALOG.md) ---
   app.use('/auth', authRouter);
+  app.use('/admin/system/update', appUpdateRouter);
   app.use('/admin', adminRouter);
   app.use('/menu', menuRouter);
   app.use('/special-notes', specialNotesRouter);

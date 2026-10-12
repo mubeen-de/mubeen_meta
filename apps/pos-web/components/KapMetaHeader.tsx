@@ -186,7 +186,7 @@ export default function KapMetaHeader({
   };
 
   const handleCheckUpdates = () => {
-    alert(`Checking kapMeta POS System Updates...\n\nCurrent Version: ${appVersion || "—"}\nDatabase: Synchronized\nStatus: Up to date (Latest Stable Release).`);
+    router.push("/app-update");
   };
 
   return (
@@ -610,7 +610,7 @@ export default function KapMetaHeader({
                     <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
                   </svg>
                 </div>
-                <span className="item-label-text">Check Updates</span>
+                <span className="item-label-text">App Update & Pull</span>
               </button>
 
               {/* Drawer-only item: Logout */}

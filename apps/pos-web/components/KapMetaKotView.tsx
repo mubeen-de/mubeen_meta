@@ -495,6 +495,55 @@ export default function KapMetaKotView({
             <div className="empty-desc">
               All kitchen orders have been prepared or match no search query.
             </div>
+            <div style={{ display: "flex", gap: "10px", marginTop: "16px", justifyContent: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="btn-view-kot-list"
+                onClick={() => {
+                  if (onOpenKotList) onOpenKotList();
+                  else router.push("/kitchen?view=list");
+                }}
+                style={{
+                  padding: "8px 18px",
+                  background: "#4f46e5",
+                  color: "#ffffff",
+                  borderRadius: "8px",
+                  border: "none",
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 4px rgba(79, 70, 229, 0.3)",
+                }}
+              >
+                📑 View KOT History (Kot List)
+              </button>
+              <button
+                type="button"
+                className="btn-view-orders"
+                onClick={() => {
+                  router.push("/orders");
+                }}
+                style={{
+                  padding: "8px 18px",
+                  background: "#0284c7",
+                  color: "#ffffff",
+                  borderRadius: "8px",
+                  border: "none",
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 2px 4px rgba(2, 132, 199, 0.3)",
+                }}
+              >
+                📋 View Active Orders
+              </button>
+            </div>
             {channelFilter !== "ALL" && (
               <button
                 type="button"

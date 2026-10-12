@@ -60,7 +60,11 @@ function deriveFloorStatus(activeOrder: any): "RUNNING" | "RUNNING_KOT" | "PRINT
   const kots = activeOrder.kotTickets || [];
   if (activeOrder.status === "PAID" || activeOrder.status === "SETTLED") return "PAID";
   if (activeOrder.status === "PRINTED" || activeOrder.status === "BILLING") return "PRINTED";
-  if (kots.some((k: any) => k.status !== "CANCELLED")) return "RUNNING_KOT";
+  // A table is only in RUNNING_KOT status if there is an active, unserved KOT currently in the kitchen
+  const hasActiveKitchenKot = kots.some(
+    (k: any) => k.status !== "CANCELLED" && k.status !== "SERVED"
+  );
+  if (hasActiveKitchenKot) return "RUNNING_KOT";
   return "RUNNING";
 }
 
