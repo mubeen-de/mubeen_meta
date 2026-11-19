@@ -22,14 +22,22 @@ router.get("/categories", requireAuth, requirePermission("menu.read"), async (re
   }
 });
 
+function serializeMenuItem(item: any) {
+  return {
+    ...item,
+    priceMinor: String(item.priceMinor ?? 0),
+    parcelPriceMinor: item.parcelPriceMinor != null ? String(item.parcelPriceMinor) : String(item.priceMinor ?? 0),
+    zomatoPriceMinor: item.zomatoPriceMinor != null ? String(item.zomatoPriceMinor) : String(item.priceMinor ?? 0),
+    swiggyPriceMinor: item.swiggyPriceMinor != null ? String(item.swiggyPriceMinor) : String(item.priceMinor ?? 0),
+  };
+}
+
 router.get("/items", requireAuth, requirePermission("menu.read"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
     const catalogRepository = new PrismaMenuCatalogRepository(prisma);
     const items = await catalogRepository.listAllItems(outletId);
-    res.status(200).json(
-      items.map((item) => ({ ...item, priceMinor: String(item.priceMinor) }))
-    );
+    res.status(200).json(items.map(serializeMenuItem));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "internal error" });
@@ -53,7 +61,23 @@ router.post("/categories", requireAuth, requirePermission("menu.category.manage"
 
 router.post("/items", requireAuth, requirePermission("menu.item.manage"), async (req: AuthedRequest, res) => {
   try {
-    const { categoryId, name, description, priceMinor, isVeg, taxRate } = req.body;
+    const {
+      categoryId,
+      name,
+      description,
+      onlineDisplayName,
+      shortCode,
+      priceMinor,
+      parcelPriceMinor,
+      parcelAvailable,
+      zomatoPriceMinor,
+      zomatoAvailable,
+      swiggyPriceMinor,
+      swiggyAvailable,
+      isVeg,
+      taxRate,
+      imageUrl,
+    } = req.body;
     const outletId = req.auth!.outletId;
 
     if (!categoryId || !name) {
@@ -67,12 +91,21 @@ router.post("/items", requireAuth, requirePermission("menu.item.manage"), async 
       categoryId,
       name: String(name).trim(),
       description: description ? String(description).trim() : undefined,
+      onlineDisplayName: onlineDisplayName ? String(onlineDisplayName).trim() : undefined,
+      shortCode: shortCode ? String(shortCode).trim() : undefined,
       priceMinor: BigInt(priceMinor || 0),
+      parcelPriceMinor: parcelPriceMinor !== undefined && parcelPriceMinor !== null ? BigInt(parcelPriceMinor) : undefined,
+      parcelAvailable: typeof parcelAvailable === "boolean" ? parcelAvailable : true,
+      zomatoPriceMinor: zomatoPriceMinor !== undefined && zomatoPriceMinor !== null ? BigInt(zomatoPriceMinor) : undefined,
+      zomatoAvailable: typeof zomatoAvailable === "boolean" ? zomatoAvailable : true,
+      swiggyPriceMinor: swiggyPriceMinor !== undefined && swiggyPriceMinor !== null ? BigInt(swiggyPriceMinor) : undefined,
+      swiggyAvailable: typeof swiggyAvailable === "boolean" ? swiggyAvailable : true,
       isVeg: typeof isVeg === "boolean" ? isVeg : true,
       taxRate: typeof taxRate === "number" ? taxRate : Number(taxRate || 5),
+      imageUrl: imageUrl ? String(imageUrl).trim() : undefined,
     });
 
-    res.status(201).json({ ...item, priceMinor: String(item.priceMinor) });
+    res.status(201).json(serializeMenuItem(item));
   } catch (err: any) {
     console.error("Error creating menu item:", err);
     res.status(500).json({ error: err.message || "Failed to create menu item" });
@@ -333,19 +366,44 @@ router.get("/modifier-groups/:id/options", requireAuth, requirePermission("menu.
   }
 });
 
-// PATCH /menu/items/:id - edit name/price/description/category/veg/tax (was missing entirely)
+// PATCH /menu/items/:id - edit name/price/description/category/veg/tax/image/channel-prices
 router.patch("/items/:id", requireAuth, requirePermission("menu.item.manage"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
     const catalogRepository = new PrismaMenuCatalogRepository(prisma);
-    const { name, description, categoryId, isVeg, priceMinor, taxRate } = req.body;
+    const {
+      name,
+      description,
+      onlineDisplayName,
+      shortCode,
+      categoryId,
+      isVeg,
+      priceMinor,
+      parcelPriceMinor,
+      parcelAvailable,
+      zomatoPriceMinor,
+      zomatoAvailable,
+      swiggyPriceMinor,
+      swiggyAvailable,
+      taxRate,
+      imageUrl,
+    } = req.body;
     const item = await catalogRepository.updateMenuItem(outletId, req.params.id, {
       name,
       description,
+      onlineDisplayName,
+      shortCode,
       categoryId,
       isVeg,
       priceMinor: priceMinor !== undefined ? BigInt(priceMinor) : undefined,
+      parcelPriceMinor: parcelPriceMinor !== undefined ? (parcelPriceMinor === null ? null : BigInt(parcelPriceMinor)) : undefined,
+      parcelAvailable,
+      zomatoPriceMinor: zomatoPriceMinor !== undefined ? (zomatoPriceMinor === null ? null : BigInt(zomatoPriceMinor)) : undefined,
+      zomatoAvailable,
+      swiggyPriceMinor: swiggyPriceMinor !== undefined ? (swiggyPriceMinor === null ? null : BigInt(swiggyPriceMinor)) : undefined,
+      swiggyAvailable,
       taxRate,
+      imageUrl: imageUrl !== undefined ? (imageUrl ? String(imageUrl).trim() : null) : undefined,
     });
     res.status(200).json({ ...item, price: String(item.price ?? "") });
   } catch (err: any) {
@@ -399,29 +457,84 @@ router.get("/categories/:categoryId/items", requireAuth, requirePermission("menu
     const catalogRepository = new PrismaMenuCatalogRepository(prisma);
     const items = await catalogRepository.listByCategory(_req.params.categoryId);
 
-    res.status(200).json(
-      items.map((item) => ({ ...item, priceMinor: String(item.priceMinor) }))
-    );
+    res.status(200).json(items.map(serializeMenuItem));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "internal error" });
   }
 });
 
+function computeAutoResumeDate(params: {
+  autoResumeAt?: string | null;
+  durationOption?: string | null; // "1hr" | "2hr" | "6hr" | "nextday" | "indefinite"
+  durationMinutes?: number | null;
+}): Date | null {
+  const { autoResumeAt, durationOption, durationMinutes } = params;
+  if (autoResumeAt) {
+    const d = new Date(autoResumeAt);
+    if (!isNaN(d.getTime())) return d;
+  }
+  if (typeof durationMinutes === "number" && durationMinutes > 0) {
+    return new Date(Date.now() + durationMinutes * 60 * 1000);
+  }
+  if (durationOption === "1hr") {
+    return new Date(Date.now() + 60 * 60 * 1000);
+  }
+  if (durationOption === "2hr") {
+    return new Date(Date.now() + 2 * 60 * 60 * 1000);
+  }
+  if (durationOption === "6hr") {
+    return new Date(Date.now() + 6 * 60 * 60 * 1000);
+  }
+  if (durationOption === "nextday") {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(6, 0, 0, 0); // 6:00 AM tomorrow
+    return d;
+  }
+  return null;
+}
+
 router.get("/availability", requireAuth, requirePermission("menu.read"), async (req: AuthedRequest, res) => {
   try {
     const outletId = req.auth!.outletId;
+
+    // 1. Auto-resume any items whose auto_resume_at timestamp has passed
+    await prisma.$executeRaw`
+      UPDATE item_availability
+      SET state = 'ON'::availability_state,
+          stock_qty = CASE WHEN stock_qty <= 0 THEN 100 ELSE stock_qty END,
+          auto_resume_at = NULL,
+          version = version + 1,
+          updated_at = NOW()
+      WHERE outlet_id = ${outletId}::uuid
+        AND state = 'OFF'::availability_state
+        AND auto_resume_at IS NOT NULL
+        AND auto_resume_at <= NOW()
+    `.catch(() => {});
+
+    await prisma.$executeRaw`
+      UPDATE menu_item_availability
+      SET is_out_of_stock = false,
+          auto_resume_at = NULL,
+          updated_at = NOW()
+      WHERE outlet_id = ${outletId}::uuid
+        AND is_out_of_stock = true
+        AND auto_resume_at IS NOT NULL
+        AND auto_resume_at <= NOW()
+    `.catch(() => {});
+
     let menuItems = await prisma.menuItem.findMany({
       where: { outletId, isActive: true },
       include: { category: true },
-      orderBy: { name: "asc" },
+      orderBy: [{ category: { sortOrder: "asc" } }, { name: "asc" }],
     });
 
     if (menuItems.length === 0) {
       menuItems = await prisma.menuItem.findMany({
         where: { isActive: true },
         include: { category: true },
-        orderBy: { name: "asc" },
+        orderBy: [{ category: { sortOrder: "asc" } }, { name: "asc" }],
       });
     }
 
@@ -434,26 +547,48 @@ router.get("/availability", requireAuth, requirePermission("menu.read"), async (
       return true;
     });
 
+    const itemIds = menuItems.map((m) => m.id);
+    const channelRows = itemIds.length > 0
+      ? await prisma.$queryRaw<Array<{
+          id: string;
+          short_code: string | null;
+          parcel_price: bigint | null;
+          parcel_available: boolean | null;
+          zomato_price: bigint | null;
+          zomato_available: boolean | null;
+          swiggy_price: bigint | null;
+          swiggy_available: boolean | null;
+        }>>`
+          SELECT id::text, short_code, parcel_price, parcel_available, zomato_price, zomato_available, swiggy_price, swiggy_available
+          FROM menu_items
+          WHERE id = ANY(${itemIds}::uuid[])
+        `.catch(() => [])
+      : [];
+    const channelMap = new Map(channelRows.map((r) => [r.id, r]));
+
     const availabilityRows = await prisma.$queryRaw<Array<{
       item_id: string;
       state: string;
       version: number;
       stock_qty: number | null;
+      auto_resume_at: Date | string | null;
     }>>`
-      SELECT item_id, state::text, version, stock_qty
+      SELECT item_id, state::text, version, stock_qty, auto_resume_at
       FROM item_availability
       WHERE outlet_id = ${outletId}::uuid
     `.catch(() => []);
 
-    const availByItem = new Map<string, { state: string; version: number; stockQty: number }>();
+    const availByItem = new Map<string, { state: string; version: number; stockQty: number; autoResumeAt: string | null }>();
     for (const row of availabilityRows) {
       const prev = availByItem.get(row.item_id);
       const stock = row.stock_qty != null ? Number(row.stock_qty) : 100;
+      const resumeStr = row.auto_resume_at ? new Date(row.auto_resume_at).toISOString() : null;
       if (!prev || (row.version || 1) >= prev.version) {
         availByItem.set(row.item_id, {
           state: row.state || "ON",
           version: row.version || 1,
           stockQty: stock,
+          autoResumeAt: resumeStr,
         });
       }
     }
@@ -461,22 +596,37 @@ router.get("/availability", requireAuth, requirePermission("menu.read"), async (
     res.status(200).json(
       menuItems.map((item) => {
         const avail = availByItem.get(item.id);
+        const ch = channelMap.get(item.id);
         const stockQty = avail?.stockQty ?? 100;
         const isStocked = avail ? (avail.state !== "OFF" && stockQty > 0) : item.isActive;
+        const autoResumeAt = !isStocked && avail?.autoResumeAt ? avail.autoResumeAt : null;
         const priceMinor = Number(item.price || 0);
+        const parcelPriceMinor = ch?.parcel_price != null ? Number(ch.parcel_price) : priceMinor;
+        const zomatoPriceMinor = ch?.zomato_price != null ? Number(ch.zomato_price) : priceMinor;
+        const swiggyPriceMinor = ch?.swiggy_price != null ? Number(ch.swiggy_price) : priceMinor;
         return {
           id: item.id,
           menuItemId: item.id,
           name: item.name,
+          onlineDisplayName: item.onlineDisplayName || null,
+          shortCode: ch?.short_code ?? null,
           description: item.description || "",
           categoryName: item.category?.name || "General",
           category: item.category?.name || "General",
           isStocked,
           stockQty,
+          autoResumeAt,
           version: avail?.version ?? 1,
           priceMinor: priceMinor.toString(),
           price: (priceMinor / 100).toFixed(2),
+          parcelPriceMinor: parcelPriceMinor.toString(),
+          parcelAvailable: ch?.parcel_available ?? true,
+          zomatoPriceMinor: zomatoPriceMinor.toString(),
+          zomatoAvailable: ch?.zomato_available ?? true,
+          swiggyPriceMinor: swiggyPriceMinor.toString(),
+          swiggyAvailable: ch?.swiggy_available ?? true,
           isVeg: item.isVeg,
+          imageUrl: (item as any).imageUrl || null,
         };
       })
     );
@@ -501,6 +651,9 @@ router.patch("/items/:menuItemId/availability", requireAuth, requirePermission("
     }
 
     const nextState = typeof isStocked === "boolean" && isStocked === false ? "OFF" : "ON";
+    const targetResumeAt = nextState === "OFF" ? computeAutoResumeDate(req.body) : null;
+    const targetResumeIso = targetResumeAt ? targetResumeAt.toISOString() : null;
+
     const accounts = await prisma.channelAccount.findMany({
       where: { outletId },
       select: { id: true },
@@ -514,32 +667,28 @@ router.patch("/items/:menuItemId/availability", requireAuth, requirePermission("
       });
       if (existing) {
         newVersion = existing.version + 1;
-        if (typeof stockQty === "number") {
-          await prisma.$executeRaw`
-            UPDATE item_availability
-            SET state = ${nextState}::availability_state,
-                stock_qty = ${stockQty},
-                version = version + 1,
-                updated_at = NOW(),
-                updated_by = ${req.auth!.userId || null}::uuid
-            WHERE id = ${existing.id}::uuid
-          `;
-        } else {
-          await prisma.item_availability.update({
-            where: { id: existing.id },
-            data: { state: nextState as any, version: { increment: 1 }, updated_at: new Date(), updated_by: req.auth!.userId },
-          });
-        }
-      } else {
-        const initialQty = typeof stockQty === "number" ? stockQty : 100;
+        const effectiveStock = typeof stockQty === "number" ? stockQty : (nextState === "OFF" ? 0 : 100);
         await prisma.$executeRaw`
-          INSERT INTO item_availability (outlet_id, item_id, channel_id, state, stock_qty, version, created_at, updated_at, created_by, updated_by)
+          UPDATE item_availability
+          SET state = ${nextState}::availability_state,
+              stock_qty = ${effectiveStock},
+              auto_resume_at = ${targetResumeIso}::timestamptz,
+              version = version + 1,
+              updated_at = NOW(),
+              updated_by = ${req.auth!.userId || null}::uuid
+          WHERE id = ${existing.id}::uuid
+        `;
+      } else {
+        const initialQty = typeof stockQty === "number" ? stockQty : (nextState === "OFF" ? 0 : 100);
+        await prisma.$executeRaw`
+          INSERT INTO item_availability (outlet_id, item_id, channel_id, state, stock_qty, auto_resume_at, version, created_at, updated_at, created_by, updated_by)
           VALUES (
             ${outletId}::uuid,
             ${item.id}::uuid,
             ${channelId}::uuid,
             ${nextState}::availability_state,
             ${initialQty},
+            ${targetResumeIso}::timestamptz,
             ${newVersion},
             NOW(),
             NOW(),
@@ -550,13 +699,30 @@ router.patch("/items/:menuItemId/availability", requireAuth, requirePermission("
       }
     }
 
-    const effectiveStockQty = typeof stockQty === "number" ? stockQty : 100;
+    const effectiveStockQty = typeof stockQty === "number" ? stockQty : (nextState === "OFF" ? 0 : 100);
     const finalStocked = nextState !== "OFF" && effectiveStockQty > 0;
 
     await prisma.menuItem.update({
       where: { id: req.params.menuItemId },
       data: { isActive: finalStocked },
     }).catch(() => {});
+
+    await prisma.$executeRaw`
+      INSERT INTO menu_item_availability (outlet_id, menu_item_id, is_out_of_stock, auto_resume_at, updated_at, updated_by)
+      VALUES (
+        ${outletId}::uuid,
+        ${item.id}::uuid,
+        ${!finalStocked},
+        ${targetResumeIso}::timestamptz,
+        NOW(),
+        ${req.auth!.userId || null}::uuid
+      )
+      ON CONFLICT (menu_item_id) DO UPDATE
+      SET is_out_of_stock = EXCLUDED.is_out_of_stock,
+          auto_resume_at = EXCLUDED.auto_resume_at,
+          updated_at = NOW(),
+          updated_by = EXCLUDED.updated_by
+    `.catch(() => {});
 
     await prisma.auditLog.create({
       data: {
@@ -566,7 +732,7 @@ router.patch("/items/:menuItemId/availability", requireAuth, requirePermission("
         entityType: "MENU_ITEM_86",
         entityId: item.id,
         beforeState: { isStocked: item.isActive },
-        afterState: { isStocked: finalStocked, stockQty: effectiveStockQty, version: newVersion },
+        afterState: { isStocked: finalStocked, stockQty: effectiveStockQty, autoResumeAt: targetResumeIso, version: newVersion },
       },
     }).catch(() => {});
 
@@ -578,11 +744,17 @@ router.patch("/items/:menuItemId/availability", requireAuth, requirePermission("
         itemId: item.id,
         stockQty: effectiveStockQty,
         isStocked: finalStocked,
+        autoResumeAt: targetResumeIso,
         version: newVersion,
       });
     }).catch(() => {});
 
-    res.status(200).json({ newVersion, isStocked: finalStocked, stockQty: effectiveStockQty });
+    res.status(200).json({
+      newVersion,
+      isStocked: finalStocked,
+      stockQty: effectiveStockQty,
+      autoResumeAt: targetResumeIso,
+    });
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ error: err.message });

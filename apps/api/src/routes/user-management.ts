@@ -40,16 +40,26 @@ router.get(
   requirePermission(...USER_READ_PERMISSIONS),
   async (req: AuthedRequest, res) => {
     try {
-      const outletId = req.auth!.outletId;
-      const whereClause = outletId
-        ? {
-            userRoles: {
-              some: {
-                OR: [{ outletId }, { outletId: null }],
-              },
-            },
-          }
-        : {};
+      const requestedOutletId = req.query.outletId as string | undefined;
+      const whereClause =
+        requestedOutletId && requestedOutletId !== "all"
+          ? {
+              OR: [
+                {
+                  userRoles: {
+                    some: {
+                      OR: [{ outletId: requestedOutletId }, { outletId: null }],
+                    },
+                  },
+                },
+                {
+                  userRoles: {
+                    none: {},
+                  },
+                },
+              ],
+            }
+          : {};
       const users = await prisma.user.findMany({
         where: whereClause,
         orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
@@ -169,43 +179,41 @@ router.post(
   }
 );
 
-// PATCH /roles/:id — rename or redescribe a role.
-router.patch(
-  "/roles/:id",
-  requireAuth,
-  requirePermission(USER_MANAGEMENT_PERMISSION),
-  async (req: AuthedRequest, res) => {
-    try {
-      const { id } = req.params;
-      const { name, description } = req.body as { name?: string; description?: string | null };
+// PATCH / PUT /roles/:id — rename or redescribe a role.
+const handleUpdateRole = async (req: AuthedRequest, res: any) => {
+  try {
+    const { id } = req.params;
+    const { name, description } = req.body as { name?: string; description?: string | null };
 
-      const role = await prisma.role.findUnique({ where: { id } });
-      if (!role) {
-        res.status(404).json({ error: "role not found" });
+    const role = await prisma.role.findUnique({ where: { id } });
+    if (!role) {
+      res.status(404).json({ error: "role not found" });
+      return;
+    }
+
+    const updateData: { name?: string; description?: string | null; updatedBy: string } = {
+      updatedBy: req.auth!.userId,
+    };
+    if (name && name.trim()) {
+      const clash = await prisma.role.findFirst({ where: { name: name.trim(), NOT: { id } } });
+      if (clash) {
+        res.status(400).json({ error: "role name already in use" });
         return;
       }
-
-      const updateData: { name?: string; description?: string | null; updatedBy: string } = {
-        updatedBy: req.auth!.userId,
-      };
-      if (name && name.trim()) {
-        const clash = await prisma.role.findFirst({ where: { name: name.trim(), NOT: { id } } });
-        if (clash) {
-          res.status(400).json({ error: "role name already in use" });
-          return;
-        }
-        updateData.name = name.trim();
-      }
-      if (description !== undefined) updateData.description = description;
-
-      const updated = await prisma.role.update({ where: { id }, data: updateData });
-      res.status(200).json({ id: updated.id, name: updated.name, description: updated.description });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "internal error" });
+      updateData.name = name.trim();
     }
+    if (description !== undefined) updateData.description = description;
+
+    const updated = await prisma.role.update({ where: { id }, data: updateData });
+    res.status(200).json({ id: updated.id, name: updated.name, description: updated.description });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "internal error" });
   }
-);
+};
+
+router.patch("/roles/:id", requireAuth, requirePermission(USER_MANAGEMENT_PERMISSION), handleUpdateRole);
+router.put("/roles/:id", requireAuth, requirePermission(USER_MANAGEMENT_PERMISSION), handleUpdateRole);
 
 // DELETE /roles/:id — remove a custom role (blocked if still assigned to users).
 router.delete(
@@ -346,12 +354,15 @@ router.post(
         return;
       }
 
-      if (outletId) {
-        if (!isUuid(outletId)) {
+      const normalizedOutletId =
+        outletId && typeof outletId === "string" && outletId.trim() !== "" ? outletId.trim() : null;
+
+      if (normalizedOutletId) {
+        if (!isUuid(normalizedOutletId)) {
           res.status(400).json({ error: "Invalid outlet ID format" });
           return;
         }
-        const outlet = await prisma.outlet.findUnique({ where: { id: outletId } });
+        const outlet = await prisma.outlet.findUnique({ where: { id: normalizedOutletId } });
         if (!outlet) {
           res.status(404).json({ error: "outlet not found" });
           return;
@@ -371,7 +382,7 @@ router.post(
               roleId: role.id,
             },
           },
-          data: { outletId: outletId ?? null },
+          data: { outletId: normalizedOutletId },
           include: { role: true, outlet: true },
         });
       } else {
@@ -379,7 +390,7 @@ router.post(
           data: {
             userId,
             roleId: role.id,
-            outletId: outletId ?? null,
+            outletId: normalizedOutletId,
           },
           include: { role: true, outlet: true },
         });
@@ -538,12 +549,15 @@ router.post(
         return;
       }
 
-      if (outletId) {
-        if (!isUuid(outletId)) {
+      const normalizedOutletId =
+        outletId && typeof outletId === "string" && outletId.trim() !== "" ? outletId.trim() : null;
+
+      if (normalizedOutletId) {
+        if (!isUuid(normalizedOutletId)) {
           res.status(400).json({ error: "Invalid outlet ID format" });
           return;
         }
-        const outlet = await prisma.outlet.findUnique({ where: { id: outletId } });
+        const outlet = await prisma.outlet.findUnique({ where: { id: normalizedOutletId } });
         if (!outlet) {
           res.status(400).json({ error: "Outlet not found" });
           return;
@@ -585,7 +599,7 @@ router.post(
             data: {
               userId: user.id,
               roleId: resolvedRoleId,
-              outletId: outletId ?? null,
+              outletId: normalizedOutletId,
             },
           });
         }

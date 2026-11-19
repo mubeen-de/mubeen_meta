@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
-import { authedFetch } from "../lib/auth";
+import { authedFetch, fetchMe } from "../lib/auth";
 import { useKapmetaSocket } from "../lib/useKapmetaSocket";
 import MoveKotModal from "./MoveKotModal";
 import AddTableModal from "./AddTableModal";
 import A2aAgentStatusDrawer from "./A2aAgentStatusDrawer";
 import HeldOrdersDrawer, { HeldOrderData } from "./HeldOrdersDrawer";
+import ReserveTableModal from "./ReserveTableModal";
+import TableQrModal from "./TableQrModal";
 import { useChannelOperations } from "../lib/channelOperations";
 
 interface TableItem {
@@ -13,7 +15,7 @@ interface TableItem {
   tableNumber: string;
   capacity: number;
   section: string | null;
-  status: "VACANT" | "RUNNING" | "PRINTED" | "PAID" | "RUNNING_KOT" | "DIRTY";
+  status: "VACANT" | "RUNNING" | "PRINTED" | "PAID" | "RUNNING_KOT" | "DIRTY" | "RESERVED";
   kitchenStage?: "QUEUED" | "COOKING" | "READY" | "SERVED" | null;
   activeOrderId?: string | null;
   totalMinor?: number;
@@ -24,6 +26,14 @@ interface TableItem {
   mergePrimaryTableId?: string | null;
   mergedWith?: string[];
   isMergePrimary?: boolean;
+  reservation?: {
+    id: string;
+    customerName: string;
+    phone?: string;
+    guestCount: number;
+    reservationTime?: string;
+    notes?: string;
+  } | null;
 }
 
 interface TableViewFloorProps {
@@ -44,12 +54,28 @@ export default function TableViewFloor({
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [isMoveKotOpen, setIsMoveKotOpen] = useState(false);
   const [isAddTableOpen, setIsAddTableOpen] = useState(false);
+  const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [targetTableIdForModal, setTargetTableIdForModal] = useState<string | null>(null);
   const [inspectTable, setInspectTable] = useState<TableItem | null>(null);
   const [inspectOrderDetails, setInspectOrderDetails] = useState<any | null>(null);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [isA2aDrawerOpen, setIsA2aDrawerOpen] = useState(false);
   const [isHeldDrawerOpen, setIsHeldDrawerOpen] = useState(false);
   const [heldTablesMap, setHeldTablesMap] = useState<Record<string, any>>({});
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    fetchMe().then((u) => setCurrentUser(u)).catch(() => { });
+  }, []);
+
+  const isCashier = Boolean(
+    currentUser?.roles?.some((r: string) =>
+      ["CASHIER", "OUTLET_MANAGER", "SUPER_ADMIN", "ADMIN", "OWNER"].includes(r.toUpperCase())
+    ) ||
+    currentUser?.permissions?.includes("order.void") ||
+    currentUser?.permissions?.includes("table.transfer")
+  );
 
   const updateHeldTables = React.useCallback(() => {
     try {
@@ -90,13 +116,13 @@ export default function TableViewFloor({
             ? ((tbl.status as any) || "RUNNING")
             : tbl.mergeGroupId
               ? "RUNNING"
-              : "VACANT";
+              : (tbl.status || "VACANT");
           const queuedKot = (currentOrder?.kots || []).some((k: any) =>
             k.status === "QUEUED" || k.status === "KOT_CREATED" || k.status === "PENDING"
           );
           let kitchenStage: TableItem["kitchenStage"] = currentOrder ? ((tbl.kitchenStage as any) || null) : null;
           if (kitchenStage === "QUEUED" && !queuedKot) kitchenStage = null;
-          let elapsedMinutes: number | undefined;
+          let elapsedMinutes: number | undefined = tbl.elapsedMinutes;
           if (currentOrder?.createdAt) {
             const created = new Date(currentOrder.createdAt).getTime();
             elapsedMinutes = Math.max(1, Math.floor((Date.now() - created) / 60000));
@@ -110,7 +136,7 @@ export default function TableViewFloor({
             status,
             kitchenStage,
             activeOrderId: currentOrder?.id || tbl.activeOrderId || null,
-            totalMinor: Number(currentOrder?.grandTotalPaise || 0),
+            totalMinor: Number(currentOrder?.grandTotalPaise || currentOrder?.grandTotalMinor || tbl.currentOrderAmountMinor || tbl.totalMinor || 0),
             elapsedMinutes,
             itemCount: currentOrder?.items?.length || 0,
             currentOrder,
@@ -118,6 +144,7 @@ export default function TableViewFloor({
             mergePrimaryTableId: tbl.mergePrimaryTableId || null,
             mergedWith: Array.isArray(tbl.mergedWith) ? tbl.mergedWith : [],
             isMergePrimary: !!tbl.isMergePrimary,
+            reservation: tbl.reservation || null,
           };
         });
 
@@ -127,6 +154,44 @@ export default function TableViewFloor({
       console.error("Failed to load tables", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSeatReservedTable = async (e: React.MouseEvent, tbl: TableItem) => {
+    e.stopPropagation();
+    try {
+      const res = await authedFetch(`/tables/${tbl.id}/seat`, { method: "POST" });
+      if (res.ok) {
+        setActionFeedback(`Table ${tbl.tableNumber} seated for dining.`);
+        setTimeout(() => setActionFeedback(null), 4000);
+        await fetchTablesData();
+        return;
+      }
+      const errJson = await res.json().catch(() => ({}));
+      setActionFeedback(errJson.error || `Could not seat table ${tbl.tableNumber}.`);
+      setTimeout(() => setActionFeedback(null), 5000);
+    } catch (err) {
+      setActionFeedback(`Network error seating table ${tbl.tableNumber}.`);
+      setTimeout(() => setActionFeedback(null), 5000);
+    }
+  };
+
+  const handleCancelReservation = async (e: React.MouseEvent, tbl: TableItem) => {
+    e.stopPropagation();
+    try {
+      const res = await authedFetch(`/tables/${tbl.id}/cancel-reservation`, { method: "POST" });
+      if (res.ok) {
+        setActionFeedback(`Reservation for Table ${tbl.tableNumber} cancelled.`);
+        setTimeout(() => setActionFeedback(null), 4000);
+        await fetchTablesData();
+        return;
+      }
+      const errJson = await res.json().catch(() => ({}));
+      setActionFeedback(errJson.error || `Could not cancel reservation on table ${tbl.tableNumber}.`);
+      setTimeout(() => setActionFeedback(null), 5000);
+    } catch (err) {
+      setActionFeedback(`Network error cancelling reservation on table ${tbl.tableNumber}.`);
+      setTimeout(() => setActionFeedback(null), 5000);
     }
   };
 
@@ -297,6 +362,7 @@ export default function TableViewFloor({
     [tables]
   );
   const vacantCount = useMemo(() => tables.filter((t) => t.status === "VACANT").length, [tables]);
+  const reservedCount = useMemo(() => tables.filter((t) => t.status === "RESERVED").length, [tables]);
   const printedCount = useMemo(() => tables.filter((t) => t.status === "PRINTED").length, [tables]);
   const runningKotCount = useMemo(() => tables.filter((t) => t.status === "RUNNING_KOT").length, [tables]);
   const activeRevenuePaise = useMemo(
@@ -321,6 +387,10 @@ export default function TableViewFloor({
           <strong className="kpi-val text-emerald">{vacantCount}</strong>
         </div>
         <div className="kpi-stat-item">
+          <span className="kpi-label">RESERVED</span>
+          <strong className="kpi-val" style={{ color: "#fb923c" }}>{reservedCount}</strong>
+        </div>
+        <div className="kpi-stat-item">
           <span className="kpi-label">PRINTED BILL</span>
           <strong className="kpi-val text-indigo">{printedCount}</strong>
         </div>
@@ -338,13 +408,17 @@ export default function TableViewFloor({
       <div className="table-view-toolbar">
         <div className="toolbar-left">
           <h2 className="toolbar-title">Table View</h2>
-          <button
-            type="button"
-            className="btn-move-kot"
-            onClick={() => setIsMoveKotOpen(true)}
-          >
-            Move KOT / Items
-          </button>
+          {isCashier && (
+            <button
+              type="button"
+              className="btn-move-kot"
+              onClick={() => {
+                setIsMoveKotOpen(true);
+              }}
+            >
+              Move KOT / Items
+            </button>
+          )}
           <button
             type="button"
             className={`btn-move-kot ${mergeMode ? "active-merge" : ""}`}
@@ -355,6 +429,30 @@ export default function TableViewFloor({
             }}
           >
             {mergeMode ? "✕ Cancel Merge" : "🔀 Merge Tables"}
+          </button>
+          <button
+            type="button"
+            className="btn-move-kot"
+            style={{ background: "#c2410c", color: "#ffffff", borderColor: "#ea580c" }}
+            onClick={() => {
+              setTargetTableIdForModal(null);
+              setIsReserveModalOpen(true);
+            }}
+            title="Book reservation for incoming guests"
+          >
+            📅 Reservations
+          </button>
+          <button
+            type="button"
+            className="btn-move-kot"
+            style={{ background: "#047857", color: "#ffffff", borderColor: "#059669" }}
+            onClick={() => {
+              setTargetTableIdForModal(null);
+              setIsQrModalOpen(true);
+            }}
+            title="Generate and print Customer Self-Order QR codes"
+          >
+            📱 Table QRs
           </button>
 
           {/* Status Color Legend Pills */}
@@ -370,6 +468,12 @@ export default function TableViewFloor({
               onClick={() => setStatusFilter(statusFilter === "VACANT" ? null : "VACANT")}
             >
               <span className="dot dot-blank"></span> Blank Table
+            </button>
+            <button
+              className={`legend-pill ${statusFilter === "RESERVED" ? "active" : ""}`}
+              onClick={() => setStatusFilter(statusFilter === "RESERVED" ? null : "RESERVED")}
+            >
+              <span className="dot dot-reserved"></span> Reserved ({reservedCount})
             </button>
             <button
               className={`legend-pill ${statusFilter === "RUNNING" ? "active" : ""}`}
@@ -422,7 +526,7 @@ export default function TableViewFloor({
             type="button"
             className="btn-toolbar-icon"
             onClick={fetchTablesData}
-            title="Refresh Table Floor"
+            title="Refresh Tables Status"
           >
             🔄
           </button>
@@ -446,7 +550,7 @@ export default function TableViewFloor({
               else router.push("/orders?tab=online");
             }}
           >
-            Delivery {!deliveryActive && "(Paused)"}
+            🛵 Delivery {!deliveryActive && "(Paused)"}
           </button>
 
           <button
@@ -460,7 +564,7 @@ export default function TableViewFloor({
               else router.push("/?mode=PICKUP");
             }}
           >
-            Pick Up {!takeawayActive && "(Paused)"}
+            🛍️ Pick Up {!takeawayActive && "(Paused)"}
           </button>
         </div>
       </div>
@@ -511,17 +615,19 @@ export default function TableViewFloor({
               <h3 className="section-title-label">{sectionName}</h3>
               <div className="tables-grid">
                 {secTables.map((tbl) => {
-                  const isOccupied = tbl.status !== "VACANT";
+                  const isOccupied = tbl.status !== "VACANT" && tbl.status !== "RESERVED";
                   const cardClass =
-                    tbl.status === "RUNNING_KOT"
-                      ? "card-running-kot"
-                      : tbl.status === "PRINTED"
-                      ? "card-printed"
-                      : tbl.status === "PAID"
-                      ? "card-paid"
-                      : tbl.status === "RUNNING"
-                      ? "card-running"
-                      : "card-blank";
+                    tbl.status === "RESERVED"
+                      ? "card-reserved"
+                      : tbl.status === "RUNNING_KOT"
+                        ? "card-running-kot"
+                        : tbl.status === "PRINTED"
+                          ? "card-printed"
+                          : tbl.status === "PAID"
+                            ? "card-paid"
+                            : tbl.status === "RUNNING"
+                              ? "card-running"
+                              : "card-blank";
 
                   const isMergeSelected = mergeSourceIds.includes(tbl.id);
                   return (
@@ -534,6 +640,8 @@ export default function TableViewFloor({
                       <div className="card-top-info">
                         {isOccupied && tbl.elapsedMinutes ? (
                           <span className="elapsed-badge">{tbl.elapsedMinutes} Min</span>
+                        ) : tbl.status === "RESERVED" ? (
+                          <span className="elapsed-badge" style={{ color: "#c2410c", fontWeight: 800 }}>RESERVED</span>
                         ) : (
                           <span className="blank-spacer"></span>
                         )}
@@ -542,10 +650,10 @@ export default function TableViewFloor({
                           <span
                             style={{
                               fontSize: "9px",
-                              fontWeight: 700,
-                              color: "#c4b5fd",
-                              background: "rgba(99, 102, 241, 0.25)",
-                              border: "1px solid rgba(129, 140, 248, 0.5)",
+                              fontWeight: 800,
+                              color: "#3730a3",
+                              background: "rgba(255, 255, 255, 0.85)",
+                              border: "1px solid #6366f1",
                               borderRadius: "4px",
                               padding: "1px 5px",
                               marginLeft: 4,
@@ -556,31 +664,49 @@ export default function TableViewFloor({
                         )}
                         {isOccupied && tbl.totalMinor ? (
                           <span className="table-amount">₹{(tbl.totalMinor / 100).toFixed(2)}</span>
+                        ) : tbl.status === "RESERVED" && tbl.reservation?.reservationTime ? (
+                          <span className="table-amount" style={{ color: "#9a3412" }}>
+                            {new Date(tbl.reservation.reservationTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          </span>
                         ) : (
                           <span className="blank-amount"></span>
                         )}
                       </div>
 
+                      {tbl.status === "RESERVED" && (
+                        <div style={{ margin: "2px 0 4px 0", textAlign: "center", display: "flex", justifyContent: "center" }}>
+                          <span style={{ fontSize: "10.5px", background: "#ffedd5", color: "#7c2d12", border: "1.5px solid #ea580c", borderRadius: "5px", padding: "1.5px 7px", fontWeight: 900, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                            <span>📅</span>
+                            <span style={{ color: "#7c2d12", fontWeight: 900 }}>{tbl.reservation?.customerName || "Reserved"}</span>
+                            <span style={{ color: "#9a3412", fontWeight: 800 }}>({tbl.reservation?.guestCount || tbl.capacity}p)</span>
+                          </span>
+                        </div>
+                      )}
+
                       {isOccupied && tbl.kitchenStage && (
                         <div style={{ margin: "2px 0 4px 0", textAlign: "center", display: "flex", justifyContent: "center" }}>
                           {((tbl.kitchenStage as string) === "COOKING" || (tbl.kitchenStage as string) === "PREPARING") && (
-                            <span style={{ fontSize: "10px", background: "rgba(245, 158, 11, 0.2)", color: "#fbbf24", border: "1px solid rgba(245, 158, 11, 0.5)", borderRadius: "4px", padding: "1px 6px", fontWeight: 700 }}>
-                              👨‍🍳 Cooking
+                            <span style={{ fontSize: "10.5px", background: "#fef3c7", color: "#78350f", border: "1.5px solid #d97706", borderRadius: "5px", padding: "1.5px 7px", fontWeight: 900, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                              <span>👨‍🍳</span>
+                              <span style={{ color: "#78350f", fontWeight: 900 }}>Cooking</span>
                             </span>
                           )}
                           {((tbl.kitchenStage as string) === "READY" || (tbl.kitchenStage as string) === "FOOD_READY") && (
-                            <span style={{ fontSize: "10px", background: "rgba(16, 185, 129, 0.25)", color: "#34d399", border: "1px solid rgba(16, 185, 129, 0.6)", borderRadius: "4px", padding: "1px 6px", fontWeight: 800 }}>
-                              🔔 Food Ready
+                            <span style={{ fontSize: "10.5px", background: "#dcfce7", color: "#064e3b", border: "1.5px solid #16a34a", borderRadius: "5px", padding: "1.5px 7px", fontWeight: 900, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                              <span>🔔</span>
+                              <span style={{ color: "#064e3b", fontWeight: 900 }}>Food Ready</span>
                             </span>
                           )}
                           {tbl.kitchenStage === "QUEUED" && (
-                            <span style={{ fontSize: "10px", background: "rgba(14, 165, 233, 0.2)", color: "#38bdf8", border: "1px solid rgba(14, 165, 233, 0.4)", borderRadius: "4px", padding: "1px 6px", fontWeight: 700 }}>
-                              🟡 KOT Queued
+                            <span style={{ fontSize: "10.5px", background: "#e0f2fe", color: "#082f49", border: "1.5px solid #0284c7", borderRadius: "5px", padding: "1.5px 7px", fontWeight: 900, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                              <span>🟡</span>
+                              <span style={{ color: "#082f49", fontWeight: 900 }}>KOT Queued</span>
                             </span>
                           )}
                           {tbl.kitchenStage === "SERVED" && (
-                            <span style={{ fontSize: "10px", background: "rgba(99, 102, 241, 0.2)", color: "#a5b4fc", border: "1px solid rgba(99, 102, 241, 0.4)", borderRadius: "4px", padding: "1px 6px", fontWeight: 700 }}>
-                              🍽️ Served
+                            <span style={{ fontSize: "10.5px", background: "#e0e7ff", color: "#1e1b4b", border: "1.5px solid #4338ca", borderRadius: "5px", padding: "1.5px 7px", fontWeight: 900, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                              <span>🍽️</span>
+                              <span style={{ color: "#1e1b4b", fontWeight: 900 }}>Served</span>
                             </span>
                           )}
                         </div>
@@ -595,28 +721,79 @@ export default function TableViewFloor({
                       )}
 
                       <div className="card-bottom-actions">
-                        {((tbl.kitchenStage as string) === "READY" || (tbl.kitchenStage as string) === "FOOD_READY") && (
-                          <button
-                            type="button"
-                            className="btn-card-serve"
-                            style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: "4px", padding: "2px 6px", fontSize: "10px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "2px" }}
-                            onClick={(e) => handleServeTable(e, tbl)}
-                            title="Mark all ready food served to table"
-                          >
-                            🍽️ Serve
-                          </button>
+                        {tbl.status === "RESERVED" ? (
+                          <>
+                            <button
+                              type="button"
+                              className="btn-card-serve"
+                              style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: "4px", padding: "2px 6px", fontSize: "10px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "2px" }}
+                              onClick={(e) => handleSeatReservedTable(e, tbl)}
+                              title="Seat guests and start dining session"
+                            >
+                              🪑 Seat
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-card-vacant"
+                              style={{ background: "#ef4444", color: "#fff", border: "none", borderRadius: "4px", padding: "2px 6px", fontSize: "10px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "2px" }}
+                              onClick={(e) => handleCancelReservation(e, tbl)}
+                              title="Cancel table reservation"
+                            >
+                              ✕ Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {((tbl.kitchenStage as string) === "READY" || (tbl.kitchenStage as string) === "FOOD_READY") && (
+                              <button
+                                type="button"
+                                className="btn-card-serve"
+                                style={{ background: "#10b981", color: "#fff", border: "none", borderRadius: "4px", padding: "2px 6px", fontSize: "10px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "2px" }}
+                                onClick={(e) => handleServeTable(e, tbl)}
+                                title="Mark all ready food served to table"
+                              >
+                                🍽️ Serve
+                              </button>
+                            )}
+                            {(tbl.status === "PAID" || tbl.status === "PRINTED" || tbl.kitchenStage === "SERVED" || tbl.status === "DIRTY") && (
+                              <button
+                                type="button"
+                                className="btn-card-vacant"
+                                style={{ background: "#6366f1", color: "#fff", border: "none", borderRadius: "4px", padding: "2px 6px", fontSize: "10px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "2px" }}
+                                onClick={(e) => handleVacateTable(e, tbl)}
+                                title="Clear table and mark vacant for next guests"
+                              >
+                                🧹 Vacant
+                              </button>
+                            )}
+                            {tbl.status === "VACANT" && (
+                              <button
+                                type="button"
+                                className="card-action-icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTargetTableIdForModal(tbl.id);
+                                  setIsReserveModalOpen(true);
+                                }}
+                                title="Reserve this table"
+                              >
+                                📅
+                              </button>
+                            )}
+                          </>
                         )}
-                        {(tbl.status === "PAID" || tbl.status === "PRINTED" || tbl.kitchenStage === "SERVED" || tbl.status === "DIRTY") && (
-                          <button
-                            type="button"
-                            className="btn-card-vacant"
-                            style={{ background: "#6366f1", color: "#fff", border: "none", borderRadius: "4px", padding: "2px 6px", fontSize: "10px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "2px" }}
-                            onClick={(e) => handleVacateTable(e, tbl)}
-                            title="Clear table and mark vacant for next guests"
-                          >
-                            🧹 Vacant
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="card-action-icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTargetTableIdForModal(tbl.id);
+                            setIsQrModalOpen(true);
+                          }}
+                          title="Generate Table QR Code"
+                        >
+                          📱
+                        </button>
                         <button
                           type="button"
                           className="card-action-icon"
@@ -670,6 +847,8 @@ export default function TableViewFloor({
       {isMoveKotOpen && (
         <MoveKotModal
           tables={tables}
+          isCashier={isCashier}
+          currentUserId={currentUser?.userId}
           onClose={() => setIsMoveKotOpen(false)}
           onSuccess={fetchTablesData}
         />
@@ -805,6 +984,33 @@ export default function TableViewFloor({
           </div>
         </div>
       )}
+
+      {/* Table Reservation Modal */}
+      <ReserveTableModal
+        isOpen={isReserveModalOpen}
+        tables={tables}
+        selectedTableId={targetTableIdForModal}
+        onClose={() => {
+          setIsReserveModalOpen(false);
+          setTargetTableIdForModal(null);
+        }}
+        onSuccess={() => {
+          setActionFeedback("Table reservation confirmed successfully!");
+          setTimeout(() => setActionFeedback(null), 4000);
+          fetchTablesData();
+        }}
+      />
+
+      {/* Customer Self-Order QR Modal */}
+      <TableQrModal
+        isOpen={isQrModalOpen}
+        tables={tables}
+        selectedTableId={targetTableIdForModal}
+        onClose={() => {
+          setIsQrModalOpen(false);
+          setTargetTableIdForModal(null);
+        }}
+      />
 
       <style jsx>{`
         .table-view-container {
@@ -969,6 +1175,7 @@ export default function TableViewFloor({
         .dot-printed { background: #22c55e; }
         .dot-paid { background: #3b82f6; }
         .dot-running-kot { background: #eab308; }
+        .dot-reserved { background: #f97316; }
 
         .toolbar-right {
           display: flex;
@@ -997,25 +1204,47 @@ export default function TableViewFloor({
         .btn-add-table:hover {
           background: var(--btn-primary-hover);
         }
-        .btn-delivery-jump, .btn-pickup-jump {
-          background: var(--btn-alert-bg);
-          color: var(--btn-alert-text);
-          border: 1px solid var(--btn-alert-border);
-          border-radius: 4px;
-          padding: 5px 12px;
+        .btn-delivery-jump {
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+          color: #ffffff;
+          border: 1px solid #2563eb;
+          border-radius: 6px;
+          padding: 6px 14px;
           font-size: 0.75rem;
           font-weight: 700;
           cursor: pointer;
           transition: all 0.15s ease;
+          box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
         }
-        .btn-delivery-jump:hover, .btn-pickup-jump:hover {
-          background: var(--btn-alert-hover);
+        .btn-delivery-jump:hover:not(:disabled) {
+          background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+          box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+          transform: translateY(-1px);
+        }
+        .btn-pickup-jump {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: #ffffff;
+          border: 1px solid #10b981;
+          border-radius: 6px;
+          padding: 6px 14px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+        }
+        .btn-pickup-jump:hover:not(:disabled) {
+          background: linear-gradient(135deg, #059669 0%, #047857 100%);
+          box-shadow: 0 4px 10px rgba(16, 185, 129, 0.35);
+          transform: translateY(-1px);
         }
         .btn-delivery-jump:disabled, .btn-pickup-jump:disabled {
           opacity: 0.45;
           cursor: not-allowed;
-          background: #475569;
-          border-color: #334155;
+          background: #475569 !important;
+          border-color: #334155 !important;
+          box-shadow: none !important;
+          transform: none !important;
         }
 
         .floor-matrix-scroll {
@@ -1088,6 +1317,12 @@ export default function TableViewFloor({
           background: #bae6fd; /* Cyan */
           color: #0c4a6e;
           border-color: #7dd3fc;
+        }
+        .card-reserved {
+          background: #fed7aa; /* Amber / Orange */
+          color: #7c2d12;
+          border-color: #fb923c;
+          box-shadow: 0 0 12px rgba(249, 115, 22, 0.25);
         }
 
         .card-top-info {

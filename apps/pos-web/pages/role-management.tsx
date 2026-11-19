@@ -186,9 +186,11 @@ export default function RoleManagementPage() {
     try {
       const res = await authedFetch(`/roles/${role.id}/permissions`);
       if (res.ok) {
-        const data = (await res.json()) as PermissionApi[];
-        const granted = new Set(data.map((p) => p.id));
-        setRoleGrantedIds(granted);
+        const data = await res.json();
+        const ids: string[] = Array.isArray(data)
+          ? data.map((p: any) => (typeof p === "string" ? p : p.id))
+          : (data?.permissionIds || []);
+        setRoleGrantedIds(new Set(ids));
       } else {
         setRoleGrantedIds(new Set());
       }

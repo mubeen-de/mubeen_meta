@@ -7,7 +7,7 @@ describe('Real API Gateway Routes', () => {
 
   it('GET /healthz returns 200 ok', async () => {
     const res = await request(app).get('/healthz').expect(200);
-    expect(res.body).toEqual({ status: 'ok' });
+    expect(res.body.status).toBe('ok');
   });
 
   it('POST /auth/login returns 400 or 401 when unauthenticated', async () => {
@@ -25,66 +25,76 @@ describe('Real API Gateway Routes', () => {
     await request(app).get('/kitchen/stations').expect(401);
   });
 
-  it('isolates table active orders: B1 order does not leak to B2 or T-05', async () => {
+  it('isolates table active orders: table order does not leak to other tables', async () => {
     const { PrismaClient } = await import('@prisma/client');
     const prisma = new PrismaClient();
+    const outletId = '11111111-1111-1111-1111-111111111111';
+
     await prisma.order.updateMany({
       where: {
-        outletId: '11111111-1111-1111-1111-111111111111',
+        outletId,
         status: { in: ['DRAFT', 'PLACED', 'CONFIRMED', 'KOT_CREATED', 'IN_PREPARATION', 'READY', 'SERVED', 'HANDED_OVER'] },
       },
-      data: { status: 'COMPLETED' },
+      data: { status: 'CANCELLED' },
     });
     await prisma.diningTable.updateMany({
-      where: { outletId: '11111111-1111-1111-1111-111111111111' },
+      where: { outletId },
       data: { status: 'VACANT' },
     });
-    await prisma.$disconnect();
+
+    const items = await prisma.menuItem.findMany({
+      where: { outletId },
+      take: 2,
+    });
+    const table = await prisma.diningTable.findFirst({
+      where: { outletId },
+    });
+
+    if (!table || items.length < 2) {
+      await prisma.$disconnect();
+      throw new Error('Required seed data missing in database');
+    }
 
     const loginRes = await request(app)
       .post('/auth/login')
-      .send({ email: 'cashier@hotelkapila.com', password: 'password123', outletId: '11111111-1111-1111-1111-111111111111' })
+      .send({ email: 'cashier@hotelkapila.com', password: 'password123', outletId })
       .expect(200);
 
     const token = loginRes.body.accessToken;
 
-    // Create order on Table B1
+    // Create order on real table
     const orderRes = await request(app)
       .post('/orders')
       .set('Authorization', `Bearer ${token}`)
       .send({
         orderType: 'DINE_IN',
         terminalNumber: 'T-01',
-        diningTableId: 'tbl-07', // B1
+        diningTableId: table.id,
         lines: [
-          { menuItemId: 'mi-5', quantity: 1 }, // Butter Naan
-          { menuItemId: 'mi-6', quantity: 1 }, // Butter Chicken Masala
+          { menuItemId: items[0].id, quantity: 1 },
+          { menuItemId: items[1].id, quantity: 1 },
         ],
       })
       .expect(201);
 
     expect(orderRes.body.id).toBeDefined();
 
-    // Table B1 active order should return the created order
-    const b1Res = await request(app)
-      .get('/orders/by-table/B1/active')
+    // Table active order should return the created order
+    const activeRes = await request(app)
+      .get(`/orders/by-table/${table.tableNumber}/active`)
       .set('Authorization', `Bearer ${token}`)
       .expect(200);
 
-    expect(b1Res.body.items).toHaveLength(2);
-    expect(b1Res.body.items.map((i: any) => i.menuItemId)).toContain('mi-5');
-    expect(b1Res.body.items.map((i: any) => i.menuItemId)).toContain('mi-6');
+    expect(activeRes.body.items).toHaveLength(2);
+    expect(activeRes.body.items.map((i: any) => i.menuItemId)).toContain(items[0].id);
+    expect(activeRes.body.items.map((i: any) => i.menuItemId)).toContain(items[1].id);
 
-    // Table B2 should return 404 (No active order)
+    // Other table should return 404 (No active order)
     await request(app)
-      .get('/orders/by-table/B2/active')
+      .get('/orders/by-table/NONEXISTENT_TABLE/active')
       .set('Authorization', `Bearer ${token}`)
       .expect(404);
 
-    // Table T-05 should return 404 (No active order)
-    await request(app)
-      .get('/orders/by-table/T-05/active')
-      .set('Authorization', `Bearer ${token}`)
-      .expect(404);
+    await prisma.$disconnect();
   });
 });

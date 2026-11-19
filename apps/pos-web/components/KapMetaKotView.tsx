@@ -151,6 +151,18 @@ export default function KapMetaKotView({
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
+  // Format ISO timestamp to readable 12-hour customer order time (e.g. 09:25 AM)
+  const formatOrderTime = (isoString?: string) => {
+    if (!isoString) return "";
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true });
+    } catch {
+      return "";
+    }
+  };
+
   const handleStatusTransition = (
     ticketId: string,
     kotNo: string | number,
@@ -603,26 +615,42 @@ export default function KapMetaKotView({
                         : "kds-queued"
                     }`}
                   >
-                    {/* Top Bar: Channel Badge + Table/Tag + KOT # + Timer */}
+                    {/* Top Bar: Channel Badge + Table/Tag + KOT # on Left, Timer (other time) on Right (In One Line) */}
                     <div className="kds-card-header">
-                      <div className="kds-channel-row">
-                        <span className={`kds-channel-badge ${channelClass}`}>
-                          {card.orderTypeDisplay || card.orderType || "Dine In"}
-                        </span>
-                        {card.orderTag && (
-                          <span className="kds-table-tag">{card.orderTag}</span>
-                        )}
-                        <span className="kds-kot-num">#{card.kotNo}</span>
+                      <div className="kds-header-top-row">
+                        <div className="kds-channel-row">
+                          <span className={`kds-channel-badge ${channelClass}`}>
+                            {card.orderTypeDisplay || card.orderType || "Dine In"}
+                          </span>
+                          {card.orderTag && (
+                            <span className="kds-table-tag">{card.orderTag}</span>
+                          )}
+                          <span className="kds-kot-num">#{card.kotNo}</span>
+                        </div>
+
+                        <div
+                          className={`kds-timer-badge ${
+                            isExceeded ? "timer-exceeded" : isWarning ? "timer-warning" : "timer-normal"
+                          }`}
+                        >
+                          <span className="timer-icon">⏱</span>
+                          <span className="timer-val">{formattedTime}</span>
+                        </div>
                       </div>
 
-                      <div
-                        className={`kds-timer-badge ${
-                          isExceeded ? "timer-exceeded" : isWarning ? "timer-warning" : "timer-normal"
-                        }`}
-                      >
-                        <span className="timer-icon">⏱</span>
-                        <span className="timer-val">{formattedTime}</span>
-                      </div>
+                      {/* Sub-row: Ordered time below KOT no on the left */}
+                      {card.createdAt && (
+                        <div className="kds-header-sub-row">
+                          <div
+                            className="kds-order-time-chip"
+                            title="Time when customer ordered"
+                          >
+                            <span>🕒</span>
+                            <span className="kds-order-time-label">Ordered:</span>
+                            <span className="kds-order-time-val">{formatOrderTime(card.createdAt)}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Station / Biller row with status pill */}
@@ -794,12 +822,37 @@ export default function KapMetaKotView({
 
                   {/* Card Body / Metadata */}
                   <div className="card-inner-body">
-                    {/* Optional Token / Bill Tag (e.g. b18, b14, b3) */}
-                    {card.orderTag && (
-                      <div className="order-tag-line">
+                    {/* Optional Token / Bill Tag + Order Time */}
+                    <div className="order-tag-line" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      {card.orderTag ? (
                         <span className="order-tag-text">{card.orderTag}</span>
-                      </div>
-                    )}
+                      ) : (
+                        <span className="order-tag-text" style={{ background: "#f8fafc", color: "#64748b", border: "1px solid #e2e8f0" }}>
+                          {card.orderTypeDisplay || "Direct"}
+                        </span>
+                      )}
+                      {card.createdAt && (
+                        <span
+                          className="kot-ordered-time"
+                          style={{
+                            fontSize: "0.72rem",
+                            fontWeight: 700,
+                            color: "#0f172a",
+                            background: "#f1f5f9",
+                            padding: "2px 7px",
+                            borderRadius: "4px",
+                            border: "1px solid #cbd5e1",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                          title="Time when customer ordered"
+                        >
+                          <span style={{ color: "#64748b" }}>🕒 Ordered:</span>
+                          <span style={{ color: "#2563eb", fontWeight: 800 }}>{formatOrderTime(card.createdAt)}</span>
+                        </span>
+                      )}
+                    </div>
 
                     {/* Table Column Header: Item | Qty. */}
                     <div className="card-table-header-row">
@@ -808,9 +861,16 @@ export default function KapMetaKotView({
                     </div>
 
                     {/* Biller / Captain User Line */}
-                    <div className="biller-info-row">
-                      <span className="biller-user-icon">👤</span>
-                      <span className="biller-name-text">{card.biller}</span>
+                    <div className="biller-info-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span className="biller-user-icon">👤</span>
+                        <span className="biller-name-text">{card.biller}</span>
+                      </div>
+                      {card.createdAt && (
+                        <span style={{ fontSize: "0.68rem", color: "#64748b", fontWeight: 600 }}>
+                          Order Time: {formatOrderTime(card.createdAt)}
+                        </span>
+                      )}
                     </div>
 
                     {/* Items List */}
@@ -1186,14 +1246,24 @@ export default function KapMetaKotView({
           background: #f8fafc;
           border-bottom: 1px solid #e2e8f0;
           display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .kds-header-top-row {
+          display: flex;
           align-items: center;
           justify-content: space-between;
+          width: 100%;
+          gap: 8px;
         }
 
         .kds-channel-row {
           display: flex;
           align-items: center;
           gap: 6px;
+          min-width: 0;
+          flex: 1;
         }
 
         .kds-channel-badge {
@@ -1201,6 +1271,8 @@ export default function KapMetaKotView({
           font-weight: 700;
           padding: 2px 6px;
           border-radius: 4px;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
 
         .kds-channel-badge.channel-dine_in {
@@ -1237,12 +1309,46 @@ export default function KapMetaKotView({
           color: #334155;
           padding: 2px 6px;
           border-radius: 4px;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
 
         .kds-kot-num {
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
           font-weight: 800;
           color: #0f172a;
+          white-space: nowrap;
+          letter-spacing: -0.2px;
+        }
+
+        .kds-header-sub-row {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          width: 100%;
+        }
+
+        .kds-order-time-chip {
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: #1e293b;
+          background: #f1f5f9;
+          padding: 2px 7px;
+          border-radius: 5px;
+          border: 1px solid #cbd5e1;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .kds-order-time-label {
+          color: #64748b;
+          font-weight: 600;
+        }
+
+        .kds-order-time-val {
+          color: #2563eb;
+          font-weight: 800;
         }
 
         .kds-timer-badge {
@@ -1254,6 +1360,8 @@ export default function KapMetaKotView({
           font-family: monospace;
           padding: 2px 6px;
           border-radius: 4px;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
 
         .kds-timer-badge.timer-normal {

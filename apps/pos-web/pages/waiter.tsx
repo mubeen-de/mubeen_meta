@@ -8,8 +8,8 @@ import UnsuccessfulKotModal from "../components/UnsuccessfulKotModal";
 import LanServerDiscoveryModal from "../components/LanServerDiscoveryModal";
 import CaptainPinLoginModal from "../components/CaptainPinLoginModal";
 import WaiterCashTipsCalculator from "../components/WaiterCashTipsCalculator";
-import MoveKotModal from "../components/MoveKotModal";
 import CaptainStationModal from "../components/CaptainStationModal";
+import CaptainMenuQrModal from "../components/CaptainMenuQrModal";
 import AttractiveMenuItemCard, { MenuItemData } from "../components/menu/AttractiveMenuItemCard";
 import MenuCustomizerModal, { CustomizedItemSelection } from "../components/menu/MenuCustomizerModal";
 import { DietaryFilter } from "../components/menu/CategoryNavbar";
@@ -24,6 +24,7 @@ interface MenuItem {
   isStocked: boolean;
   stockQty: number;
   icon: string;
+  imageUrl?: string;
 }
 
 interface RawMenuItemApi extends Omit<MenuItem, "isStocked" | "stockQty" | "category"> {
@@ -38,6 +39,7 @@ interface DiningTable {
   section: string;
   status: "VACANT" | "OCCUPIED" | "BILLING" | "DIRTY";
   isActive: boolean;
+  totalMinor?: number;
   kitchenStage?: "QUEUED" | "COOKING" | "READY" | "SERVED" | null;
   orderStatus?: string | null;
   currentOrderId?: string | null;
@@ -51,6 +53,8 @@ interface DiningTable {
     id: string;
     waiterId?: string | null;
     waiterName?: string | null;
+    grandTotalPaise?: number;
+    totalAmount?: number;
     kots?: { id: string; ticketNumber: string; status: string }[];
   } | null;
 }
@@ -244,37 +248,7 @@ const ORDER_CATEGORIES = [
   "Noodles (Veg)",
 ];
 
-const DEFAULT_WAITER_TABLES: DiningTable[] = [
-  // AC Section
-  { id: "tbl_a1", tableNumber: "A1", capacity: 4, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a2", tableNumber: "A2", capacity: 2, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a3", tableNumber: "A3", capacity: 4, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a4", tableNumber: "A4", capacity: 6, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a5", tableNumber: "A5", capacity: 2, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a6", tableNumber: "A6", capacity: 4, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a7", tableNumber: "A7", capacity: 4, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a8", tableNumber: "A8", capacity: 2, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a9", tableNumber: "A9", capacity: 6, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a10", tableNumber: "A10", capacity: 4, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a11", tableNumber: "A11", capacity: 2, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a12", tableNumber: "A12", capacity: 4, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a13", tableNumber: "A13", capacity: 4, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a14", tableNumber: "A14", capacity: 6, section: "AC", status: "VACANT", isActive: true },
-  { id: "tbl_a15", tableNumber: "A15", capacity: 2, section: "AC", status: "VACANT", isActive: true },
-  // Non-AC Section
-  { id: "tbl_b1", tableNumber: "B1", capacity: 4, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b2", tableNumber: "B2", capacity: 2, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b3", tableNumber: "B3", capacity: 4, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b4", tableNumber: "B4", capacity: 6, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b5", tableNumber: "B5", capacity: 2, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b6", tableNumber: "B6", capacity: 4, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b7", tableNumber: "B7", capacity: 4, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b8", tableNumber: "B8", capacity: 2, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b9", tableNumber: "B9", capacity: 6, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b10", tableNumber: "B10", capacity: 4, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b11", tableNumber: "B11", capacity: 2, section: "Non-AC", status: "VACANT", isActive: true },
-  { id: "tbl_b12", tableNumber: "B12", capacity: 4, section: "Non-AC", status: "VACANT", isActive: true },
-];
+const DEFAULT_WAITER_TABLES: DiningTable[] = [];
 
 // Offline/network-failure fallback ONLY — used when /menu/items cannot be reached.
 // This is NOT the happy-path default; the captain tablet always fetches live menu
@@ -444,6 +418,19 @@ const OFFLINE_FALLBACK_MENU_ITEMS: MenuItem[] = [
 export default function WaiterDashboard() {
   const { me, loading: authLoading } = useAuthGuard("order.create");
 
+  const isWaiterOnly = Boolean(
+    !me ||
+      (me.roles?.some((r: string) => {
+        const up = r.toUpperCase();
+        return up.includes("WAITER") || up.includes("CAPTAIN") || up.includes("FLOOR") || up.includes("SERVER");
+      }) &&
+        !me.roles?.some((r: string) =>
+          ["ADMIN", "SUPER_ADMIN", "OWNER", "MANAGER", "CASHIER", "OUTLET_MANAGER", "RESTAURANT_ADMIN"].includes(
+            r.toUpperCase()
+          )
+        ))
+  );
+
   // Floor Map & Catalog States
   const [tables, setTables] = useState<DiningTable[]>(DEFAULT_WAITER_TABLES);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -499,6 +486,16 @@ export default function WaiterDashboard() {
   const [isServerIpModalOpen, setIsServerIpModalOpen] = useState<boolean>(false);
   const [isPinLoginModalOpen, setIsPinLoginModalOpen] = useState<boolean>(false);
   const [isCashTipsCalculatorOpen, setIsCashTipsCalculatorOpen] = useState<boolean>(false);
+  const [isCustomerQrOpen, setIsCustomerQrOpen] = useState<boolean>(false);
+  const [selectedQrTable, setSelectedQrTable] = useState<DiningTable | null>(null);
+  const [lastCustomerSelfOrder, setLastCustomerSelfOrder] = useState<{
+    orderId: string;
+    orderNumber: string | null;
+    tableId: string;
+    tableNumber: string;
+    itemsCount?: number;
+    captainCode?: string | null;
+  } | null>(null);
 
   // Connectivity & Feedback
   const [mounted, setMounted] = useState<boolean>(false);
@@ -512,16 +509,26 @@ export default function WaiterDashboard() {
 
   // Waiter Personal Shift Stats
   const [showStats, setShowStats] = useState<boolean>(false);
+  const [refreshingStats, setRefreshingStats] = useState<boolean>(false);
   const [myStats, setMyStats] = useState<{
     ordersToday: number;
     tablesServed: number;
     completedOrders: number;
+    activeOrders?: number;
     avgOrderMinutes: number | null;
     tipsMinor: string;
     serviceChargeMinor?: string;
     revenueMinor: string;
+    subtotalMinor?: string;
+    taxMinor?: string;
+    discountMinor?: string;
+    cashInHandMinor?: string;
+    cardSalesMinor?: string;
+    upiSalesMinor?: string;
+    otherSalesMinor?: string;
+    totalCollectedMinor?: string;
+    pendingDueMinor?: string;
   } | null>(null);
-  const [isMoveKotOpen, setIsMoveKotOpen] = useState(false);
 
   // Captain Station State (Dynamically resolved per waiter)
   const [stationCode, setStationCode] = useState<string>("cp1");
@@ -542,6 +549,7 @@ export default function WaiterDashboard() {
           else status = "OCCUPIED";
           const waiterId = tbl.waiterId || tbl.currentOrder?.waiterId || null;
           const waiterName = tbl.waiterName || tbl.currentOrder?.waiterName || null;
+          const orderTotalMinor = Number(tbl.currentOrder?.grandTotalPaise || tbl.currentOrderAmountMinor || tbl.totalMinor || 0);
           return {
             id: tbl.id,
             tableNumber: tbl.tableNumber,
@@ -554,6 +562,7 @@ export default function WaiterDashboard() {
             currentOrderId: tbl.currentOrder?.id || tbl.activeOrderId || null,
             waiterId,
             waiterName,
+            totalMinor: orderTotalMinor,
             mergeGroupId: tbl.mergeGroupId || null,
             mergePrimaryTableId: tbl.mergePrimaryTableId || null,
             mergedWith: Array.isArray(tbl.mergedWith) ? tbl.mergedWith : [],
@@ -563,6 +572,8 @@ export default function WaiterDashboard() {
                   id: tbl.currentOrder.id,
                   waiterId: tbl.currentOrder.waiterId || waiterId,
                   waiterName: tbl.currentOrder.waiterName || waiterName,
+                  grandTotalPaise: orderTotalMinor,
+                  totalAmount: orderTotalMinor / 100,
                   kots: tbl.currentOrder.kots || [],
                 }
               : null,
@@ -578,11 +589,14 @@ export default function WaiterDashboard() {
   };
 
   const fetchMyStats = async () => {
+    setRefreshingStats(true);
     try {
       const res = await authedFetch("/waiters/me/stats");
       if (res.ok) setMyStats(await res.json());
     } catch {
       // keep last snapshot
+    } finally {
+      setRefreshingStats(false);
     }
   };
 
@@ -604,10 +618,15 @@ export default function WaiterDashboard() {
           priceMinor: Number(item.priceMinor || (Number(item.price || 0) * 100)),
           isVeg: item.isVeg ?? true,
           isStocked: overrides[item.id] !== undefined
-            ? overrides[item.id]
+            ? (typeof overrides[item.id] === "object"
+                ? (overrides[item.id].autoResumeAt && Date.now() >= new Date(overrides[item.id].autoResumeAt).getTime()
+                    ? true
+                    : overrides[item.id].isStocked)
+                : overrides[item.id])
             : (item.isStocked !== undefined ? item.isStocked : (item.availability ? item.availability.isStocked : (item.isActive ?? true))),
           stockQty: item.availability ? item.availability.stockQty : (item.stockQty ?? 100),
           icon: item.icon || "🍽️",
+          imageUrl: item.imageUrl || item.image_url || undefined,
         }));
         setMenuItems(mapped);
         const cats = Array.from(new Set(mapped.map((item) => item.category).filter(Boolean)));
@@ -885,6 +904,35 @@ export default function WaiterDashboard() {
           })
           .catch(() => {});
       }
+      // Customer QR Self-Order notification (Real-time attribution to this captain)
+      if (
+        payload.topic === "customer.self_order_placed" ||
+        (payload.topic === "order.created" && payload.data?.isCustomerSelfOrder)
+      ) {
+        const orderData = (payload.data || {}) as any;
+        const myUserId = me?.userId;
+        const capCode = typeof orderData.captainCode === "string" ? orderData.captainCode.trim().toLowerCase() : "";
+        const isAttributedToMe =
+          (orderData.waiterId && myUserId && orderData.waiterId === myUserId) ||
+          (capCode && capCode === stationCode.trim().toLowerCase());
+
+        setLastCustomerSelfOrder({
+          orderId: String(orderData.orderId || ""),
+          orderNumber: orderData.orderNumber ? String(orderData.orderNumber) : "NEW",
+          tableId: String(orderData.tableId || orderData.diningTableId || ""),
+          tableNumber: String(orderData.tableNumber || ""),
+          itemsCount: Number(orderData.itemsCount || 1),
+          captainCode: orderData.captainCode ? String(orderData.captainCode) : stationCode,
+        });
+
+        const alertText = isAttributedToMe
+          ? `🔔 Customer Order at Table ${orderData?.tableNumber || ""}! Assigned to you (${stationCode}).`
+          : `📱 Customer Order at Table ${orderData?.tableNumber || ""} (Cap: ${orderData?.captainCode || "Staff"}).`;
+
+        showPickupNotification(alertText);
+        playPickupBeep();
+      }
+
       if (
         (payload.topic === "kot.status_updated" && status === "READY") ||
         (payload.topic === "order.status_updated" && stage === "FOOD_READY")
@@ -1213,6 +1261,14 @@ export default function WaiterDashboard() {
   };
 
   const serveTable = async (table: DiningTable) => {
+    // Waiter isolation check
+    const isManagerOrAdmin = me?.roles?.some((r: string) => ["ADMIN", "SUPER_ADMIN", "MANAGER", "CASHIER"].includes(r));
+    const tableWaiterId = table.currentOrder?.waiterId || table.waiterId;
+    if (!isManagerOrAdmin && tableWaiterId && me?.userId && tableWaiterId !== me.userId) {
+      const captainName = table.currentOrder?.waiterName || table.waiterName || "another captain";
+      showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${captainName}. You cannot serve another captain's table.`);
+      return;
+    }
     try {
       const res = await authedFetch(`/tables/${table.id}/serve`, { method: "POST" });
       if (res.ok) {
@@ -1233,6 +1289,14 @@ export default function WaiterDashboard() {
 
   // Open an OCCUPIED table for management (add items / void / bill) — loads its live order
   const openManageTable = async (table: DiningTable) => {
+    // Waiter isolation check: only assigned captain or admin/manager can manage order
+    const isManagerOrAdmin = me?.roles?.some((r: string) => ["ADMIN", "SUPER_ADMIN", "MANAGER", "CASHIER"].includes(r));
+    const tableWaiterId = table.currentOrder?.waiterId || table.waiterId;
+    if (!isManagerOrAdmin && tableWaiterId && me?.userId && tableWaiterId !== me.userId) {
+      const captainName = table.currentOrder?.waiterName || table.waiterName || "another captain";
+      showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${captainName}. You cannot manage another captain's table.`);
+      return;
+    }
     setActiveTable(table);
     setCart([]);
     setManageOrder(null);
@@ -1350,6 +1414,13 @@ export default function WaiterDashboard() {
 
   // Transfer: move active order from one table to a chosen vacant table
   const startTransfer = (table: DiningTable) => {
+    const isManagerOrAdmin = me?.roles?.some((r: string) => ["ADMIN", "SUPER_ADMIN", "MANAGER", "CASHIER"].includes(r));
+    const tableWaiterId = table.currentOrder?.waiterId || table.waiterId;
+    if (!isManagerOrAdmin && tableWaiterId && me?.userId && tableWaiterId !== me.userId) {
+      const captainName = table.currentOrder?.waiterName || table.waiterName || "another captain";
+      showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${captainName}. You cannot transfer another captain's table.`);
+      return;
+    }
     setTableActionError(null);
     setTransferFromTable(table);
   };
@@ -1377,11 +1448,31 @@ export default function WaiterDashboard() {
 
   // Merge: fold selected occupied tables' orders into one target table
   const toggleMergeSource = (tableId: string) => {
+    const target = tables.find((t) => t.id === tableId);
+    if (target) {
+      const isManagerOrAdmin = me?.roles?.some((r: string) => ["ADMIN", "SUPER_ADMIN", "MANAGER", "CASHIER"].includes(r));
+      const targetWaiterId = target.currentOrder?.waiterId || target.waiterId;
+      if (!isManagerOrAdmin && targetWaiterId && me?.userId && targetWaiterId !== me.userId) {
+        const captainName = target.currentOrder?.waiterName || target.waiterName || "another captain";
+        showPickupNotification(`⚠️ Table ${target.tableNumber} is assigned to Captain ${captainName}. You cannot merge another captain's table.`);
+        return;
+      }
+    }
     setMergeSourceIds((prev) => (prev.includes(tableId) ? prev.filter((id) => id !== tableId) : [...prev, tableId]));
   };
 
   const completeMerge = async (targetTableId: string) => {
     if (mergeSourceIds.length === 0) return;
+    const target = tables.find((t) => t.id === targetTableId);
+    if (target) {
+      const isManagerOrAdmin = me?.roles?.some((r: string) => ["ADMIN", "SUPER_ADMIN", "MANAGER", "CASHIER"].includes(r));
+      const targetWaiterId = target.currentOrder?.waiterId || target.waiterId;
+      if (!isManagerOrAdmin && targetWaiterId && me?.userId && targetWaiterId !== me.userId) {
+        const captainName = target.currentOrder?.waiterName || target.waiterName || "another captain";
+        showPickupNotification(`⚠️ Target Table ${target.tableNumber} is assigned to Captain ${captainName}. You cannot merge into another captain's table.`);
+        return;
+      }
+    }
     try {
       const res = await authedFetch("/tables/merge", {
         method: "POST",
@@ -1767,29 +1858,47 @@ export default function WaiterDashboard() {
         </div>
 
         <div className="flex items-center gap-2 text-slate-400 text-xs">
-          <Link
-            href="/"
-            className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-[11px] font-bold"
-            title="Switch to POS Terminal"
-          >
-            🖥️ POS
-          </Link>
+          {!isWaiterOnly && (
+            <>
+              <Link
+                href="/"
+                className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                title="Switch to POS Terminal"
+              >
+                🖥️ POS
+              </Link>
 
-          <Link
-            href="/kitchen"
-            className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-[11px] font-bold"
-            title="Switch to Kitchen KOT"
-          >
-            👨‍🍳 KOT
-          </Link>
+              <Link
+                href="/kitchen"
+                className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                title="Switch to Kitchen KOT"
+              >
+                👨‍🍳 KOT
+              </Link>
 
-          <Link
-            href="/admin?tab=daily-ops"
-            className="flex items-center gap-1 bg-indigo-950/60 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-900/80 px-2.5 py-1 rounded-lg text-[11px] font-bold"
-            title="Switch to Daily Operations"
+              <Link
+                href="/admin?tab=daily-ops"
+                className="flex items-center gap-1 bg-indigo-950/60 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-900/80 px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                title="Switch to Daily Operations"
+              >
+                📊 Ops
+              </Link>
+            </>
+          )}
+
+          {/* Show Menu QR for Customer button */}
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedQrTable(activeTable || tables[0] || null);
+              setIsCustomerQrOpen(true);
+            }}
+            className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border border-indigo-400/40 px-3 py-1 rounded-lg text-[11px] font-bold shadow-md shadow-indigo-900/30 transition active:scale-95"
+            title="Show Customer Menu QR Scanner"
           >
-            📊 Ops
-          </Link>
+            <span>📱</span>
+            <span>Menu QR</span>
+          </button>
 
           <button
             type="button"
@@ -1798,15 +1907,6 @@ export default function WaiterDashboard() {
             title="Shift Cash & Tips Reconciliation"
           >
             💰 Cash & Tips
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsPinLoginModalOpen(true)}
-            className="flex items-center gap-1.5 bg-slate-800 text-slate-200 hover:text-white px-2.5 py-1 rounded-lg text-[11px] font-bold"
-            title="Fast PIN Switch Staff"
-          >
-            🧑‍🍳 PIN
           </button>
 
           <button
@@ -2290,12 +2390,6 @@ export default function WaiterDashboard() {
                     >
                       {mergeMode ? "Cancel Merge" : "Merge Tables"}
                     </button>
-                    <button
-                      onClick={() => setIsMoveKotOpen(true)}
-                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-slate-100"
-                    >
-                      Move KOT
-                    </button>
                     {offlineCount > 0 && (
                       <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-950/40 text-amber-400 border border-amber-500/20">
                         {offlineCount} queued
@@ -2306,9 +2400,10 @@ export default function WaiterDashboard() {
                         setShowStats(true);
                         await fetchMyStats();
                       }}
-                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-slate-100"
+                      className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 flex items-center gap-1.5 transition-all shadow-sm"
                     >
-                      My Stats
+                      <span>📊</span>
+                      <span>Shift & Tax Stats</span>
                     </button>
                     <Link href="/waiter-monitor" className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-slate-800 text-slate-300 hover:text-slate-100">
                       Floor Monitor
@@ -2420,7 +2515,22 @@ export default function WaiterDashboard() {
                         <div>
                           {/* Table Header: Name & Status */}
                           <div className="flex justify-between items-start gap-2">
-                            <span className="text-2xl font-bold tracking-tight text-white">{table.tableNumber}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl font-bold tracking-tight text-white">{table.tableNumber}</span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedQrTable(table);
+                                  setIsCustomerQrOpen(true);
+                                }}
+                                className="px-2 py-0.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-700/60 hover:border-indigo-400 text-[10px] font-bold transition flex items-center gap-1 shadow-sm"
+                                title={`Show Customer Menu QR for Table ${table.tableNumber}`}
+                              >
+                                <span>📱</span>
+                                <span>QR</span>
+                              </button>
+                            </div>
                             <span className={`text-[10px] font-extrabold tracking-wider uppercase px-3 py-1 rounded-full border text-center leading-tight whitespace-pre-line ${badgeStyle}`}>
                               {badgeLabel}
                             </span>
@@ -2444,7 +2554,16 @@ export default function WaiterDashboard() {
                           )}
 
                           {(table.status === "OCCUPIED" || table.status === "BILLING") && (
-                            <div className="mt-2.5 flex items-center gap-1">
+                            <div className="mt-2.5 flex items-center justify-between bg-slate-950/80 border border-slate-800/80 rounded-xl px-3 py-1.5 shadow-inner">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Bill Amount</span>
+                              <span className="text-sm font-black text-emerald-400 tracking-tight">
+                                ₹{(((table.totalMinor || (table.currentOrder as any)?.grandTotalPaise || 0)) / 100).toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+
+                          {(table.status === "OCCUPIED" || table.status === "BILLING") && (
+                            <div className="mt-2 flex items-center gap-1">
                               {isOtherWaitersTable ? (
                                 <span
                                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-300 bg-amber-950/60 border border-amber-700/60 px-2.5 py-0.5 rounded-lg truncate max-w-full"
@@ -2502,27 +2621,79 @@ export default function WaiterDashboard() {
                               <>
                                 {table.kitchenStage === "READY" && (
                                   <button
-                                    onClick={() => serveTable(table)}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-2 text-xs font-bold transition-all shadow-sm active:scale-95 mb-0.5"
+                                    onClick={() => {
+                                      if (isOtherWaitersTable) {
+                                        showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${orderWaiterName || "another captain"}. You cannot serve their food.`);
+                                        return;
+                                      }
+                                      serveTable(table);
+                                    }}
+                                    disabled={isOtherWaitersTable}
+                                    title={
+                                      isOtherWaitersTable
+                                        ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot serve this table.`
+                                        : "Serve ready dishes to table"
+                                    }
+                                    className={`w-full rounded-xl py-2 text-xs font-bold transition-all shadow-sm active:scale-95 mb-0.5 ${
+                                      isOtherWaitersTable
+                                        ? "bg-[#182232]/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
+                                        : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                                    }`}
                                   >
-                                    Serve
+                                    {isOtherWaitersTable ? "🔒 Serve" : "Serve"}
                                   </button>
                                 )}
                                 <button
                                   onClick={() => {
+                                    if (isOtherWaitersTable) {
+                                      showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${orderWaiterName || "another captain"}. You cannot manage their orders.`);
+                                      return;
+                                    }
                                     setCoversCount(table.capacity || 2);
                                     openManageTable(table);
                                   }}
-                                  className="w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded-xl py-2.5 text-sm font-bold transition-all shadow active:scale-95 text-center"
+                                  disabled={isOtherWaitersTable}
+                                  title={
+                                    isOtherWaitersTable
+                                      ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot manage this table.`
+                                      : table.kitchenStage === "SERVED"
+                                      ? "Add next / Running"
+                                      : "Manage Order"
+                                  }
+                                  className={`w-full rounded-xl py-2.5 text-sm font-bold transition-all active:scale-95 text-center ${
+                                    isOtherWaitersTable
+                                      ? "bg-[#182232]/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
+                                      : "bg-[#4f46e5] hover:bg-[#4338ca] text-white shadow shadow-indigo-600/20"
+                                  }`}
                                 >
-                                  {table.kitchenStage === "SERVED" ? "Add next / Running" : "Manage Order"}
+                                  {isOtherWaitersTable
+                                    ? "🔒 Manage Order"
+                                    : table.kitchenStage === "SERVED"
+                                    ? "Add next / Running"
+                                    : "Manage Order"}
                                 </button>
                                 <div className="grid grid-cols-3 gap-1.5">
                                   <button
-                                    onClick={() => startTransfer(table)}
-                                    className="bg-[#182232] hover:bg-slate-700 text-slate-300 rounded-xl py-2 text-xs font-semibold transition-all active:scale-95 text-center"
+                                    onClick={() => {
+                                      if (isOtherWaitersTable) {
+                                        showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${orderWaiterName || "another captain"}. You cannot transfer their table.`);
+                                        return;
+                                      }
+                                      startTransfer(table);
+                                    }}
+                                    disabled={isOtherWaitersTable}
+                                    title={
+                                      isOtherWaitersTable
+                                        ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot transfer this table.`
+                                        : "Transfer table"
+                                    }
+                                    className={`rounded-xl py-2 text-xs font-semibold transition-all active:scale-95 text-center ${
+                                      isOtherWaitersTable
+                                        ? "bg-[#182232]/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
+                                        : "bg-[#182232] hover:bg-slate-700 text-slate-300"
+                                    }`}
                                   >
-                                    Transfer
+                                    {isOtherWaitersTable ? "🔒 Transfer" : "Transfer"}
                                   </button>
                                   <button
                                     onClick={() => {
@@ -2551,10 +2722,26 @@ export default function WaiterDashboard() {
                                     {isOtherWaitersTable ? "🔒 Bill" : "Bill"}
                                   </button>
                                   <button
-                                    onClick={() => handleVacateTable(table)}
-                                    className="bg-[#182232] hover:bg-slate-700 text-slate-300 rounded-xl py-2 text-xs font-semibold transition-all active:scale-95 text-center"
+                                    onClick={() => {
+                                      if (isOtherWaitersTable) {
+                                        showPickupNotification(`⚠️ Table ${table.tableNumber} is assigned to Captain ${orderWaiterName || "another captain"}. You cannot vacate their table.`);
+                                        return;
+                                      }
+                                      handleVacateTable(table);
+                                    }}
+                                    disabled={isOtherWaitersTable}
+                                    title={
+                                      isOtherWaitersTable
+                                        ? `Assigned to Captain ${orderWaiterName || "another captain"}. You cannot vacate this table.`
+                                        : "Vacate table"
+                                    }
+                                    className={`rounded-xl py-2 text-xs font-semibold transition-all active:scale-95 text-center ${
+                                      isOtherWaitersTable
+                                        ? "bg-[#182232]/40 text-slate-500 border border-slate-700/30 cursor-not-allowed opacity-60"
+                                        : "bg-[#182232] hover:bg-slate-700 text-slate-300"
+                                    }`}
                                   >
-                                    Vacate
+                                    {isOtherWaitersTable ? "🔒 Vacate" : "Vacate"}
                                   </button>
                                 </div>
                               </>
@@ -2635,9 +2822,16 @@ export default function WaiterDashboard() {
                       >
                         <div>
                           <div className="flex justify-between items-center mb-3">
-                            <span className="font-bold text-xs text-slate-100">
-                              KOT #{kot.ticketNumber}{kot.tableNumber ? ` · ${kot.tableNumber}` : ""}
-                            </span>
+                            <div>
+                              <span className="font-bold text-xs text-slate-100">
+                                KOT #{kot.ticketNumber}{kot.tableNumber ? ` · ${kot.tableNumber}` : ""}
+                              </span>
+                              {kot.createdAt && (
+                                <div className="text-[10px] text-indigo-300 font-semibold mt-0.5">
+                                  🕒 Ordered: {new Date(kot.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: true })}
+                                </div>
+                              )}
+                            </div>
                             <span className={`text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full ${badgeColor}`}>
                               {kot.status}
                             </span>
@@ -2716,66 +2910,245 @@ export default function WaiterDashboard() {
         </div>
       )}
 
-      {isMoveKotOpen && (
-        <MoveKotModal
-          tables={tables.map((t) => ({
-            id: t.id,
-            tableNumber: t.tableNumber,
-            section: t.section,
-            status: t.status,
-            currentOrder: t.currentOrder || null,
-          }))}
-          onClose={() => setIsMoveKotOpen(false)}
-          onSuccess={() => {
-            fetchTables();
-            fetchKots();
-            fetchMyStats();
-          }}
-        />
-      )}
-
       {showStats && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setShowStats(false)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-lg text-slate-100">My Shift — Today</h2>
-              <button onClick={() => setShowStats(false)} className="text-slate-400 hover:text-slate-200 text-xl font-bold w-9 h-9 flex items-center justify-center">×</button>
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4" onClick={() => setShowStats(false)}>
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 w-full max-w-lg shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll flex flex-col gap-4 text-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-start border-b border-slate-800/80 pb-3.5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-400 bg-indigo-950/60 border border-indigo-800/50 px-2.5 py-0.5 rounded-full">
+                    Captain Shift Dashboard
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Live Today
+                  </span>
+                </div>
+                <h2 className="text-xl font-black text-white mt-1">My Shift — Today</h2>
+                <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
+                  <span>🧑‍🍳 {me?.name || "Captain"}</span>
+                  <span>•</span>
+                  <span className="text-amber-400 font-bold uppercase">{stationCode}</span>
+                  <span>•</span>
+                  <span>{me?.outlet?.name || "Hotel Kapila"}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={fetchMyStats}
+                  disabled={refreshingStats}
+                  className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition border border-slate-700/60 disabled:opacity-50"
+                  title="Refresh Live Stats"
+                >
+                  <span className={refreshingStats ? "animate-spin inline-block text-xs" : "text-xs"}>🔄</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowStats(false)}
+                  className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-lg font-bold flex items-center justify-center transition border border-slate-700/60"
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
             {!myStats ? (
-              <p className="text-xs text-slate-500">Loading...</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-950 rounded-xl p-3">
-                  <div className="text-2xl font-bold text-slate-100">{myStats.ordersToday}</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Orders Taken</div>
-                </div>
-                <div className="bg-slate-950 rounded-xl p-3">
-                  <div className="text-2xl font-bold text-slate-100">{myStats.tablesServed}</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Tables Served</div>
-                </div>
-                <div className="bg-slate-950 rounded-xl p-3">
-                  <div className="text-2xl font-bold text-slate-100">{myStats.avgOrderMinutes ?? "—"}</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Avg Order Time (min)</div>
-                </div>
-                <div className="bg-slate-950 rounded-xl p-3">
-                  <div className="text-2xl font-bold text-emerald-400">₹{(Number(myStats.tipsMinor) / 100).toFixed(2)}</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Tips Earned</div>
-                </div>
-                <div className="bg-slate-950 rounded-xl p-3">
-                  <div className="text-2xl font-bold text-slate-100">₹{(Number(myStats.serviceChargeMinor || 0) / 100).toFixed(2)}</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Service Charge</div>
-                </div>
-                <div className="bg-slate-950 rounded-xl p-3">
-                  <div className="text-2xl font-bold text-slate-100">{myStats.completedOrders}</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Settled Orders</div>
-                </div>
-                <div className="bg-slate-950 rounded-xl p-3 col-span-2">
-                  <div className="text-2xl font-bold text-slate-100">₹{(Number(myStats.revenueMinor) / 100).toFixed(2)}</div>
-                  <div className="text-[10px] text-slate-500 mt-1">Total Revenue Handled</div>
-                </div>
+              <div className="py-12 text-center text-slate-500 flex flex-col items-center gap-2">
+                <span className="text-3xl animate-spin">⏳</span>
+                <p className="text-xs">Loading shift records & live collections...</p>
               </div>
-            )}
+            ) : (() => {
+              const cashInHand = Number(myStats.cashInHandMinor || 0) / 100;
+              const cardSales = Number(myStats.cardSalesMinor || 0) / 100;
+              const upiSales = Number(myStats.upiSalesMinor || 0) / 100;
+              const totalCollected = Number(myStats.totalCollectedMinor || 0) / 100;
+              const pendingDue = Number(myStats.pendingDueMinor || 0) / 100;
+              const totalRevenue = Number(myStats.revenueMinor || 0) / 100;
+              const tax = Number(myStats.taxMinor || 0) / 100;
+              const tips = Number(myStats.tipsMinor || 0) / 100;
+              const serviceCharge = Number(myStats.serviceChargeMinor || 0) / 100;
+              const discount = Number(myStats.discountMinor || 0) / 100;
+              const rawSubtotal = Number(myStats.subtotalMinor || 0) / 100;
+              // Food subtotal is the full base sales before tax (tax is added on top)
+              const netFoodSales = rawSubtotal;
+
+              return (
+                <div className="flex flex-col gap-3.5">
+                  {/* Hero Card: CASH IN HAND */}
+                  <div className="relative overflow-hidden bg-gradient-to-br from-emerald-950/80 via-slate-900 to-slate-950 border border-emerald-500/30 rounded-2xl p-4 shadow-lg shadow-emerald-950/40">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base">💵</span>
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-300">
+                            Cash In Hand (Physical Notes)
+                          </span>
+                        </div>
+                        <div className="text-3xl sm:text-4xl font-black text-emerald-400 mt-1 tracking-tight">
+                          ₹{cashInHand.toFixed(2)}
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-full">
+                        To Handover
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
+                      Physical currency in hand collected by you during this shift. Must be surrendered and reconciled at cashier counter.
+                    </p>
+                  </div>
+
+                  {/* Collections Breakdown Grid */}
+                  <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-3.5">
+                    <div className="flex justify-between items-center mb-2.5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Collections By Tender Mode
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-300">
+                        Total Collected: <span className="text-emerald-400">₹{totalCollected.toFixed(2)}</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">💵 Cash</span>
+                        <span className="text-base font-extrabold text-emerald-400 mt-1">₹{cashInHand.toFixed(2)}</span>
+                        <span className="text-[9px] text-slate-500 mt-0.5">Physical In-Hand</span>
+                      </div>
+                      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">📱 UPI / QR</span>
+                        <span className="text-base font-extrabold text-cyan-400 mt-1">₹{upiSales.toFixed(2)}</span>
+                        <span className="text-[9px] text-slate-500 mt-0.5">Direct Bank</span>
+                      </div>
+                      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">💳 Card</span>
+                        <span className="text-base font-extrabold text-indigo-300 mt-1">₹{cardSales.toFixed(2)}</span>
+                        <span className="text-[9px] text-slate-500 mt-0.5">POS Machine</span>
+                      </div>
+                      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
+                        <span className="text-[10px] text-rose-300/80 flex items-center gap-1">⏳ Running Due</span>
+                        <span className={`text-base font-extrabold mt-1 ${pendingDue > 0 ? "text-rose-400" : "text-slate-400"}`}>
+                          ₹{pendingDue.toFixed(2)}
+                        </span>
+                        <span className="text-[9px] text-slate-500 mt-0.5">Unsettled Tables</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Revenue & Tax Breakdown */}
+                  <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4">
+                    <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-800/80">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm">🏛️</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                          Order Revenue & Tax Breakdown
+                        </span>
+                      </div>
+                      <span className="text-[10px] bg-indigo-950 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded font-bold">
+                        GST (5%)
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col gap-2 text-xs">
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span>Net Food Subtotal (Base)</span>
+                        <span className="font-semibold text-slate-200">₹{netFoodSales.toFixed(2)}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center bg-indigo-950/40 border border-indigo-800/40 rounded-lg px-2.5 py-1.5">
+                        <span className="text-indigo-300 font-medium flex items-center gap-1.5">
+                          <span>🧾 GST Tax (5%)</span>
+                        </span>
+                        <span className="font-bold text-indigo-200">₹{tax.toFixed(2)}</span>
+                      </div>
+
+                      {discount > 0 && (
+                        <div className="flex justify-between items-center text-amber-400">
+                          <span>Discounts Applied</span>
+                          <span className="font-semibold">-₹{discount.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-center text-slate-400">
+                        <span>Service Charge</span>
+                        <span className="font-semibold text-slate-300">₹{serviceCharge.toFixed(2)}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center text-emerald-400 font-medium">
+                        <span>Tips Earned (Gratuity)</span>
+                        <span className="font-bold">₹{tips.toFixed(2)}</span>
+                      </div>
+
+                      <div className="border-t border-slate-800 pt-2.5 mt-1 flex justify-between items-center">
+                        <div>
+                          <span className="text-sm font-extrabold text-white">Total Revenue Handled</span>
+                          <div className="text-[10px] text-slate-400">(All order volume handled by captain with Tax)</div>
+                        </div>
+                        <span className="text-lg font-black text-white">₹{totalRevenue.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Floor Service & Turnaround Metrics */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 text-center">
+                      <div className="text-lg font-black text-slate-100">{myStats.ordersToday}</div>
+                      <div className="text-[10px] font-medium text-slate-400 mt-0.5">Orders Taken</div>
+                      <div className="text-[9px] text-slate-500 mt-0.5">
+                        {myStats.completedOrders} settled • {myStats.activeOrders ?? Math.max(0, myStats.ordersToday - myStats.completedOrders)} active
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 text-center">
+                      <div className="text-lg font-black text-slate-100">{myStats.tablesServed}</div>
+                      <div className="text-[10px] font-medium text-slate-400 mt-0.5">Tables Served</div>
+                      <div className="text-[9px] text-slate-500 mt-0.5">Distinct tables</div>
+                    </div>
+
+                    <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 text-center">
+                      <div className="text-lg font-black text-emerald-400">{myStats.completedOrders}</div>
+                      <div className="text-[10px] font-medium text-slate-400 mt-0.5">Settled Orders</div>
+                      <div className="text-[9px] text-emerald-500/80 mt-0.5">Paid & cleared</div>
+                    </div>
+
+                    <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 text-center">
+                      <div className="text-lg font-black text-amber-300">
+                        {myStats.avgOrderMinutes ? `${myStats.avgOrderMinutes}m` : "—"}
+                      </div>
+                      <div className="text-[10px] font-medium text-slate-400 mt-0.5">Avg Turnaround</div>
+                      <div className="text-[9px] text-slate-500 mt-0.5">Order to settle</div>
+                    </div>
+                  </div>
+
+                  {/* Quick Action Footer */}
+                  <div className="pt-2 border-t border-slate-800/80 flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowStats(false);
+                        setIsCashTipsCalculatorOpen(true);
+                      }}
+                      className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl py-2.5 px-3 text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-950/50 transition-all active:scale-[0.98]"
+                    >
+                      <span>🧮</span>
+                      <span>Physical Cash Denomination Counter</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowStats(false)}
+                      className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl py-2.5 px-4 text-xs font-bold transition"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -2909,12 +3282,28 @@ export default function WaiterDashboard() {
                 </div>
 
                 <div className="text-xs text-slate-400 flex flex-col gap-1.5 border-b border-slate-800 pb-3">
-                  <div className="flex justify-between"><span>Subtotal</span><span>₹{(subtotalNum / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between"><span>Discount</span><span>-₹{(discountNum / 100).toFixed(2)}</span></div>
-                  <div className="flex justify-between"><span>Tax (GST 5%)</span><span>₹{(taxNum / 100).toFixed(2)}</span></div>
+                  <div className="flex justify-between">
+                    <span>Food Subtotal (Base)</span>
+                    <span className="font-semibold text-slate-200">₹{(subtotalNum / 100).toFixed(2)}</span>
+                  </div>
+                  {discountNum > 0 && (
+                    <div className="flex justify-between text-amber-400">
+                      <span>Discount</span>
+                      <span className="font-semibold">-₹{(discountNum / 100).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <span>Tax (GST 5%)</span>
+                    </span>
+                    <span className="font-semibold text-slate-200">₹{(taxNum / 100).toFixed(2)}</span>
+                  </div>
                   <div className="flex justify-between text-indigo-300"><span>Tip</span><span>+₹{liveTip.toFixed(2)}</span></div>
                   <div className="flex justify-between text-indigo-300"><span>Service Charge</span><span>+₹{liveService.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-slate-200 font-bold text-sm"><span>Grand Total</span><span>₹{liveGrandTotal.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-slate-100 font-bold text-sm pt-1 border-t border-slate-800/60">
+                    <span>Grand Total</span>
+                    <span>₹{liveGrandTotal.toFixed(2)}</span>
+                  </div>
                   <div className="flex justify-between text-emerald-400"><span>Paid</span><span>₹{(paidNum / 100).toFixed(2)}</span></div>
                   <div className="flex justify-between text-rose-400 font-bold text-sm"><span>Due</span><span>₹{liveDue.toFixed(2)}</span></div>
                 </div>
@@ -3111,6 +3500,7 @@ export default function WaiterDashboard() {
       <CaptainNavDrawer
         isOpen={isCaptainDrawerOpen}
         onClose={() => setIsCaptainDrawerOpen(false)}
+        hideAdminNav={isWaiterOnly}
         outletName={me?.outlet?.name || "Main Outlet"}
         stationCode={stationCode}
         staffName={me?.name || "Captain"}
@@ -3122,6 +3512,10 @@ export default function WaiterDashboard() {
         }}
         onOpenUnsuccessfulModal={() => setIsUnsuccessfulModalOpen(true)}
         onOpenCashTipsCalculator={() => setIsCashTipsCalculatorOpen(true)}
+        onOpenShiftStats={() => {
+          setShowStats(true);
+          fetchMyStats();
+        }}
         onOpenStationModal={() => setIsStationModalOpen(true)}
         onSyncData={async () => {
           await fetchTables();
@@ -3180,6 +3574,19 @@ export default function WaiterDashboard() {
           }}
         />
       )}
+
+      {/* Customer Menu QR Scanner Modal */}
+      <CaptainMenuQrModal
+        isOpen={isCustomerQrOpen}
+        onClose={() => setIsCustomerQrOpen(false)}
+        tables={tables}
+        selectedTable={selectedQrTable || activeTable || tables[0] || null}
+        captainCode={stationCode}
+        waiterId={me?.userId || null}
+        waiterName={me?.name || stationCode}
+        onTableChange={(t) => setSelectedQrTable(t)}
+        lastCustomerOrder={lastCustomerSelfOrder}
+      />
 
       {/* LAN Server IP Configuration Modal */}
       {isServerIpModalOpen && (

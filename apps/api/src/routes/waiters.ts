@@ -134,6 +134,8 @@ router.get("/waiters/me/stats", requireAuth, async (req: AuthedRequest, res) => 
         OR: [
           { createdAt: { gte: dayStart } },
           { settledAt: { gte: dayStart } },
+          // Always display active unsettled orders until and unless payment is collected
+          { status: { notIn: ["COMPLETED", "CANCELLED", "VOIDED"] } },
         ],
         waiterId: req.auth!.userId,
       },
@@ -150,19 +152,60 @@ router.get("/waiters/me/stats", requireAuth, async (req: AuthedRequest, res) => 
               60000) *
               10
           ) / 10;
+    const subtotalMinor = orders.reduce((sum, o) => sum + (o.subtotal || 0n), 0n);
+    const taxMinor = orders.reduce((sum, o) => sum + (o.taxTotal || 0n), 0n);
+    const discountMinor = orders.reduce((sum, o) => sum + (o.discountTotal || 0n), 0n);
     const tipsMinor = orders.reduce((sum, o) => sum + (o.tipTotal || 0n), 0n);
     const serviceChargeMinor = orders.reduce((sum, o) => sum + (o.serviceChargeTotal || 0n), 0n);
     const revenueMinor = orders.reduce((sum, o) => sum + BigInt(o.grandTotal || 0), 0n);
 
+    const orderIds = orders.map((o) => o.id);
+    const payments = orderIds.length > 0 ? await prisma.payment.findMany({
+      where: {
+        outletId: req.auth!.outletId,
+        orderId: { in: orderIds },
+        status: { in: ["SUCCESS", "CAPTURED", "COMPLETED"] },
+      },
+    }) : [];
+
+    const cashInHandMinor = payments
+      .filter((p) => p.method === "CASH")
+      .reduce((sum, p) => sum + p.amount, 0n);
+
+    const cardSalesMinor = payments
+      .filter((p) => p.method === "CARD")
+      .reduce((sum, p) => sum + p.amount, 0n);
+
+    const upiSalesMinor = payments
+      .filter((p) => p.method === "UPI")
+      .reduce((sum, p) => sum + p.amount, 0n);
+
+    const otherSalesMinor = payments
+      .filter((p) => !["CASH", "CARD", "UPI"].includes(p.method))
+      .reduce((sum, p) => sum + p.amount, 0n);
+
+    const totalCollectedMinor = cashInHandMinor + cardSalesMinor + upiSalesMinor + otherSalesMinor;
+    const pendingDueMinor = revenueMinor > totalCollectedMinor ? revenueMinor - totalCollectedMinor : 0n;
+    const activeOrders = orders.filter((o) => o.status !== "COMPLETED" && o.status !== "CANCELLED" && o.status !== "VOIDED").length;
 
     res.status(200).json({
       ordersToday: orders.length,
       tablesServed,
       completedOrders: completedOrders.length,
+      activeOrders,
       avgOrderMinutes,
       tipsMinor: tipsMinor.toString(),
       serviceChargeMinor: serviceChargeMinor.toString(),
       revenueMinor: revenueMinor.toString(),
+      subtotalMinor: subtotalMinor.toString(),
+      taxMinor: taxMinor.toString(),
+      discountMinor: discountMinor.toString(),
+      cashInHandMinor: cashInHandMinor.toString(),
+      cardSalesMinor: cardSalesMinor.toString(),
+      upiSalesMinor: upiSalesMinor.toString(),
+      otherSalesMinor: otherSalesMinor.toString(),
+      totalCollectedMinor: totalCollectedMinor.toString(),
+      pendingDueMinor: pendingDueMinor.toString(),
     });
   } catch (err: any) {
     console.error("Error fetching waiter stats:", err);
@@ -187,6 +230,8 @@ router.get("/waiters/me/shift-reconciliation", requireAuth, async (req: AuthedRe
           OR: [
             { createdAt: { gte: dayStart } },
             { settledAt: { gte: dayStart } },
+            // Always display active unsettled orders until and unless payment is collected
+            { status: { notIn: ["COMPLETED", "CANCELLED", "VOIDED"] } },
           ],
           waiterId: req.auth!.userId,
         },

@@ -132,11 +132,6 @@ export default function UserManagement() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
-
-  // Role assignment state
-  const [selectedRole, setSelectedRole] = useState<Record<string, string>>({});
-  const [selectedOutlet, setSelectedOutlet] = useState<Record<string, string>>({});
-  const [assigning, setAssigning] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
 
   // Add/Edit User Modals
@@ -161,6 +156,9 @@ export default function UserManagement() {
   const [editUserLastName, setEditUserLastName] = useState("");
   const [editUserPhone, setEditUserPhone] = useState("");
   const [editUserIsActive, setEditUserIsActive] = useState(true);
+  const [editUserRoles, setEditUserRoles] = useState<UserRoleApi[]>([]);
+  const [editUserRoleId, setEditUserRoleId] = useState("");
+  const [editUserOutletId, setEditUserOutletId] = useState("");
   const [editUserError, setEditUserError] = useState<string | null>(null);
   const [editingUserSaving, setEditingUserSaving] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
@@ -517,8 +515,43 @@ export default function UserManagement() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "HTTP error " + res.status);
       }
+
+      // Role assignment update in modal
+      if (!editUserRoleId || editUserRoleId === "__REMOVE__") {
+        // If unassigned selected, revoke any previously assigned roles
+        for (const ur of editUserRoles) {
+          await authedFetch(`/users/${editingUserId}/roles/${ur.roleId}`, {
+            method: "DELETE",
+          });
+        }
+      } else {
+        // 1. Assign/update selected role with chosen outlet scope first
+        const roleRes = await authedFetch(`/users/${editingUserId}/roles`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roleId: editUserRoleId,
+            outletId: editUserOutletId ? editUserOutletId.trim() : null,
+          }),
+        });
+        if (!roleRes.ok) {
+          const roleBody = await roleRes.json().catch(() => ({}));
+          throw new Error(roleBody.error || "Failed to update role assignment");
+        }
+
+        // 2. Remove other roles that differ from the selected role
+        for (const ur of editUserRoles) {
+          if (ur.roleId !== editUserRoleId) {
+            await authedFetch(`/users/${editingUserId}/roles/${ur.roleId}`, {
+              method: "DELETE",
+            });
+          }
+        }
+      }
+
       setShowEditUserModal(false);
       setEditingUserId(null);
+      setActionNotice("✓ Staff account and role updated successfully!");
       fetchData();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to update user";
@@ -549,37 +582,18 @@ export default function UserManagement() {
       setDeletingUserId(null);
     }
   };
+  const revokeRole = async (userId: string, roleId: string) => {
+    const targetUser = users.find((u) => u.id === userId);
+    const targetRole = roles.find((r) => r.id === roleId);
+    const roleLabel = targetRole?.name || "Role";
+    const userLabel = targetUser ? `${targetUser.firstName} ${targetUser.lastName}` : "User";
 
-  const assignRole = async (userId: string) => {
-    const roleId = selectedRole[userId];
-    if (!roleId) {
-      setActionError("Pick a role before assigning.");
+    if (!window.confirm(`Are you sure you want to remove the role "${roleLabel}" from ${userLabel}?`)) {
       return;
     }
-    const outletId = selectedOutlet[userId] || null;
 
     setActionError(null);
-    setAssigning(userId);
-    try {
-      const res = await authedFetch(`/users/${userId}/roles`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roleId, outletId }),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "HTTP error " + body.error);
-      }
-      fetchData();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to assign role");
-    } finally {
-      setAssigning(null);
-    }
-  };
-
-  const revokeRole = async (userId: string, roleId: string) => {
-    setActionError(null);
+    setActionNotice(null);
     setRevoking(`${userId}:${roleId}`);
     try {
       const res = await authedFetch(`/users/${userId}/roles/${roleId}`, {
@@ -589,9 +603,10 @@ export default function UserManagement() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "HTTP error " + res.status);
       }
+      setActionNotice(`✓ Removed role "${roleLabel}" from ${userLabel}.`);
       fetchData();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to revoke role");
+      setActionError(err instanceof Error ? err.message : "Failed to remove role");
     } finally {
       setRevoking(null);
     }
@@ -1571,16 +1586,13 @@ export default function UserManagement() {
                           </div>
 
                           <div className="table-responsive">
-                            <table className="clean-table">
+                            <table className="clean-table staff-table">
                               <thead>
                                 <tr>
                                   <th style={{ minWidth: "160px" }}>User Name</th>
-                                  <th style={{ minWidth: "190px" }}>Email</th>
-                                  <th style={{ minWidth: "110px" }}>Phone</th>
-                                  <th style={{ minWidth: "180px" }}>Assigned Roles</th>
-                                  {canManageUsers && <th style={{ minWidth: "160px" }}>Assign Role</th>}
-                                  {canManageUsers && <th style={{ minWidth: "170px" }}>Outlet Scope</th>}
-                                  {canManageUsers && <th style={{ width: "90px" }}>Assign</th>}
+                                  <th style={{ minWidth: "200px" }}>Email</th>
+                                  <th style={{ minWidth: "120px" }}>Phone</th>
+                                  <th style={{ minWidth: "220px" }}>Assigned Roles</th>
                                   <th style={{ minWidth: "140px", textAlign: "right" }}>Actions</th>
                                 </tr>
                               </thead>
@@ -1591,7 +1603,7 @@ export default function UserManagement() {
                                       <strong>{user.firstName} {user.lastName}</strong>
                                       {!user.isActive && <div className="inactive-tag">Inactive</div>}
                                     </td>
-                                    <td>{user.email}</td>
+                                    <td style={{ wordBreak: "break-all" }}>{user.email}</td>
                                     <td>{user.phone || "—"}</td>
                                     <td>
                                       {user.userRoles.length === 0 && <span className="no-roles">No roles assigned</span>}
@@ -1601,68 +1613,9 @@ export default function UserManagement() {
                                             {ur.roleName}
                                             {ur.outletName ? ` @ ${ur.outletName}` : " (org-wide)"}
                                           </span>
-                                          {canManageUsers && (
-                                            <button
-                                              className="revoke-btn"
-                                              disabled={revoking === `${user.id}:${ur.roleId}`}
-                                              onClick={() => revokeRole(user.id, ur.roleId)}
-                                            >
-                                              {revoking === `${user.id}:${ur.roleId}` ? "..." : "✕"}
-                                            </button>
-                                          )}
                                         </div>
                                       ))}
                                     </td>
-
-                                    {canManageUsers && (
-                                      <td>
-                                        <select
-                                          value={selectedRole[user.id] ?? ""}
-                                          onChange={(e) =>
-                                            setSelectedRole((prev) => ({ ...prev, [user.id]: e.target.value }))
-                                          }
-                                          className="role-select"
-                                        >
-                                          <option value="">Select role...</option>
-                                          {roles.map((role) => (
-                                            <option key={role.id} value={role.id}>
-                                              {role.name}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </td>
-                                    )}
-
-                                    {canManageUsers && (
-                                      <td>
-                                        <select
-                                          value={selectedOutlet[user.id] ?? ""}
-                                          onChange={(e) =>
-                                            setSelectedOutlet((prev) => ({ ...prev, [user.id]: e.target.value }))
-                                          }
-                                          className="outlet-input"
-                                        >
-                                          <option value="">Org-wide (All Outlets)</option>
-                                          {outlets.map((outlet) => (
-                                            <option key={outlet.id} value={outlet.id}>
-                                              {outlet.name}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </td>
-                                    )}
-
-                                    {canManageUsers && (
-                                      <td>
-                                        <button
-                                          className="assign-btn"
-                                          disabled={assigning === user.id}
-                                          onClick={() => assignRole(user.id)}
-                                        >
-                                          {assigning === user.id ? "..." : "Assign"}
-                                        </button>
-                                      </td>
-                                    )}
 
                                     <td style={{ textAlign: "right" }}>
                                       <div style={{ display: "inline-flex", gap: "6px" }}>
@@ -1702,6 +1655,7 @@ export default function UserManagement() {
                                             <button
                                               className="edit-btn"
                                               onClick={() => {
+                                                const primaryRole = user.userRoles[0];
                                                 setEditingUserId(user.id);
                                                 setEditUserEmail(user.email);
                                                 setEditUserFirstName(user.firstName);
@@ -1710,6 +1664,9 @@ export default function UserManagement() {
                                                 setEditUserIsActive(user.isActive);
                                                 setEditUserPassword("");
                                                 setEditUserPin("");
+                                                setEditUserRoles(user.userRoles || []);
+                                                setEditUserRoleId(primaryRole ? primaryRole.roleId : "");
+                                                setEditUserOutletId(primaryRole?.outletId || "");
                                                 setEditUserError(null);
                                                 setShowEditUserModal(true);
                                               }}
@@ -1947,6 +1904,63 @@ export default function UserManagement() {
                           <input type="checkbox" id="isActiveCheck" checked={editUserIsActive} onChange={(e) => setEditUserIsActive(e.target.checked)} />
                           <label htmlFor="isActiveCheck">Account Active</label>
                         </div>
+
+                        <div className="form-group" style={{ borderTop: "1px solid var(--border)", paddingTop: "14px", marginTop: "12px" }}>
+                          <label style={{ fontWeight: 600 }}>Assigned Roles</label>
+                          {editUserRoles.length === 0 ? (
+                            <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginTop: "4px" }}>No roles currently assigned</div>
+                          ) : (
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "6px" }}>
+                              {editUserRoles.map((ur) => (
+                                <span key={ur.roleId} className="role-chip" style={{ margin: 0 }}>
+                                  <span>{ur.roleName}{ur.outletName ? ` @ ${ur.outletName}` : " (org-wide)"}</span>
+                                  <button
+                                    type="button"
+                                    className="revoke-btn"
+                                    title={`Remove role ${ur.roleName}`}
+                                    onClick={async () => {
+                                      if (editingUserId) {
+                                        await authedFetch(`/users/${editingUserId}/roles/${ur.roleId}`, { method: "DELETE" });
+                                        setEditUserRoles((prev) => prev.filter((r) => r.roleId !== ur.roleId));
+                                        if (editUserRoleId === ur.roleId) {
+                                          setEditUserRoleId("");
+                                        }
+                                        fetchData();
+                                      }
+                                    }}
+                                  >
+                                    ✕
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="form-group">
+                          <label>Role</label>
+                          <select value={editUserRoleId} onChange={(e) => setEditUserRoleId(e.target.value)}>
+                            <option value="">-- No Role Assigned --</option>
+                            {roles.map((r) => (
+                              <option key={r.id} value={r.id}>{r.name}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {editUserRoleId && (
+                          <div className="form-group">
+                            <label>Outlet Scope for Role</label>
+                            <select value={editUserOutletId} onChange={(e) => setEditUserOutletId(e.target.value)}>
+                              <option value="">Org-wide (All Outlets)</option>
+                              {outlets.map((outlet) => (
+                                <option key={outlet.id} value={outlet.id}>
+                                  {outlet.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
                         {editUserError && (
                           <div className="error-banner">{editUserError}</div>
                         )}
@@ -2678,53 +2692,6 @@ export default function UserManagement() {
 
         .revoke-btn:hover {
           color: #dc2626;
-        }
-
-        .role-select, .outlet-input {
-          height: 38px;
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          color: var(--text-primary);
-          padding: 0 10px;
-          border-radius: 8px;
-          font-size: 0.8125rem;
-          box-sizing: border-box;
-          vertical-align: middle;
-          width: 100%;
-        }
-
-        .role-select:focus, .outlet-input:focus {
-          outline: none;
-          border-color: #2563eb;
-          box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
-        }
-
-        .assign-btn {
-          height: 38px;
-          background: #2563eb;
-          color: #fff;
-          border: 1px solid #2563eb;
-          padding: 0 16px;
-          border-radius: 8px;
-          font-weight: 700;
-          font-size: 0.75rem;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          box-sizing: border-box;
-          vertical-align: middle;
-          transition: all 0.15s ease;
-        }
-
-        .assign-btn:hover:not(:disabled) {
-          background: #1d4ed8;
-          border-color: #1d4ed8;
-        }
-
-        .assign-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
         }
 
         .edit-btn {

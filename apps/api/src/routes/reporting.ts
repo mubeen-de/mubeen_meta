@@ -16,6 +16,7 @@ import {
 } from "@kapmeta/reporting";
 import { getRevenueTrend, PrismaOrderRepository } from "@kapmeta/orders";
 import { requireAuth, requirePermission, type AuthedRequest } from "../middleware/require-auth";
+import { handleSuiteReport } from "./reporting-suite";
 
 const router = Router();
 const REPORT_PERMISSIONS = ["report.read", "report.financial.read", "users.manage", "users.read", "kot.read", "order.read", "menu.read"];
@@ -688,6 +689,8 @@ router.get("/inventory-variance", requireAuth, requirePermission("report.financi
     res.status(500).json({ error: "internal error" });
   }
 });
+
+router.get("/suite/:reportKey", requireAuth, requirePermission(...REPORT_PERMISSIONS), handleSuiteReport);
 
 export const reportingRouter = router;
 

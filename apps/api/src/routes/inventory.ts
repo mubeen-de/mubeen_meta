@@ -60,7 +60,7 @@ inventoryRouter.post("/ingredients", requireAuth, requirePermission("inventory.w
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "CREATE",
         entityType: "INVENTORY_INGREDIENT",
         entityId: ingredient.id,
@@ -113,7 +113,7 @@ inventoryRouter.patch("/ingredients/:id", requireAuth, requirePermission("invent
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "UPDATE",
         entityType: "INVENTORY_INGREDIENT",
         entityId: ingredientId,
@@ -163,7 +163,7 @@ inventoryRouter.post("/stock/deduct", requireAuth, requirePermission("inventory.
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "UPDATE",
         entityType: "INVENTORY_INGREDIENT",
         entityId: ingredientId,
@@ -290,7 +290,7 @@ inventoryRouter.post("/recipes", requireAuth, requirePermission("inventory.write
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "CREATE",
         entityType: "INVENTORY_RECIPE",
         entityId: recipe.id,
@@ -347,7 +347,7 @@ inventoryRouter.patch("/recipes/:id", requireAuth, requirePermission("inventory.
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "UPDATE",
         entityType: "INVENTORY_RECIPE",
         entityId: recipeId,
@@ -391,7 +391,7 @@ inventoryRouter.delete("/recipes/:id", requireAuth, requirePermission("inventory
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "DELETE",
         entityType: "INVENTORY_RECIPE",
         entityId: recipeId,
@@ -459,7 +459,7 @@ inventoryRouter.post("/vendors", requireAuth, requirePermission("inventory.write
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "CREATE",
         entityType: "INVENTORY_VENDOR",
         entityId: vendor.id,
@@ -513,7 +513,7 @@ inventoryRouter.patch("/vendors/:id", requireAuth, requirePermission("inventory.
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "UPDATE",
         entityType: "INVENTORY_VENDOR",
         entityId: vendorId,
@@ -572,7 +572,7 @@ inventoryRouter.delete("/vendors/:id", requireAuth, requirePermission("inventory
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "DELETE",
         entityType: "INVENTORY_VENDOR",
         entityId: vendorId,
@@ -677,7 +677,7 @@ inventoryRouter.post("/purchase-orders", requireAuth, requirePermission("invento
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "CREATE",
         entityType: "INVENTORY_PURCHASE_ORDER",
         entityId: po.id,
@@ -779,7 +779,7 @@ inventoryRouter.post("/purchase-orders/:id/receive", requireAuth, requirePermiss
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "UPDATE",
         entityType: "INVENTORY_GRN",
         entityId: poId,
@@ -859,7 +859,7 @@ inventoryRouter.patch("/purchase-orders/:id", requireAuth, requirePermission("in
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "UPDATE",
         entityType: "INVENTORY_PURCHASE_ORDER",
         entityId: poId,
@@ -906,7 +906,7 @@ inventoryRouter.post("/purchase-orders/:id/cancel", requireAuth, requirePermissi
     await prisma.auditLog.create({
       data: {
         outletId,
-        actor_id: userId,
+        userId,
         action: "UPDATE",
         entityType: "INVENTORY_PURCHASE_ORDER",
         entityId: poId,

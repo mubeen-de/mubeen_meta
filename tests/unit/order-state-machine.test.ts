@@ -10,7 +10,7 @@ const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   DRAFT: ["PLACED", "CANCELLED"],
   PLACED: ["CONFIRMED", "CANCELLED"],
   CONFIRMED: ["KOT_CREATED", "CANCELLED"],
-  KOT_CREATED: ["IN_PREPARATION", "CANCELLED"],
+  KOT_CREATED: ["IN_PREPARATION", "READY", "CANCELLED"],
   IN_PREPARATION: ["READY", "CANCELLED"],
   READY: ["COMPLETED", "CANCELLED"],
   COMPLETED: [],
@@ -24,6 +24,7 @@ describe("Order state machine — valid transitions", () => {
   it("PLACED → CONFIRMED", () => expect(can("PLACED", "CONFIRMED")).toBe(true));
   it("CONFIRMED → KOT_CREATED", () => expect(can("CONFIRMED", "KOT_CREATED")).toBe(true));
   it("KOT_CREATED → IN_PREPARATION", () => expect(can("KOT_CREATED", "IN_PREPARATION")).toBe(true));
+  it("KOT_CREATED → READY", () => expect(can("KOT_CREATED", "READY")).toBe(true));
   it("IN_PREPARATION → READY", () => expect(can("IN_PREPARATION", "READY")).toBe(true));
   it("READY → COMPLETED", () => expect(can("READY", "COMPLETED")).toBe(true));
   it("all pre-COMPLETED statuses can → CANCELLED", () => {

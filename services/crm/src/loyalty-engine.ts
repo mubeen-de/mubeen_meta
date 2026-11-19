@@ -40,15 +40,17 @@ export class LoyaltyEngine {
           });
 
           // Record transaction
-          await tx.loyaltyTransaction.create({
-            data: {
-              outletId: event.outletId,
-              customerId,
-              orderId: order.id,
-              pointsEarned: pointsEarned,
-              pointsRedeemed: 0
-            }
-          });
+          if ((tx as any).loyaltyTransaction) {
+            await (tx as any).loyaltyTransaction.create({
+              data: {
+                outletId: event.outletId,
+                customerId,
+                orderId: order.id,
+                pointsEarned: pointsEarned,
+                pointsRedeemed: 0
+              }
+            });
+          }
         });
         
         console.log(`[LoyaltyEngine] Awarded ${pointsEarned} points to customer ${order.customerId} for order ${order.id}`);

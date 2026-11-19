@@ -142,7 +142,14 @@ ordersRouter.post(
       }
     }
 
-    const orderType = (body.orderType === "TAKEAWAY" || body.orderType === "PICKUP") ? "PICKUP" : (body.orderType === "DELIVERY" ? "DELIVERY" : "DINE_IN");
+    let orderType = (body.orderType === "TAKEAWAY" || body.orderType === "PICKUP") ? "PICKUP" : (body.orderType === "DELIVERY" ? "DELIVERY" : "DINE_IN");
+    if (orderType === "DINE_IN" && !diningTableId) {
+      if (!body.tableNumber || body.tableNumber === "Direct" || body.tableNumber === "Select Table") {
+        orderType = "PICKUP";
+      } else {
+        return res.status(400).json({ error: `Dining table "${body.tableNumber}" not found. Dine-In orders require a valid active table.` });
+      }
+    }
     let customerId = body.customerId || undefined;
     if (!customerId && (body.customerPhone || body.customerName)) {
       try {
@@ -196,6 +203,7 @@ ordersRouter.post(
           waiterId: body.waiterId || req.auth?.userId || undefined,
         },
       }).catch(() => {});
+      await occupyMergeMembers(prisma, outletId, diningTableId).catch(() => {});
     }
 
     let scheduledFireAtDate: Date | null = null;
@@ -803,7 +811,14 @@ ordersRouter.get("/orders/:id", requireAuth, async (req: AuthedRequest, res) => 
 
     const kotTickets = await prisma.kOTTicket.findMany({
       where: { orderId: order.id },
-      include: { kotItems: true },
+      include: {
+        kotItems: {
+          include: {
+            menuItem: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
     }).catch(() => []);
     const kitchenRank: Record<string, number> = {
       QUEUED: 1, KOT_CREATED: 1, PENDING: 1,
@@ -835,6 +850,19 @@ ordersRouter.get("/orders/:id", requireAuth, async (req: AuthedRequest, res) => 
         unitPriceMinor: String(it.unitPriceMinor),
         subtotalMinor: String(it.subtotalMinor),
         kitchenStatus: kitchenByOrderItem.get(it.id) || null,
+      })),
+      kots: kotTickets.map((k: any) => ({
+        id: k.id,
+        ticketNumber: k.ticketNumber,
+        status: k.status,
+        createdAt: k.createdAt,
+        servedAt: k.servedAt,
+        items: (k.kotItems || []).map((ki: any) => ({
+          id: ki.id,
+          name: ki.menuItem?.name || "Item",
+          quantity: ki.quantity,
+          status: ki.servedAt ? "SERVED" : k.status,
+        })),
       })),
       payments: (payments.length > 0 ? payments : (order.payments || [])).map((p: any) => ({
         id: p.id,
@@ -893,6 +921,20 @@ ordersRouter.patch("/orders/:id/status", requireAuth, requirePermission("order.u
       if (order.diningTableId) {
         await dissolveMergeGroupForTable(prisma, order.outletId, order.diningTableId).catch(() => {});
       }
+      await prisma.kOTTicket.updateMany({
+        where: { orderId, status: { in: ["QUEUED", "PREPARING", "READY"] } },
+        data: { status: "SERVED", servedAt: new Date() },
+      }).catch(() => {});
+    }
+
+    if (mappedTarget === "CANCELLED") {
+      if (order.diningTableId) {
+        await dissolveMergeGroupForTable(prisma, order.outletId, order.diningTableId).catch(() => {});
+      }
+      await prisma.kOTTicket.updateMany({
+        where: { orderId, status: { in: ["QUEUED", "PREPARING", "READY"] } },
+        data: { status: "CANCELLED" },
+      }).catch(() => {});
     }
 
     res.status(200).json(result);
@@ -902,11 +944,12 @@ ordersRouter.patch("/orders/:id/status", requireAuth, requirePermission("order.u
   }
 });
 
-// Verifies that a floor waiter can only view/bill/settle orders on their own assigned tables
+// Verifies that a floor waiter can only view/bill/settle/manage orders on their own assigned tables
 async function assertWaiterBillAccess(
   req: AuthedRequest,
   orderId: string,
-  outletId: string
+  outletId: string,
+  action: "bill" | "manage" = "bill"
 ): Promise<{ allowed: boolean; error?: string }> {
   try {
     const order = await prisma.order.findUnique({
@@ -929,9 +972,10 @@ async function assertWaiterBillAccess(
       ? `${waiterUser.firstName || ''} ${waiterUser.lastName || ''}`.trim() || waiterUser.email
       : "another captain";
 
+    const verb = action === "bill" ? "take bills for" : "manage orders on";
     return {
       allowed: false,
-      error: `This table bill belongs to Captain ${waiterName}. You can only take bills for your own tables.`,
+      error: `This table order belongs to Captain ${waiterName}. You can only ${verb} your own tables.`,
     };
   } catch {
     return { allowed: true };
@@ -1001,18 +1045,30 @@ const handleRecordPayment = async (req: AuthedRequest, res: any) => {
       return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
     }
 
-    const unservedKots = await prisma.kOTTicket.findMany({
-      where: {
-        orderId: req.params.id,
-        outletId,
-        status: { in: ["QUEUED", "PREPARING", "READY"] },
-      },
+    // Only non-cashiers (waitstaff) are blocked from taking payment while order is in KOT
+    const userRoles = await prisma.userRole.findMany({
+      where: { userId, OR: [{ outletId }, { outletId: null }] },
+      include: { role: { select: { name: true } } },
     });
-    if (unservedKots.length > 0) {
-      return res.status(400).json({
-        error: "CANNOT_PAY_IN_KOT",
-        message: "Cannot take payment: Order has active items in kitchen (KOT). Food must be served to table before payment can be accepted.",
+    const roleNames = userRoles.map((ur) => (ur.role?.name || "").toUpperCase());
+    const isCashierOrAbove = roleNames.length === 0 || roleNames.some((r) =>
+      ["CASHIER", "ADMIN", "SUPER_ADMIN", "OWNER", "MANAGER", "OUTLET_MANAGER", "RESTAURANT_ADMIN"].includes(r)
+    );
+
+    if (!isCashierOrAbove) {
+      const unservedKots = await prisma.kOTTicket.findMany({
+        where: {
+          orderId: req.params.id,
+          outletId,
+          status: { in: ["QUEUED", "PREPARING", "READY"] },
+        },
       });
+      if (unservedKots.length > 0) {
+        return res.status(400).json({
+          error: "CANNOT_PAY_IN_KOT",
+          message: "Cannot take payment: Order has active items in kitchen (KOT). Food must be served to table before payment can be accepted.",
+        });
+      }
     }
 
     const payment = await orderRepo.recordPayment(
@@ -1049,6 +1105,11 @@ ordersRouter.post("/orders/:id/items", requireAuth, requirePermission("order.cre
     const outletId = req.auth!.outletId;
     const userId = req.auth!.userId;
     const { lines } = req.body;
+
+    const access = await assertWaiterBillAccess(req, req.params.id, outletId, "manage");
+    if (!access.allowed) {
+      return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
+    }
 
     if (!Array.isArray(lines) || lines.length === 0) {
       return res.status(400).json({ error: "lines must be a non-empty array" });
@@ -1089,18 +1150,42 @@ ordersRouter.post("/orders/:id/items", requireAuth, requirePermission("order.cre
   }
 });
 
-// POST & PATCH /orders/:id/items/:itemId/void - Void an item from order
+// POST & PATCH /orders/:id/items/:itemId/void - Void an item from order (Cashier / Manager / Admin only)
 const handleVoidItem = async (req: AuthedRequest, res: any) => {
   try {
     const outletId = req.auth!.outletId;
     const userId = req.auth!.userId;
-    const reasonCode = req.body?.reasonCode || req.body?.reason || "CUSTOMER_VOID";
+    const reasonText =
+      (req.body?.reason && String(req.body.reason).trim()) ||
+      (req.body?.reasonCode && String(req.body.reasonCode).trim()) ||
+      "CUSTOMER_VOID";
+
+    // Enforce Cashier / Manager / Admin role on backend as well
+    const userRoles = await prisma.userRole.findMany({
+      where: { userId, OR: [{ outletId }, { outletId: null }] },
+      include: { role: { select: { name: true } } },
+    });
+    const roleNames = userRoles.map((ur) => (ur.role?.name || "").toUpperCase());
+    const isCashierOrAbove = roleNames.some((r) =>
+      ["CASHIER", "ADMIN", "SUPER_ADMIN", "OWNER", "MANAGER", "OUTLET_MANAGER", "RESTAURANT_ADMIN"].includes(r)
+    );
+    if (roleNames.length > 0 && !isCashierOrAbove) {
+      return res.status(403).json({
+        error: "CASHIER_ONLY",
+        message: "Only Cashiers, Managers, or Admins are authorized to cancel dispatched items.",
+      });
+    }
+
+    const access = await assertWaiterBillAccess(req, req.params.id, outletId, "manage");
+    if (!access.allowed) {
+      return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
+    }
 
     const result = await orderRepo.voidItem(
       outletId,
       req.params.id,
       req.params.itemId,
-      reasonCode,
+      reasonText,
       userId
     );
     if (!result.ok) {
@@ -1124,15 +1209,43 @@ const handleVoidItem = async (req: AuthedRequest, res: any) => {
       });
     }
 
-    res.status(200).json(result);
+    // If voiding the last item cancelled the whole order, also cancel active KOTs and free table
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, status: true, diningTableId: true },
+    }).catch(() => null);
+
+    if (updatedOrder?.status === "CANCELLED") {
+      await prisma.kOTTicket.updateMany({
+        where: { orderId: updatedOrder.id, status: { in: ["QUEUED", "PREPARING", "READY"] } },
+        data: { status: "CANCELLED" },
+      }).catch(() => {});
+
+      if (updatedOrder.diningTableId) {
+        await dissolveMergeGroupForTable(prisma, outletId, updatedOrder.diningTableId).catch(() => {});
+        await prisma.diningTable.update({
+          where: { id: updatedOrder.diningTableId },
+          data: { status: "VACANT" },
+        }).catch(() => {});
+      }
+    }
+
+    import("../websockets").then(({ broadcast }) => {
+      broadcast(outletId, "order.updated", { orderId: req.params.id, status: updatedOrder?.status });
+      if (updatedOrder?.status === "CANCELLED" && updatedOrder.diningTableId) {
+        broadcast(outletId, "table.status_updated", { tableId: updatedOrder.diningTableId, status: "VACANT" });
+      }
+    }).catch(() => {});
+
+    res.status(200).json({ ...result, reason: reasonText, orderStatus: updatedOrder?.status });
   } catch (err: any) {
     console.error("Error voiding order item:", err);
     res.status(400).json({ error: err.message || "Failed to void item" });
   }
 };
 
-ordersRouter.post("/orders/:id/items/:itemId/void", requireAuth, requirePermission("order.void"), handleVoidItem);
-ordersRouter.patch("/orders/:id/items/:itemId/void", requireAuth, requirePermission("order.void"), handleVoidItem);
+ordersRouter.post("/orders/:id/items/:itemId/void", requireAuth, requirePermission("order.void", "order.cancel"), handleVoidItem);
+ordersRouter.patch("/orders/:id/items/:itemId/void", requireAuth, requirePermission("order.void", "order.cancel"), handleVoidItem);
 
 // POST & PATCH /orders/:id/charges - Apply discounts / tips / service charges
 const handleCharges = async (req: AuthedRequest, res: any) => {
@@ -1242,12 +1355,12 @@ ordersRouter.post("/orders/:id/fire-advance", requireAuth, requirePermission("or
   }
 });
 
-// POST /orders/:id/cancel - Cancel order
-ordersRouter.post("/orders/:id/cancel", requireAuth, requirePermission("order.void"), async (req: AuthedRequest, res) => {
+// Cancel order handler
+const cancelOrderHandler = async (req: AuthedRequest, res: any) => {
   try {
     const orderId = req.params.id;
     const userId = req.auth!.userId;
-    const { reason, reasonCode } = req.body;
+    const { reason, reasonCode } = req.body || {};
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -1267,6 +1380,11 @@ ordersRouter.post("/orders/:id/cancel", requireAuth, requirePermission("order.vo
 
     await transitionOrder(orderId, "CANCELLED" as OrderStatus, orderRepo, userId, reason || reasonCode || "CUSTOMER_CANCELLED");
 
+    await prisma.kOTTicket.updateMany({
+      where: { orderId, status: { in: ["QUEUED", "PREPARING", "READY"] } },
+      data: { status: "CANCELLED" },
+    }).catch(() => {});
+
     const dissolved = order.diningTableId
       ? await dissolveMergeGroupForTable(prisma, order.outletId, order.diningTableId)
       : { ids: [] as string[] };
@@ -1283,7 +1401,10 @@ ordersRouter.post("/orders/:id/cancel", requireAuth, requirePermission("order.vo
     console.error("Error cancelling order:", err);
     res.status(500).json({ error: err.message || "Failed to cancel order" });
   }
-});
+};
+
+ordersRouter.post("/orders/:id/cancel", requireAuth, requirePermission("order.void", "order.cancel", "order.create"), cancelOrderHandler);
+ordersRouter.delete("/orders/:id", requireAuth, requirePermission("order.void", "order.cancel", "order.create"), cancelOrderHandler);
 
 // GET /orders/by-table/:tableId/active - Get running order on a table
 ordersRouter.get("/orders/by-table/:tableId/active", requireAuth, async (req: AuthedRequest, res) => {
@@ -1291,10 +1412,12 @@ ordersRouter.get("/orders/by-table/:tableId/active", requireAuth, async (req: Au
     const outletId = req.auth!.outletId;
     const tableId = req.params.tableId;
     const anchor = await resolveAnchorTable(prisma, outletId, tableId);
-    const memberIds = await expandMergeMemberIds(prisma, outletId, [anchor?.id || tableId]);
+    if (!anchor) {
+      return res.status(404).json({ error: "No active order for this table" });
+    }
+    const memberIds = await expandMergeMemberIds(prisma, outletId, [anchor.id]);
     const candidateIds = Array.from(new Set([
-      anchor?.id,
-      tableId,
+      anchor.id,
       ...memberIds,
     ].filter(Boolean) as string[]));
     const liveOrders = await findLiveOrdersOnTables(
@@ -1306,6 +1429,11 @@ ordersRouter.get("/orders/by-table/:tableId/active", requireAuth, async (req: Au
 
     if (!order) {
       return res.status(404).json({ error: "No active order for this table" });
+    }
+
+    const access = await assertWaiterBillAccess(req, order.id, outletId, "manage");
+    if (!access.allowed) {
+      return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
     }
 
     res.status(200).json({
@@ -1666,18 +1794,29 @@ ordersRouter.post(
         return res.status(404).json({ error: "Order not found" });
       }
 
-      const unservedKots = await prisma.kOTTicket.findMany({
-        where: {
-          orderId,
-          outletId,
-          status: { in: ["QUEUED", "PREPARING", "READY"] },
-        },
+      const userRoles = await prisma.userRole.findMany({
+        where: { userId: (req.auth as any).userId, OR: [{ outletId }, { outletId: null }] },
+        include: { role: { select: { name: true } } },
       });
-      if (unservedKots.length > 0) {
-        return res.status(400).json({
-          error: "CANNOT_PAY_IN_KOT",
-          message: "Cannot take seat payment: Order has active items in kitchen (KOT). Food must be served to table before payment can be accepted.",
+      const roleNames = userRoles.map((ur) => (ur.role?.name || "").toUpperCase());
+      const isCashierOrAbove = roleNames.length === 0 || roleNames.some((r) =>
+        ["CASHIER", "ADMIN", "SUPER_ADMIN", "OWNER", "MANAGER", "OUTLET_MANAGER", "RESTAURANT_ADMIN"].includes(r)
+      );
+
+      if (!isCashierOrAbove) {
+        const unservedKots = await prisma.kOTTicket.findMany({
+          where: {
+            orderId,
+            outletId,
+            status: { in: ["QUEUED", "PREPARING", "READY"] },
+          },
         });
+        if (unservedKots.length > 0) {
+          return res.status(400).json({
+            error: "CANNOT_PAY_IN_KOT",
+            message: "Cannot take seat payment: Order has active items in kitchen (KOT). Food must be served to table before payment can be accepted.",
+          });
+        }
       }
 
       const seatBill = await (prisma as any).order_seat_bills.findFirst({

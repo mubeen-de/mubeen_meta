@@ -17,8 +17,8 @@ describe("isKotTransitionLegal", () => {
     expect(isKotTransitionLegal("READY", "SERVED")).toBe(true);
   });
 
-  it("QUEUED -> READY is illegal (no skipping)", () => {
-    expect(isKotTransitionLegal("QUEUED", "READY")).toBe(false);
+  it("QUEUED -> READY is legal (Directly Mark Ready)", () => {
+    expect(isKotTransitionLegal("QUEUED", "READY")).toBe(true);
   });
 
   it("SERVED -> anything is illegal (terminal)", () => {

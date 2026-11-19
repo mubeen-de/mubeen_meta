@@ -112,6 +112,7 @@ export class PrismaOrderRepository implements OrderRepository {
           grandTotal: priced.grandTotalMinor,
           customerId: input.customerId || null,
           diningTableId: input.diningTableId || null,
+          waiterId: input.waiterId || null,
         },
       });
 
@@ -739,20 +740,34 @@ export class PrismaOrderRepository implements OrderRepository {
     }
 
     const paidMinor = payments.reduce((acc, p) => acc + p.amount, 0n);
+
+    // Food Subtotal is the full base item subtotal (never deducting tax from food subtotal).
+    // Tax (GST) is added on top of food subtotal.
+    const subtotalMinor = order.subtotal || 0n;
+    const taxTotalMinor = order.taxTotal || 0n;
+    const discountTotalMinor = order.discountTotal || 0n;
+    const tipTotalMinor = order.tipTotal || 0n;
+    const serviceChargeTotalMinor = order.serviceChargeTotal || 0n;
+
+    // Grand Total = Subtotal - Discount + Tax + Tip + ServiceCharge
     const expectedGrandTotal =
-      (order.subtotal || 0n) -
-      (order.discountTotal || 0n) +
-      (order.taxTotal || 0n) +
-      (order.tipTotal || 0n) +
-      (order.serviceChargeTotal || 0n);
+      subtotalMinor -
+      discountTotalMinor +
+      taxTotalMinor +
+      tipTotalMinor +
+      serviceChargeTotalMinor;
+
     const grandTotalMinor =
-      order.grandTotal === expectedGrandTotal ? order.grandTotal : expectedGrandTotal;
+      order.grandTotal && order.grandTotal > subtotalMinor
+        ? order.grandTotal + tipTotalMinor + serviceChargeTotalMinor
+        : expectedGrandTotal;
+
     const dueMinor = grandTotalMinor > paidMinor ? grandTotalMinor - paidMinor : 0n;
 
     return {
       orderId: order.id,
       orderNumber: order.orderNumber,
-      subtotalMinor: order.subtotal,
+      subtotalMinor,
       discountTotalMinor: order.discountTotal || 0n,
       taxTotalMinor: order.taxTotal || 0n,
       tipTotalMinor: order.tipTotal || 0n,
@@ -804,10 +819,11 @@ export class PrismaOrderRepository implements OrderRepository {
   ): Promise<{ tipTotalMinor: bigint; serviceChargeTotalMinor: bigint; grandTotalMinor: bigint }> {
     return this.prisma.$transaction(async (tx) => {
       const order = await tx.order.findFirstOrThrow({ where: { id: orderId, outletId } });
+      const baseSubtotal = (order.subtotal || 0n) + (order.taxTotal || 0n);
+
       const calculatedGrandTotal =
-        (order.subtotal || 0n) -
+        baseSubtotal -
         (order.discountTotal || 0n) +
-        (order.taxTotal || 0n) +
         tipMinor +
         serviceChargeMinor;
 
@@ -889,7 +905,10 @@ export class PrismaOrderRepository implements OrderRepository {
           for (const nextStatus of transitions) {
             await tx.order.update({
               where: { id: orderId },
-              data: { status: nextStatus as any },
+              data: {
+                status: nextStatus as any,
+                ...(nextStatus === "COMPLETED" ? { settledAt: new Date() } : {}),
+              },
             });
           }
         }

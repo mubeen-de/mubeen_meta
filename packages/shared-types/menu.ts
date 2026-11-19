@@ -12,9 +12,18 @@ export interface MenuItemInput {
   categoryId: string;
   name: string;
   description?: string;
-  priceMinor: bigint; // minor units (paise), matches schema's BigInt price column
+  onlineDisplayName?: string | null;
+  shortCode?: string | null;
+  priceMinor: bigint; // minor units (paise), Dine-In base price
+  parcelPriceMinor?: bigint | null;
+  parcelAvailable?: boolean;
+  zomatoPriceMinor?: bigint | null;
+  zomatoAvailable?: boolean;
+  swiggyPriceMinor?: bigint | null;
+  swiggyAvailable?: boolean;
   isVeg?: boolean; // matches schema's MenuItem.isVeg (defaults true in DB if omitted)
   taxRate?: number; // matches schema's MenuItem.taxRate (defaults 5.0 in DB if omitted)
+  imageUrl?: string | null;
 }
 
 export interface AvailabilityState {
@@ -36,9 +45,18 @@ export interface MenuItemView {
   categoryName: string;
   name: string;
   description: string | null;
+  onlineDisplayName?: string | null;
+  shortCode?: string | null;
   priceMinor: bigint;
+  parcelPriceMinor?: bigint | null;
+  parcelAvailable?: boolean;
+  zomatoPriceMinor?: bigint | null;
+  zomatoAvailable?: boolean;
+  swiggyPriceMinor?: bigint | null;
+  swiggyAvailable?: boolean;
   isVeg: boolean;
   taxRate: string;
   isActive: boolean;
+  imageUrl?: string | null;
   availability: { isStocked: boolean; stockQty: number; version: number } | null;
 }

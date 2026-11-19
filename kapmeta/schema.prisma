@@ -253,6 +253,25 @@ model table_merge_members {
   @@map("table_merge_members")
 }
 
+model table_reservations {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  outlet_id        String    @db.Uuid
+  dining_table_id  String
+  customer_name    String
+  customer_phone   String?
+  guest_count      Int       @default(2)
+  reservation_time DateTime  @default(now()) @db.Timestamptz(6)
+  status           String    @default("CONFIRMED")
+  special_notes    String?
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([outlet_id], map: "idx_table_reservations_outlet")
+  @@index([dining_table_id], map: "idx_table_reservations_table")
+  @@index([reservation_time], map: "idx_table_reservations_time")
+  @@map("table_reservations")
+}
+
 model table_seats {
   id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   outlet_id        String      @db.Uuid
@@ -345,6 +364,14 @@ model MenuItem {
   isActive          Boolean       @default(true) @map("is_active")
   station_id        String?       @map("station_id") @db.Uuid
   onlineDisplayName String?       @map("online_display_name")
+  imageUrl          String?       @map("image_url")
+  shortCode         String?       @map("short_code")
+  parcelPrice       BigInt?       @map("parcel_price")
+  parcelAvailable   Boolean       @default(true) @map("parcel_available")
+  zomatoPrice       BigInt?       @map("zomato_price")
+  zomatoAvailable   Boolean       @default(true) @map("zomato_available")
+  swiggyPrice       BigInt?       @map("swiggy_price")
+  swiggyAvailable   Boolean       @default(true) @map("swiggy_available")
   createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   category          MenuCategory? @relation(fields: [categoryId], references: [id])

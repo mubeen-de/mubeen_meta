@@ -5,7 +5,7 @@
 // The "Add Category"/"Add Menu Item" logic here mirrors the working modal
 // handlers in pages/index.tsx (same authedFetch calls, same field names)
 // but lives on its own page instead of being buried in the POS terminal.
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import { authedFetch, useAuthGuard } from "../lib/auth";
 import Nav from "../components/Nav";
@@ -25,14 +25,24 @@ interface MenuItemRow {
   categoryId: string;
   name: string;
   description: string | null;
-  priceMinor: string; // BigInt serialized as string by the API
+  shortCode?: string | null;
+  onlineDisplayName?: string | null;
+  priceMinor: string; // Dine-In base price (paise)
+  parcelPriceMinor?: string | null;
+  parcelAvailable?: boolean;
+  zomatoPriceMinor?: string | null;
+  zomatoAvailable?: boolean;
+  swiggyPriceMinor?: string | null;
+  swiggyAvailable?: boolean;
   isVeg: boolean;
   taxRate: string;
   isActive: boolean;
+  imageUrl?: string | null;
   availability: { isStocked: boolean; stockQty: number; version: number } | null;
 }
 
-function formatPriceMinor(priceMinor: string): string {
+function formatPriceMinor(priceMinor?: string | null): string {
+  if (priceMinor == null || priceMinor === "") return "—";
   const rupees = Number(BigInt(priceMinor)) / 100;
   return `₹${rupees.toFixed(2)}`;
 }
@@ -55,20 +65,42 @@ export default function MenuManagement() {
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const [newItemCategoryId, setNewItemCategoryId] = useState("");
   const [newItemName, setNewItemName] = useState("");
+  const [newItemShortCode, setNewItemShortCode] = useState("");
   const [newItemDescription, setNewItemDescription] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
+  const [newItemParcelPrice, setNewItemParcelPrice] = useState("");
+  const [newItemParcelAvailable, setNewItemParcelAvailable] = useState(true);
+  const [newItemZomatoPrice, setNewItemZomatoPrice] = useState("");
+  const [newItemZomatoAvailable, setNewItemZomatoAvailable] = useState(true);
+  const [newItemSwiggyPrice, setNewItemSwiggyPrice] = useState("");
+  const [newItemSwiggyAvailable, setNewItemSwiggyAvailable] = useState(true);
   const [newItemIsVeg, setNewItemIsVeg] = useState(true);
   const [newItemTaxRate, setNewItemTaxRate] = useState("5");
+  const [newItemImageUrl, setNewItemImageUrl] = useState("");
+  const [showAddUrlInput, setShowAddUrlInput] = useState(false);
+  const [isAddDragging, setIsAddDragging] = useState(false);
+  const addItemFileInputRef = useRef<HTMLInputElement>(null);
   const [savingItem, setSavingItem] = useState(false);
 
   const [isEditItemOpen, setIsEditItemOpen] = useState(false);
   const [editItemId, setEditItemId] = useState("");
   const [editItemCategoryId, setEditItemCategoryId] = useState("");
   const [editItemName, setEditItemName] = useState("");
+  const [editItemShortCode, setEditItemShortCode] = useState("");
   const [editItemDescription, setEditItemDescription] = useState("");
   const [editItemPrice, setEditItemPrice] = useState("");
+  const [editItemParcelPrice, setEditItemParcelPrice] = useState("");
+  const [editItemParcelAvailable, setEditItemParcelAvailable] = useState(true);
+  const [editItemZomatoPrice, setEditItemZomatoPrice] = useState("");
+  const [editItemZomatoAvailable, setEditItemZomatoAvailable] = useState(true);
+  const [editItemSwiggyPrice, setEditItemSwiggyPrice] = useState("");
+  const [editItemSwiggyAvailable, setEditItemSwiggyAvailable] = useState(true);
   const [editItemIsVeg, setEditItemIsVeg] = useState(true);
   const [editItemTaxRate, setEditItemTaxRate] = useState("5");
+  const [editItemImageUrl, setEditItemImageUrl] = useState("");
+  const [showEditUrlInput, setShowEditUrlInput] = useState(false);
+  const [isEditDragging, setIsEditDragging] = useState(false);
+  const editItemFileInputRef = useRef<HTMLInputElement>(null);
   const [savingEditItem, setSavingEditItem] = useState(false);
 
   const [isEditCategoryOpen, setIsEditCategoryOpen] = useState(false);
@@ -96,6 +128,56 @@ export default function MenuManagement() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const processImageFile = (file: File, setImage: (url: string) => void) => {
+    if (!file.type.startsWith("image/")) {
+      showToast("⚠️ Please select a valid image file (PNG, JPG, WebP)");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("⚠️ Image is too large. Please select an image under 10MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const rawDataUrl = e.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const maxDim = 800;
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimized = canvas.toDataURL("image/jpeg", 0.85);
+            setImage(optimized);
+          } else {
+            setImage(rawDataUrl);
+          }
+        } catch {
+          setImage(rawDataUrl);
+        }
+      };
+      img.onerror = () => {
+        setImage(rawDataUrl);
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
   };
 
   const fetchCategoriesAndItems = () => {
@@ -172,10 +254,20 @@ export default function MenuManagement() {
   const openAddItem = (categoryId?: string) => {
     setNewItemCategoryId(categoryId || categories[0]?.id || "");
     setNewItemName("");
+    setNewItemShortCode("");
     setNewItemDescription("");
     setNewItemPrice("");
+    setNewItemParcelPrice("");
+    setNewItemParcelAvailable(true);
+    setNewItemZomatoPrice("");
+    setNewItemZomatoAvailable(true);
+    setNewItemSwiggyPrice("");
+    setNewItemSwiggyAvailable(true);
     setNewItemIsVeg(true);
     setNewItemTaxRate("5");
+    setNewItemImageUrl("");
+    setShowAddUrlInput(false);
+    setIsAddDragging(false);
     setIsAddItemOpen(true);
   };
 
@@ -183,6 +275,9 @@ export default function MenuManagement() {
     e.preventDefault();
     const nameTrimmed = newItemName.trim();
     const priceNum = parseFloat(newItemPrice);
+    const parcelNum = parseFloat(newItemParcelPrice);
+    const zomatoNum = parseFloat(newItemZomatoPrice);
+    const swiggyNum = parseFloat(newItemSwiggyPrice);
     const taxNum = parseFloat(newItemTaxRate);
 
     if (!newItemCategoryId) {
@@ -193,8 +288,8 @@ export default function MenuManagement() {
       showToast("⚠️ Item name is required");
       return;
     }
-    if (isNaN(priceNum) || priceNum <= 0) {
-      showToast("⚠️ Please enter a valid price in Rupees");
+    if (isNaN(priceNum) || priceNum < 0) {
+      showToast("⚠️ Please enter a valid Dine-In price in Rupees");
       return;
     }
 
@@ -206,10 +301,18 @@ export default function MenuManagement() {
         body: JSON.stringify({
           categoryId: newItemCategoryId,
           name: nameTrimmed,
+          shortCode: newItemShortCode.trim() || undefined,
           description: newItemDescription.trim() || undefined,
           priceMinor: Math.round(priceNum * 100),
+          parcelPriceMinor: !isNaN(parcelNum) ? Math.round(parcelNum * 100) : Math.round(priceNum * 100),
+          parcelAvailable: newItemParcelAvailable,
+          zomatoPriceMinor: !isNaN(zomatoNum) ? Math.round(zomatoNum * 100) : Math.round(priceNum * 100),
+          zomatoAvailable: newItemZomatoAvailable,
+          swiggyPriceMinor: !isNaN(swiggyNum) ? Math.round(swiggyNum * 100) : Math.round(priceNum * 100),
+          swiggyAvailable: newItemSwiggyAvailable,
           isVeg: newItemIsVeg,
           taxRate: isNaN(taxNum) ? undefined : taxNum,
+          imageUrl: newItemImageUrl.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -227,13 +330,30 @@ export default function MenuManagement() {
   };
 
   const openEditItem = (item: MenuItemRow) => {
+    const baseStr = (Number(BigInt(item.priceMinor)) / 100).toString();
     setEditItemId(item.id);
     setEditItemCategoryId(item.categoryId);
     setEditItemName(item.name);
+    setEditItemShortCode(item.shortCode || "");
     setEditItemDescription(item.description || "");
-    setEditItemPrice((Number(BigInt(item.priceMinor)) / 100).toString());
+    setEditItemPrice(baseStr);
+    setEditItemParcelPrice(
+      item.parcelPriceMinor != null ? (Number(BigInt(item.parcelPriceMinor)) / 100).toString() : baseStr
+    );
+    setEditItemParcelAvailable(item.parcelAvailable ?? true);
+    setEditItemZomatoPrice(
+      item.zomatoPriceMinor != null ? (Number(BigInt(item.zomatoPriceMinor)) / 100).toString() : baseStr
+    );
+    setEditItemZomatoAvailable(item.zomatoAvailable ?? true);
+    setEditItemSwiggyPrice(
+      item.swiggyPriceMinor != null ? (Number(BigInt(item.swiggyPriceMinor)) / 100).toString() : baseStr
+    );
+    setEditItemSwiggyAvailable(item.swiggyAvailable ?? true);
     setEditItemIsVeg(item.isVeg);
     setEditItemTaxRate(item.taxRate);
+    setEditItemImageUrl(item.imageUrl || "");
+    setShowEditUrlInput(Boolean(item.imageUrl && item.imageUrl.startsWith("http")));
+    setIsEditDragging(false);
     setIsEditItemOpen(true);
   };
 
@@ -241,14 +361,17 @@ export default function MenuManagement() {
     e.preventDefault();
     const nameTrimmed = editItemName.trim();
     const priceNum = parseFloat(editItemPrice);
+    const parcelNum = parseFloat(editItemParcelPrice);
+    const zomatoNum = parseFloat(editItemZomatoPrice);
+    const swiggyNum = parseFloat(editItemSwiggyPrice);
     const taxNum = parseFloat(editItemTaxRate);
 
     if (!nameTrimmed) {
       showToast("⚠️ Item name is required");
       return;
     }
-    if (isNaN(priceNum) || priceNum <= 0) {
-      showToast("⚠️ Please enter a valid price in Rupees");
+    if (isNaN(priceNum) || priceNum < 0) {
+      showToast("⚠️ Please enter a valid Dine-In price in Rupees");
       return;
     }
 
@@ -260,10 +383,18 @@ export default function MenuManagement() {
         body: JSON.stringify({
           categoryId: editItemCategoryId,
           name: nameTrimmed,
+          shortCode: editItemShortCode.trim() || null,
           description: editItemDescription.trim() || undefined,
           priceMinor: Math.round(priceNum * 100),
+          parcelPriceMinor: !isNaN(parcelNum) ? Math.round(parcelNum * 100) : Math.round(priceNum * 100),
+          parcelAvailable: editItemParcelAvailable,
+          zomatoPriceMinor: !isNaN(zomatoNum) ? Math.round(zomatoNum * 100) : Math.round(priceNum * 100),
+          zomatoAvailable: editItemZomatoAvailable,
+          swiggyPriceMinor: !isNaN(swiggyNum) ? Math.round(swiggyNum * 100) : Math.round(priceNum * 100),
+          swiggyAvailable: editItemSwiggyAvailable,
           isVeg: editItemIsVeg,
           taxRate: isNaN(taxNum) ? undefined : taxNum,
+          imageUrl: editItemImageUrl.trim() || null,
         }),
       });
       if (!res.ok) {
@@ -603,10 +734,11 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                               <thead>
                                 <tr>
                                   <th>Name</th>
-                                  <th>Description</th>
-                                  <th>Price</th>
-                                  <th>Veg</th>
-                                  <th>Tax Rate</th>
+                                  <th>Dine-In</th>
+                                  <th>Parcel</th>
+                                  <th>Zomato</th>
+                                  <th>Swiggy</th>
+                                  <th>Diet</th>
                                   <th>Status</th>
                                   <th>Actions</th>
                                 </tr>
@@ -614,11 +746,56 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                               <tbody>
                                 {items.map((item) => (
                                   <tr key={item.id}>
-                                    <td>{item.name}</td>
-                                    <td className="desc-cell">{item.description || "—"}</td>
-                                    <td>{formatPriceMinor(item.priceMinor)}</td>
-                                    <td>{item.isVeg ? "🟢 Pure Veg" : "🔴 Non-Veg"}</td>
-                                    <td>{item.taxRate}%</td>
+                                    <td>
+                                      <div className="item-name-cell">
+                                        {item.imageUrl ? (
+                                          <img
+                                            src={item.imageUrl}
+                                            alt={item.name}
+                                            className="item-row-thumb"
+                                          />
+                                        ) : (
+                                          <div className="item-row-avatar">
+                                            {item.isVeg ? "🌱" : "🍗"}
+                                          </div>
+                                        )}
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                          <span className="item-row-title">
+                                            {item.name}
+                                            {item.shortCode && (
+                                              <span style={{ marginLeft: "6px", fontSize: "10px", fontWeight: 700, padding: "1px 5px", borderRadius: "4px", background: "var(--bg-subtle)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+                                                #{item.shortCode}
+                                              </span>
+                                            )}
+                                          </span>
+                                          {item.description && (
+                                            <span style={{ fontSize: "11px", color: "var(--text-muted)", maxWidth: "260px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                              {item.description}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td style={{ fontWeight: 700 }}>{formatPriceMinor(item.priceMinor)}</td>
+                                    <td>
+                                      <span style={{ fontWeight: 600 }}>{formatPriceMinor(item.parcelPriceMinor ?? item.priceMinor)}</span>
+                                      {item.parcelAvailable === false && (
+                                        <span style={{ marginLeft: "4px", fontSize: "10px", color: "#ef4444", fontWeight: 700 }}>Off</span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <span style={{ fontWeight: 600, color: "#e11d48" }}>{formatPriceMinor(item.zomatoPriceMinor ?? item.priceMinor)}</span>
+                                      {item.zomatoAvailable === false && (
+                                        <span style={{ marginLeft: "4px", fontSize: "10px", color: "#ef4444", fontWeight: 700 }}>Off</span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <span style={{ fontWeight: 600, color: "#ea580c" }}>{formatPriceMinor(item.swiggyPriceMinor ?? item.priceMinor)}</span>
+                                      {item.swiggyAvailable === false && (
+                                        <span style={{ marginLeft: "4px", fontSize: "10px", color: "#ef4444", fontWeight: 700 }}>Off</span>
+                                      )}
+                                    </td>
+                                    <td>{item.isVeg ? "🟢 Veg" : "🔴 Non-Veg"}</td>
                                     <td>
                                       <button
                                         type="button"
@@ -734,16 +911,124 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                   placeholder="Short description"
                 />
               </label>
+              <div className="image-field-container">
+                <span className="field-title">Dish Image (optional)</span>
+                {newItemImageUrl ? (
+                  <div className="image-preview-wrapper">
+                    <img src={newItemImageUrl} alt="Preview" className="image-preview-img" />
+                    <div className="image-preview-info">
+                      <span className="image-status-badge">✓ Image Attached</span>
+                      <div className="image-preview-btns">
+                        <button
+                          type="button"
+                          className="btn-replace-img"
+                          onClick={() => addItemFileInputRef.current?.click()}
+                        >
+                          Change Photo
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-remove-img"
+                          onClick={() => setNewItemImageUrl("")}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className={`image-dropzone ${isAddDragging ? "dropzone-active" : ""}`}
+                    onClick={() => addItemFileInputRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsAddDragging(true);
+                    }}
+                    onDragLeave={() => setIsAddDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsAddDragging(false);
+                      if (e.dataTransfer.files?.[0]) {
+                        processImageFile(e.dataTransfer.files[0], setNewItemImageUrl);
+                      }
+                    }}
+                  >
+                    <div className="dropzone-icon">📷</div>
+                    <div className="dropzone-copy">
+                      <span className="dropzone-title">Upload Image</span>
+                      <span className="dropzone-sub">Click to browse or drag & drop</span>
+                    </div>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={addItemFileInputRef}
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      processImageFile(e.target.files[0], setNewItemImageUrl);
+                    }
+                  }}
+                />
+                {!showAddUrlInput ? (
+                  <button
+                    type="button"
+                    className="btn-link-toggle"
+                    onClick={() => setShowAddUrlInput(true)}
+                  >
+                    🔗 Or paste image URL
+                  </button>
+                ) : (
+                  <div className="url-input-container">
+                    <input
+                      type="url"
+                      value={newItemImageUrl}
+                      onChange={(e) => setNewItemImageUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/... or web URL"
+                    />
+                    <button
+                      type="button"
+                      className="btn-url-close"
+                      onClick={() => setShowAddUrlInput(false)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="field-row">
                 <label>
-                  Price (₹)
+                  Dine-In Price (₹)
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={newItemPrice}
                     onChange={(e) => setNewItemPrice(e.target.value)}
-                    placeholder="150"
+                    placeholder="179"
+                  />
+                </label>
+                <label>
+                  Short Code (optional)
+                  <input
+                    type="text"
+                    value={newItemShortCode}
+                    onChange={(e) => setNewItemShortCode(e.target.value)}
+                    placeholder="e.g. 250"
+                  />
+                </label>
+              </div>
+              <div className="field-row">
+                <label>
+                  Parcel Price (₹)
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newItemParcelPrice}
+                    onChange={(e) => setNewItemParcelPrice(e.target.value)}
+                    placeholder={newItemPrice || "189"}
                   />
                 </label>
                 <label>
@@ -757,14 +1042,64 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                   />
                 </label>
               </div>
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={newItemIsVeg}
-                  onChange={(e) => setNewItemIsVeg(e.target.checked)}
-                />
-                Vegetarian
-              </label>
+              <div className="field-row">
+                <label>
+                  Zomato Price (₹)
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newItemZomatoPrice}
+                    onChange={(e) => setNewItemZomatoPrice(e.target.value)}
+                    placeholder={newItemPrice || "235.75"}
+                  />
+                </label>
+                <label>
+                  Swiggy Price (₹)
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newItemSwiggyPrice}
+                    onChange={(e) => setNewItemSwiggyPrice(e.target.value)}
+                    placeholder={newItemPrice || "235.75"}
+                  />
+                </label>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "14px", marginBottom: "10px" }}>
+                <label className="checkbox-row" style={{ marginBottom: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={newItemIsVeg}
+                    onChange={(e) => setNewItemIsVeg(e.target.checked)}
+                  />
+                  Vegetarian
+                </label>
+                <label className="checkbox-row" style={{ marginBottom: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={newItemParcelAvailable}
+                    onChange={(e) => setNewItemParcelAvailable(e.target.checked)}
+                  />
+                  Parcel
+                </label>
+                <label className="checkbox-row" style={{ marginBottom: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={newItemZomatoAvailable}
+                    onChange={(e) => setNewItemZomatoAvailable(e.target.checked)}
+                  />
+                  Zomato
+                </label>
+                <label className="checkbox-row" style={{ marginBottom: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={newItemSwiggyAvailable}
+                    onChange={(e) => setNewItemSwiggyAvailable(e.target.checked)}
+                  />
+                  Swiggy
+                </label>
+              </div>
               <div className="modal-actions">
                 <button type="button" className="btn-cancel" onClick={() => setIsAddItemOpen(false)}>
                   Cancel
@@ -810,15 +1145,122 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                   placeholder="Short description"
                 />
               </label>
+              <div className="image-field-container">
+                <span className="field-title">Dish Image (optional)</span>
+                {editItemImageUrl ? (
+                  <div className="image-preview-wrapper">
+                    <img src={editItemImageUrl} alt="Preview" className="image-preview-img" />
+                    <div className="image-preview-info">
+                      <span className="image-status-badge">✓ Image Attached</span>
+                      <div className="image-preview-btns">
+                        <button
+                          type="button"
+                          className="btn-replace-img"
+                          onClick={() => editItemFileInputRef.current?.click()}
+                        >
+                          Change Photo
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-remove-img"
+                          onClick={() => setEditItemImageUrl("")}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className={`image-dropzone ${isEditDragging ? "dropzone-active" : ""}`}
+                    onClick={() => editItemFileInputRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsEditDragging(true);
+                    }}
+                    onDragLeave={() => setIsEditDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsEditDragging(false);
+                      if (e.dataTransfer.files?.[0]) {
+                        processImageFile(e.dataTransfer.files[0], setEditItemImageUrl);
+                      }
+                    }}
+                  >
+                    <div className="dropzone-icon">📷</div>
+                    <div className="dropzone-copy">
+                      <span className="dropzone-title">Upload Image</span>
+                      <span className="dropzone-sub">Click to browse or drag & drop</span>
+                    </div>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={editItemFileInputRef}
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      processImageFile(e.target.files[0], setEditItemImageUrl);
+                    }
+                  }}
+                />
+                {!showEditUrlInput ? (
+                  <button
+                    type="button"
+                    className="btn-link-toggle"
+                    onClick={() => setShowEditUrlInput(true)}
+                  >
+                    🔗 Or paste image URL
+                  </button>
+                ) : (
+                  <div className="url-input-container">
+                    <input
+                      type="url"
+                      value={editItemImageUrl}
+                      onChange={(e) => setEditItemImageUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/... or web URL"
+                    />
+                    <button
+                      type="button"
+                      className="btn-url-close"
+                      onClick={() => setShowEditUrlInput(false)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="field-row">
                 <label>
-                  Price (₹)
+                  Dine-In Price (₹)
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={editItemPrice}
                     onChange={(e) => setEditItemPrice(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Short Code (optional)
+                  <input
+                    type="text"
+                    value={editItemShortCode}
+                    onChange={(e) => setEditItemShortCode(e.target.value)}
+                    placeholder="e.g. 250"
+                  />
+                </label>
+              </div>
+              <div className="field-row">
+                <label>
+                  Parcel Price (₹)
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editItemParcelPrice}
+                    onChange={(e) => setEditItemParcelPrice(e.target.value)}
                   />
                 </label>
                 <label>
@@ -832,14 +1274,62 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
                   />
                 </label>
               </div>
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={editItemIsVeg}
-                  onChange={(e) => setEditItemIsVeg(e.target.checked)}
-                />
-                Vegetarian
-              </label>
+              <div className="field-row">
+                <label>
+                  Zomato Price (₹)
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editItemZomatoPrice}
+                    onChange={(e) => setEditItemZomatoPrice(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Swiggy Price (₹)
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editItemSwiggyPrice}
+                    onChange={(e) => setEditItemSwiggyPrice(e.target.value)}
+                  />
+                </label>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "14px", marginBottom: "10px" }}>
+                <label className="checkbox-row" style={{ marginBottom: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={editItemIsVeg}
+                    onChange={(e) => setEditItemIsVeg(e.target.checked)}
+                  />
+                  Vegetarian
+                </label>
+                <label className="checkbox-row" style={{ marginBottom: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={editItemParcelAvailable}
+                    onChange={(e) => setEditItemParcelAvailable(e.target.checked)}
+                  />
+                  Parcel
+                </label>
+                <label className="checkbox-row" style={{ marginBottom: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={editItemZomatoAvailable}
+                    onChange={(e) => setEditItemZomatoAvailable(e.target.checked)}
+                  />
+                  Zomato
+                </label>
+                <label className="checkbox-row" style={{ marginBottom: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={editItemSwiggyAvailable}
+                    onChange={(e) => setEditItemSwiggyAvailable(e.target.checked)}
+                  />
+                  Swiggy
+                </label>
+              </div>
               <div className="modal-actions">
                 <button type="button" className="btn-cancel" onClick={() => setIsEditItemOpen(false)}>
                   Cancel
@@ -1362,10 +1852,200 @@ Desserts,Gulab Jamun,90,true,5,Fried milk dumplings in rose syrup,SKU-006`;
           border: 1px solid var(--border-strong);
           border-radius: 16px;
           padding: 24px;
-          width: 420px;
-          max-width: 90vw;
+          width: 480px;
+          max-width: 92vw;
+          max-height: 92vh;
+          overflow-y: auto;
           box-shadow: var(--shadow-modal);
           color: var(--text-primary);
+        }
+
+        .item-name-cell {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .item-row-thumb {
+          width: 36px;
+          height: 36px;
+          object-fit: cover;
+          border-radius: 8px;
+          border: 1px solid var(--border-strong);
+          flex-shrink: 0;
+        }
+
+        .item-row-avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          flex-shrink: 0;
+        }
+
+        .item-row-title {
+          font-weight: 600;
+          color: var(--text-primary);
+        }
+
+        .image-field-container {
+          margin-bottom: 14px;
+        }
+
+        .field-title {
+          display: block;
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--text-secondary);
+          margin-bottom: 8px;
+        }
+
+        .image-preview-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 10px;
+          background: var(--bg-subtle);
+          border: 1px solid var(--border-strong);
+          border-radius: 10px;
+        }
+
+        .image-preview-img {
+          width: 64px;
+          height: 64px;
+          object-fit: cover;
+          border-radius: 8px;
+          border: 1px solid var(--border);
+          flex-shrink: 0;
+        }
+
+        .image-preview-info {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          flex: 1;
+        }
+
+        .image-status-badge {
+          font-size: 11px;
+          font-weight: 700;
+          color: #10b981;
+        }
+
+        .image-preview-btns {
+          display: flex;
+          gap: 8px;
+        }
+
+        .btn-replace-img {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          color: var(--text-primary);
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .btn-replace-img:hover {
+          border-color: var(--accent);
+        }
+
+        .btn-remove-img {
+          background: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.3);
+          color: #f87171;
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .btn-remove-img:hover {
+          background: rgba(239, 68, 68, 0.2);
+        }
+
+        .image-dropzone {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 14px;
+          background: var(--bg-subtle);
+          border: 2px dashed var(--border-strong);
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .image-dropzone:hover {
+          border-color: var(--accent);
+          background: rgba(59, 130, 246, 0.05);
+        }
+        .image-dropzone.dropzone-active {
+          border-color: var(--accent);
+          background: rgba(59, 130, 246, 0.12);
+        }
+
+        .dropzone-icon {
+          font-size: 24px;
+          line-height: 1;
+        }
+
+        .dropzone-copy {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .dropzone-title {
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--text-primary);
+        }
+
+        .dropzone-sub {
+          font-size: 11px;
+          color: var(--text-muted);
+        }
+
+        .btn-link-toggle {
+          background: none;
+          border: none;
+          color: var(--accent);
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          padding: 6px 0 0 0;
+          text-align: left;
+        }
+        .btn-link-toggle:hover {
+          text-decoration: underline;
+        }
+
+        .url-input-container {
+          display: flex;
+          gap: 6px;
+          margin-top: 8px;
+        }
+
+        .url-input-container input {
+          flex: 1;
+          padding: 8px 10px !important;
+          font-size: 12px !important;
+        }
+
+        .btn-url-close {
+          background: var(--bg-subtle);
+          border: 1px solid var(--border);
+          color: var(--text-secondary);
+          border-radius: 6px;
+          width: 32px;
+          cursor: pointer;
+          font-size: 12px;
         }
 
         .modal h3 {

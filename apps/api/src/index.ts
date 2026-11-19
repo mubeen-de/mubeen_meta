@@ -9,6 +9,7 @@ import { createApp } from './app';
 import { setupWebSockets } from './websockets';
 import { prisma } from './prisma';
 import { startOutboxProcessor } from './orchestration/outbox-processor';
+import { startAvailabilityScheduler } from './orchestration/item-availability-scheduler';
 
 const app = createApp();
 
@@ -30,6 +31,7 @@ server.on("error", (err: NodeJS.ErrnoException) => {
 
 server.listen(port, () => {
   startOutboxProcessor(prisma);
+  startAvailabilityScheduler(prisma);
   // eslint-disable-next-line no-console
   console.log(`Kapmeta API listening on port ${port}`);
 });

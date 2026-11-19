@@ -4,6 +4,7 @@ import Link from "next/link";
 interface CaptainNavDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  hideAdminNav?: boolean;
   outletName?: string;
   stationCode?: string;
   appVersion?: string;
@@ -15,6 +16,7 @@ interface CaptainNavDrawerProps {
   onUpdateMenu: () => void;
   onOpenServerIpModal: () => void;
   onOpenCashTipsCalculator?: () => void;
+  onOpenShiftStats?: () => void;
   onOpenStationModal?: () => void;
   onOpenSettings: () => void;
   onLogout?: () => void;
@@ -23,6 +25,7 @@ interface CaptainNavDrawerProps {
 export default function CaptainNavDrawer({
   isOpen,
   onClose,
+  hideAdminNav = false,
   outletName = "",
   stationCode = "",
   appVersion = "",
@@ -34,6 +37,7 @@ export default function CaptainNavDrawer({
   onUpdateMenu,
   onOpenServerIpModal,
   onOpenCashTipsCalculator,
+  onOpenShiftStats,
   onOpenStationModal,
   onOpenSettings,
   onLogout,
@@ -97,6 +101,18 @@ export default function CaptainNavDrawer({
           >
             <span className="menu-icon">📝</span>
             <span className="menu-label">New KOT</span>
+          </button>
+
+          <button
+            type="button"
+            className="menu-item-btn"
+            onClick={() => {
+              if (onOpenShiftStats) onOpenShiftStats();
+              onClose();
+            }}
+          >
+            <span className="menu-icon">📊</span>
+            <span className="menu-label">My Shift & Tax Stats</span>
           </button>
 
           <button
@@ -188,27 +204,31 @@ export default function CaptainNavDrawer({
             <span className="menu-label">Station Settings</span>
           </button>
 
-          <div style={{ height: "1px", background: "rgba(255,255,255,0.12)", margin: "8px 0" }} />
+          {!hideAdminNav && (
+            <>
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.12)", margin: "8px 0" }} />
 
-          <Link href="/" className="menu-item-btn" onClick={onClose} style={{ textDecoration: "none" }}>
-            <span className="menu-icon">🖥️</span>
-            <span className="menu-label">POS Terminal Floor</span>
-          </Link>
+              <Link href="/" className="menu-item-btn" onClick={onClose} style={{ textDecoration: "none" }}>
+                <span className="menu-icon">🖥️</span>
+                <span className="menu-label">POS Terminal Floor</span>
+              </Link>
 
-          <Link href="/kitchen" className="menu-item-btn" onClick={onClose} style={{ textDecoration: "none" }}>
-            <span className="menu-icon">👨‍🍳</span>
-            <span className="menu-label">Kitchen Display (KDS)</span>
-          </Link>
+              <Link href="/kitchen" className="menu-item-btn" onClick={onClose} style={{ textDecoration: "none" }}>
+                <span className="menu-icon">👨‍🍳</span>
+                <span className="menu-label">Kitchen Display (KDS)</span>
+              </Link>
 
-          <Link href="/orders?tab=live" className="menu-item-btn" onClick={onClose} style={{ textDecoration: "none" }}>
-            <span className="menu-icon">⚡</span>
-            <span className="menu-label">Live Orders Register</span>
-          </Link>
+              <Link href="/orders?tab=live" className="menu-item-btn" onClick={onClose} style={{ textDecoration: "none" }}>
+                <span className="menu-icon">⚡</span>
+                <span className="menu-label">Live Orders Register</span>
+              </Link>
 
-          <Link href="/admin?tab=daily-ops" className="menu-item-btn" onClick={onClose} style={{ textDecoration: "none" }}>
-            <span className="menu-icon">📊</span>
-            <span className="menu-label">Daily Operations Hub</span>
-          </Link>
+              <Link href="/admin?tab=daily-ops" className="menu-item-btn" onClick={onClose} style={{ textDecoration: "none" }}>
+                <span className="menu-icon">📊</span>
+                <span className="menu-label">Daily Operations Hub</span>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Drawer Footer: Staff Profile & Logout */}

@@ -99,9 +99,31 @@ router.get("/outlets", async (req, res) => {
   }
 });
 
+const pinRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkPinRateLimit(key: string, limit = 10, windowMs = 60_000): boolean {
+  const now = Date.now();
+  const entry = pinRateLimitMap.get(key);
+  if (!entry || entry.resetAt <= now) {
+    pinRateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (entry.count >= limit) {
+    return false;
+  }
+  entry.count += 1;
+  return true;
+}
+
 // Fast PIN-based login for floor staff / waiters / captains on tablets
 router.post("/pin-login", async (req, res) => {
   try {
+    const clientKey = String(req.ip || req.socket?.remoteAddress || "global");
+    if (!checkPinRateLimit(clientKey, 10, 60_000)) {
+      res.status(429).json({ error: "Too many attempts, please try again later" });
+      return;
+    }
+
     const { pin, userId, email, outletId } = req.body as {
       pin?: string;
       userId?: string;

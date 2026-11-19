@@ -195,10 +195,12 @@ export function priceOrder(
     const qty = BigInt(line.quantity ?? 1);
     const lineSubtotalMinor = (unitPrice + surcharge) * qty;
 
-    const rate = Number(taxRatePercent ?? 5);
+    const rate = Number(taxRatePercent ?? 0);
     const taxRateBasisPoints = BigInt(Math.round(rate * 100));
-    // Tax-exclusive (Option A: 5% GST added on top of food subtotal)
-    const lineTaxMinor = (lineSubtotalMinor * taxRateBasisPoints) / 10000n;
+    // Exclusive tax: GST is added on top of the food base subtotal
+    const lineTaxMinor = taxRateBasisPoints > 0n
+      ? (lineSubtotalMinor * taxRateBasisPoints) / 10000n
+      : 0n;
 
     pricedLines.push({
       menuItemId: line.menuItemId,
@@ -215,7 +217,7 @@ export function priceOrder(
     taxTotalMinor += lineTaxMinor;
   }
 
-  // Tax-exclusive: Grand Total = Subtotal + Tax
+  // Tax-exclusive: Grand Total = Subtotal + Tax (GST added on top of base food price)
   return {
     subtotalMinor,
     taxTotalMinor,

@@ -8,6 +8,7 @@ import ItemToggleModal from "./ItemToggleModal";
 import HoldOrdersDrawer from "./HoldOrdersDrawer";
 import AdvanceOrderAlertBanner from "./AdvanceOrderAlertBanner";
 import { filterSidebarGroups, drawerGroupIcon } from "./Nav";
+import { useKapmetaSocket } from "../lib/useKapmetaSocket";
 
 export interface KapMetaHeaderProps {
   outletName?: string;
@@ -30,6 +31,15 @@ export default function KapMetaHeader({
 }: KapMetaHeaderProps) {
   const router = useRouter();
   const [me, setMe] = useState<MeResponse | null>(null);
+  const isChef = Boolean(
+    me?.roles?.some((r: string) =>
+      ["KITCHEN_USER", "CHEF", "COOK", "KITCHEN"].includes(r.toUpperCase())
+    ) ||
+    (router.pathname === "/kitchen" &&
+      !me?.roles?.some((r: string) =>
+        ["SUPER_ADMIN", "ADMIN", "OUTLET_MANAGER", "MANAGER"].includes(r.toUpperCase())
+      ))
+  );
   const [searchModalType, setSearchModalType] = useState<"BILL" | "KOT" | null>(null);
   const [billSearchQuery, setBillSearchQuery] = useState("");
   const [kotSearchQuery, setKotSearchQuery] = useState("");
@@ -100,6 +110,49 @@ export default function KapMetaHeader({
   }, [updateHeldCountFromStorage]);
 
   const effectiveHeldCount = heldOrdersCountProp !== undefined ? heldOrdersCountProp : internalHeldCount;
+
+  // Live operational summary counts (Reel-inspired HUD: Kitchen pending, Aggregator pending, System status)
+  const [summaryCounts, setSummaryCounts] = useState<{
+    kitchenPendingKots: number;
+    aggregatorPendingOrders: number;
+    totalTables: number;
+    occupiedTables: number;
+    reservedTables: number;
+    vacantTables: number;
+  }>({
+    kitchenPendingKots: 0,
+    aggregatorPendingOrders: 0,
+    totalTables: 0,
+    occupiedTables: 0,
+    reservedTables: 0,
+    vacantTables: 0,
+  });
+
+  const fetchSummaryCounts = React.useCallback(async () => {
+    try {
+      const res = await authedFetch("/tables/summary-counts");
+      if (res.ok) {
+        const data = await res.json();
+        setSummaryCounts(data);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSummaryCounts();
+    const interval = setInterval(fetchSummaryCounts, 8000);
+    return () => clearInterval(interval);
+  }, [fetchSummaryCounts]);
+
+  useKapmetaSocket(
+    () => {
+      fetchSummaryCounts();
+    },
+    true,
+    "header-hud"
+  );
 
   const fetchLiveNotifications = () => {
     authedFetch("/notifications")
@@ -277,6 +330,37 @@ export default function KapMetaHeader({
               onClick={() => setSearchModalType("KOT")}
             />
           </div>
+
+          {/* Reel-inspired Real-Time Live HUD Chips */}
+          <div className="header-hud-chips">
+            <button
+              type="button"
+              className={`hud-chip hud-kitchen ${summaryCounts.kitchenPendingKots > 0 ? "has-pending" : ""}`}
+              onClick={() => router.push("/kitchen")}
+              title="Kitchen Order Tickets pending preparation - click to open KDS"
+            >
+              <span className={`hud-dot hud-dot-kitchen ${summaryCounts.kitchenPendingKots > 0 ? "hud-pulsing" : ""}`} />
+              <span className="hud-label">Kitchen</span>
+              <span className="hud-count-badge">{summaryCounts.kitchenPendingKots}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`hud-chip hud-aggregator ${summaryCounts.aggregatorPendingOrders > 0 ? "has-pending" : ""}`}
+              onClick={() => router.push("/orders?tab=live")}
+              title="Online Delivery (Swiggy / Zomato / ONDC) orders - click to view"
+            >
+              <span className={`hud-dot hud-dot-aggregator ${summaryCounts.aggregatorPendingOrders > 0 ? "hud-pulsing" : ""}`} />
+              <span className="hud-label">Online</span>
+              <span className="hud-count-badge">{summaryCounts.aggregatorPendingOrders}</span>
+            </button>
+
+            <div className="hud-chip hud-system" title="System Operational Status: All Microservices & DB Active">
+              <span className="hud-dot hud-dot-system" />
+              <span className="hud-label">System</span>
+              <span className="hud-status-text">Healthy</span>
+            </div>
+          </div>
         </div>
 
         {/* Right Section: Icon Actions & Support Hotline */}
@@ -313,156 +397,161 @@ export default function KapMetaHeader({
             <span className="nav-caption">Store {isStoreOnline ? "(Open)" : "(Paused)"}</span>
           </button>
 
-          {/* 3. Live View */}
-          <button
-            type="button"
-            className={`top-nav-action-btn ${liveViewActive ? "is-live" : ""}`}
-            onClick={() => {
-              setLiveViewActive(!liveViewActive);
-              router.push("/orders?tab=live");
-            }}
-            title="Live View Floor & KDS Feed"
-          >
-            <div className="nav-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
-                <path d="M4.93 19.07A10 10 0 0 1 12 16a10 10 0 0 1 7.07 3.07M1.39 15.54A15 15 0 0 1 12 11a15 15 0 0 1 10.61 4.54M8.46 22.54A5 5 0 0 1 12 21a5 5 0 0 1 3.54 1.54" />
-                <circle cx="12" cy="11" r="1" fill="#475569" />
-              </svg>
-            </div>
-            <span className="nav-caption">Live View</span>
-          </button>
+          {/* Navigation Action Buttons (Hidden for Chef / Kitchen users who cannot access them) */}
+          {!isChef && (
+            <>
+              {/* 3. Live View */}
+              <button
+                type="button"
+                className={`top-nav-action-btn ${liveViewActive ? "is-live" : ""}`}
+                onClick={() => {
+                  setLiveViewActive(!liveViewActive);
+                  router.push("/orders?tab=live");
+                }}
+                title="Live View Floor & KDS Feed"
+              >
+                <div className="nav-icon-wrapper">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+                    <path d="M4.93 19.07A10 10 0 0 1 12 16a10 10 0 0 1 7.07 3.07M1.39 15.54A15 15 0 0 1 12 11a15 15 0 0 1 10.61 4.54M8.46 22.54A5 5 0 0 1 12 21a5 5 0 0 1 3.54 1.54" />
+                    <circle cx="12" cy="11" r="1" fill="#475569" />
+                  </svg>
+                </div>
+                <span className="nav-caption">Live View</span>
+              </button>
 
-          {/* 4. Orders */}
-          <Link
-            href="/orders?tab=live"
-            className={`top-nav-action-btn ${router.pathname === "/orders" ? "is-live" : ""}`}
-            title="Live & All Orders Matrix"
-          >
-            <div className="nav-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
-                <rect x="2" y="3" width="20" height="14" rx="2" />
-                <line x1="8" y1="21" x2="16" y2="21" />
-                <line x1="12" y1="17" x2="12" y2="21" />
-              </svg>
-            </div>
-            <span className="nav-caption">Orders</span>
-          </Link>
+              {/* 4. Orders */}
+              <Link
+                href="/orders?tab=live"
+                className={`top-nav-action-btn ${router.pathname === "/orders" ? "is-live" : ""}`}
+                title="Live & All Orders Matrix"
+              >
+                <div className="nav-icon-wrapper">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                    <line x1="8" y1="21" x2="16" y2="21" />
+                    <line x1="12" y1="17" x2="12" y2="21" />
+                  </svg>
+                </div>
+                <span className="nav-caption">Orders</span>
+              </Link>
 
-          {/* Advance Orders Nav Action */}
-          <Link
-            href="/orders?view=ADVANCE"
-            className={`top-nav-action-btn ${router.query?.view === "ADVANCE" ? "is-live" : ""}`}
-            title="Advance / Scheduled Orders Registry"
-          >
-            <div className="nav-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-            </div>
-            <span className="nav-caption">Advance</span>
-          </Link>
+              {/* Advance Orders Nav Action */}
+              <Link
+                href="/orders?view=ADVANCE"
+                className={`top-nav-action-btn ${router.query?.view === "ADVANCE" ? "is-live" : ""}`}
+                title="Advance / Scheduled Orders Registry"
+              >
+                <div className="nav-icon-wrapper">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </div>
+                <span className="nav-caption">Advance</span>
+              </Link>
 
-          {/* 5. Kitchen KOT */}
-          <Link
-            href="/kitchen"
-            className={`top-nav-action-btn ${router.pathname === "/kitchen" ? "is-live" : ""}`}
-            title="Kitchen Order Tickets (KDS)"
-          >
-            <div className="nav-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
-                <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
-                <line x1="6" y1="17" x2="18" y2="17" />
-              </svg>
-            </div>
-            <span className="nav-caption">KOT</span>
-          </Link>
+              {/* 5. Kitchen KOT */}
+              <Link
+                href="/kitchen"
+                className={`top-nav-action-btn ${router.pathname === "/kitchen" ? "is-live" : ""}`}
+                title="Kitchen Order Tickets (KDS)"
+              >
+                <div className="nav-icon-wrapper">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+                    <path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z" />
+                    <line x1="6" y1="17" x2="18" y2="17" />
+                  </svg>
+                </div>
+                <span className="nav-caption">KOT</span>
+              </Link>
 
-          {/* 6. Waiter App */}
-          <Link
-            href="/waiter"
-            className={`top-nav-action-btn ${router.pathname === "/waiter" ? "is-live" : ""}`}
-            title="Captain & Waiter Order App"
-          >
-            <div className="nav-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                <line x1="12" y1="18" x2="12.01" y2="18" />
-              </svg>
-            </div>
-            <span className="nav-caption">Waiter</span>
-          </Link>
+              {/* 6. Waiter App */}
+              <Link
+                href="/waiter"
+                className={`top-nav-action-btn ${router.pathname === "/waiter" ? "is-live" : ""}`}
+                title="Captain & Waiter Order App"
+              >
+                <div className="nav-icon-wrapper">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                    <line x1="12" y1="18" x2="12.01" y2="18" />
+                  </svg>
+                </div>
+                <span className="nav-caption">Waiter</span>
+              </Link>
 
-          {/* 6. Hold */}
-          <button
-            type="button"
-            className="top-nav-action-btn"
-            onClick={() => {
-              if (onOpenHoldDrawer) onOpenHoldDrawer();
-              else setIsHoldOpen(true);
-            }}
-            title="Held Orders"
-          >
-            <div className="nav-icon-wrapper" style={{ position: "relative" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={effectiveHeldCount > 0 ? "#f59e0b" : "#475569"} strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-              {effectiveHeldCount > 0 && (
-                <span className="alert-badge" style={{ background: "#f59e0b" }}>
-                  {effectiveHeldCount}
+              {/* 6. Hold */}
+              <button
+                type="button"
+                className="top-nav-action-btn"
+                onClick={() => {
+                  if (onOpenHoldDrawer) onOpenHoldDrawer();
+                  else setIsHoldOpen(true);
+                }}
+                title="Held Orders"
+              >
+                <div className="nav-icon-wrapper" style={{ position: "relative" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={effectiveHeldCount > 0 ? "#f59e0b" : "#475569"} strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  {effectiveHeldCount > 0 && (
+                    <span className="alert-badge" style={{ background: "#f59e0b" }}>
+                      {effectiveHeldCount}
+                    </span>
+                  )}
+                </div>
+                <span className="nav-caption" style={effectiveHeldCount > 0 ? { color: "#d97706", fontWeight: 700 } : {}}>
+                  Hold {effectiveHeldCount > 0 ? `(${effectiveHeldCount})` : ""}
                 </span>
-              )}
-            </div>
-            <span className="nav-caption" style={effectiveHeldCount > 0 ? { color: "#d97706", fontWeight: 700 } : {}}>
-              Hold {effectiveHeldCount > 0 ? `(${effectiveHeldCount})` : ""}
-            </span>
-          </button>
+              </button>
 
-          {/* 7. Alerts */}
-          <button
-            type="button"
-            className="top-nav-action-btn alert-action-btn"
-            onClick={() => setShowAlertsModal(true)}
-            title="Live Operational Alerts"
-          >
-            <div className="nav-icon-wrapper" style={{ position: "relative" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-              {unreadAlertsCount > 0 && <span className="alert-badge">{unreadAlertsCount}</span>}
-            </div>
-            <span className="nav-caption">Alerts</span>
-          </button>
+              {/* 7. Alerts */}
+              <button
+                type="button"
+                className="top-nav-action-btn alert-action-btn"
+                onClick={() => setShowAlertsModal(true)}
+                title="Live Operational Alerts"
+              >
+                <div className="nav-icon-wrapper" style={{ position: "relative" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                  {unreadAlertsCount > 0 && <span className="alert-badge">{unreadAlertsCount}</span>}
+                </div>
+                <span className="nav-caption">Alerts</span>
+              </button>
 
-          {/* 8. Admin Hub & Multi-Agent Operations */}
-          <Link
-            href="/admin"
-            className={`top-nav-action-btn ${router.pathname === "/admin" ? "is-live" : ""}`}
-            title="Executive Admin Hub & Multi-Agent Operations"
-            style={router.pathname === "/admin" ? { borderColor: "#6366f1", backgroundColor: "rgba(99, 102, 241, 0.12)" } : {}}
-          >
-            <div className="nav-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={router.pathname === "/admin" ? "#4f46e5" : "#475569"} strokeWidth="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-            </div>
-            <span className="nav-caption" style={router.pathname === "/admin" ? { color: "#4f46e5", fontWeight: 700 } : {}}>Admin</span>
-          </Link>
+              {/* 8. Admin Hub & Multi-Agent Operations */}
+              <Link
+                href="/admin"
+                className={`top-nav-action-btn ${router.pathname === "/admin" ? "is-live" : ""}`}
+                title="Executive Admin Hub & Multi-Agent Operations"
+                style={router.pathname === "/admin" ? { borderColor: "#6366f1", backgroundColor: "rgba(99, 102, 241, 0.12)" } : {}}
+              >
+                <div className="nav-icon-wrapper">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={router.pathname === "/admin" ? "#4f46e5" : "#475569"} strokeWidth="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                </div>
+                <span className="nav-caption" style={router.pathname === "/admin" ? { color: "#4f46e5", fontWeight: 700 } : {}}>Admin</span>
+              </Link>
 
-          {/* 9. Zomato Help */}
-          <Link href="/channel-availability" className="top-nav-action-btn" title="Zomato / Swiggy Aggregator Support">
-            <div className="nav-icon-wrapper">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
-                <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-                <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
-              </svg>
-            </div>
-            <span className="nav-caption">Zomato Help</span>
-          </Link>
+              {/* 9. Zomato Help */}
+              <Link href="/channel-availability" className="top-nav-action-btn" title="Zomato / Swiggy Aggregator Support">
+                <div className="nav-icon-wrapper">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+                    <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                  </svg>
+                </div>
+                <span className="nav-caption">Zomato Help</span>
+              </Link>
+            </>
+          )}
 
           {/* 9. Logout */}
           <button
@@ -1118,6 +1207,87 @@ export default function KapMetaHeader({
         .search-pill-input::placeholder {
           color: #64748b;
           font-weight: 500;
+        }
+
+        /* Real-Time HUD Chips (Reel Inspired) */
+        .header-hud-chips {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-left: 4px;
+        }
+        .hud-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 4px 10px;
+          border-radius: 9999px;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #334155;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          text-decoration: none;
+        }
+        .hud-chip:hover {
+          background: #e2e8f0;
+          transform: translateY(-0.5px);
+        }
+        .hud-kitchen.has-pending {
+          background: #fffbeb;
+          border-color: #fde68a;
+          color: #92400e;
+        }
+        .hud-aggregator.has-pending {
+          background: #eff6ff;
+          border-color: #bfdbfe;
+          color: #1e40af;
+        }
+        .hud-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          display: inline-block;
+        }
+        .hud-dot-kitchen {
+          background: #f59e0b;
+        }
+        .hud-dot-aggregator {
+          background: #3b82f6;
+        }
+        .hud-dot-system {
+          background: #10b981;
+        }
+        .hud-pulsing {
+          box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+          animation: hudPulse 1.8s infinite;
+        }
+        @keyframes hudPulse {
+          0% { transform: scale(0.95); opacity: 0.8; }
+          50% { transform: scale(1.15); opacity: 1; }
+          100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .hud-count-badge {
+          background: #0f172a;
+          color: #ffffff;
+          font-size: 0.65rem;
+          font-weight: 800;
+          padding: 1px 6px;
+          border-radius: 9999px;
+          line-height: 1.2;
+        }
+        .hud-kitchen.has-pending .hud-count-badge {
+          background: #d97706;
+        }
+        .hud-aggregator.has-pending .hud-count-badge {
+          background: #2563eb;
+        }
+        .hud-status-text {
+          font-size: 0.6875rem;
+          color: #059669;
+          font-weight: 700;
         }
 
         /* Right Cluster */

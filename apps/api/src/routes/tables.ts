@@ -243,6 +243,29 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
     });
 
     const tableIds = tables.map((t: any) => t.id);
+
+    // Fetch active confirmed reservations for this outlet
+    const confirmedReservations = await (prisma as any).table_reservations.findMany({
+      where: {
+        outlet_id: outletId,
+        status: "CONFIRMED",
+      },
+      orderBy: { reservation_time: "asc" },
+    }).catch(() => []);
+
+    const reservationMap = new Map<string, any>();
+    for (const r of confirmedReservations) {
+      if (!reservationMap.has(r.dining_table_id)) {
+        reservationMap.set(r.dining_table_id, {
+          id: r.id,
+          customerName: r.customer_name,
+          phone: r.customer_phone,
+          guestCount: r.guest_count,
+          reservationTime: r.reservation_time ? r.reservation_time.toISOString() : null,
+          notes: r.special_notes,
+        });
+      }
+    }
     const activeOrders = await (prisma.order as any).findMany({
       where: {
         outletId,
@@ -308,7 +331,7 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
     };
 
     const occupiedNoOrder = tables.filter(
-      (t: any) => t.status === "OCCUPIED" && !orderForTable(t) && !t.mergeGroupId
+      (t: any) => t.status === "OCCUPIED" && !orderForTable(t) && !t.mergeGroupId && !reservationMap.has(t.id)
     );
     const vacantWithOrder = tables.filter((t: any) => (t.status === "VACANT" || t.status === "DIRTY") && orderMap.has(t.id));
 
@@ -329,6 +352,9 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
       const members = t.mergeGroupId ? groupMembers.get(t.mergeGroupId) || [t] : [t];
       const extra = mergeFieldsForTable(t, members);
       const activeOrder = orderForTable(t);
+      const activeReservation = reservationMap.get(t.id);
+      const isReserved = !activeOrder && (t.status === "RESERVED" || Boolean(activeReservation));
+
       if (!activeOrder) {
         return {
           id: t.id,
@@ -337,7 +363,11 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
           name: t.tableNumber,
           capacity: extra.groupCapacity || t.capacity,
           section: t.section,
-          status: t.status === "DIRTY" ? "DIRTY" : (t.mergeGroupId ? "RUNNING" : "VACANT"),
+          status: isReserved
+            ? "RESERVED"
+            : t.status === "DIRTY"
+            ? "DIRTY"
+            : (t.mergeGroupId ? "RUNNING" : "VACANT"),
           kitchenStage: null,
           isActive: t.isActive,
           activeOrderId: null,
@@ -347,6 +377,7 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
           waiterName: null,
           elapsedMinutes: null,
           currentOrderAmountMinor: null,
+          reservation: activeReservation || null,
           ...extra,
         };
       }
@@ -375,15 +406,200 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
         waiterName,
         elapsedMinutes: elapsedMinutesSince(activeOrder.createdAt),
         currentOrderAmountMinor: String(activeOrder.grandTotal ?? 0),
+        reservation: activeReservation || null,
         ...extra,
       };
     });
-
 
     res.status(200).json(mapped);
   } catch (err) {
     console.error("Error listing tables:", err);
     res.status(500).json({ error: "Failed to list tables" });
+  }
+});
+
+// POST /tables/:id/reserve - Lock and reserve a dining table slot
+tablesRouter.post("/tables/:id/reserve", requireAuth, async (req: AuthedRequest, res) => {
+  try {
+    const outletId = req.auth!.outletId;
+    const tableId = req.params.id;
+    const { customerName, customerPhone, guestCount, reservationTime, specialNotes } = req.body;
+
+    if (!customerName || !customerName.trim()) {
+      return res.status(400).json({ error: "customerName is required" });
+    }
+
+    const table = await prisma.diningTable.findFirst({
+      where: { id: tableId, outletId },
+    });
+    if (!table) {
+      return res.status(404).json({ error: "Table not found" });
+    }
+
+    const resTime = reservationTime ? new Date(reservationTime) : new Date();
+
+    // Cancel any previous confirmed reservations on this table
+    await (prisma as any).table_reservations.updateMany({
+      where: {
+        outlet_id: outletId,
+        dining_table_id: tableId,
+        status: "CONFIRMED",
+      },
+      data: { status: "CANCELLED" },
+    }).catch(() => {});
+
+    // Create new reservation record
+    const reservation = await (prisma as any).table_reservations.create({
+      data: {
+        outlet_id: outletId,
+        dining_table_id: tableId,
+        customer_name: customerName.trim(),
+        customer_phone: customerPhone ? String(customerPhone).trim() : null,
+        guest_count: Number(guestCount) || table.capacity || 2,
+        reservation_time: resTime,
+        status: "CONFIRMED",
+        special_notes: specialNotes ? String(specialNotes).trim() : null,
+      },
+    });
+
+    // Update table status to RESERVED if not occupied by active running order
+    const liveOrders = await findLiveOrdersOnTables(prisma, outletId, [tableId]);
+    if (liveOrders.length === 0) {
+      await prisma.diningTable.update({
+        where: { id: tableId },
+        data: { status: "RESERVED" },
+      }).catch(() => {});
+    }
+
+    import("../websockets").then(({ broadcast }) => {
+      broadcast(outletId, "table.status_updated", {
+        tableId,
+        status: "RESERVED",
+        reservation: {
+          id: reservation.id,
+          customerName: reservation.customer_name,
+          phone: reservation.customer_phone,
+          guestCount: reservation.guest_count,
+          reservationTime: reservation.reservation_time.toISOString(),
+          notes: reservation.special_notes,
+        },
+      });
+    }).catch(() => {});
+
+    res.status(201).json({
+      ok: true,
+      message: `Table ${table.tableNumber} reserved for ${customerName}.`,
+      reservation: {
+        id: reservation.id,
+        customerName: reservation.customer_name,
+        phone: reservation.customer_phone,
+        guestCount: reservation.guest_count,
+        reservationTime: reservation.reservation_time.toISOString(),
+        notes: reservation.special_notes,
+      },
+    });
+  } catch (err: any) {
+    console.error("Error reserving table:", err);
+    res.status(500).json({ error: err.message || "Failed to reserve table" });
+  }
+});
+
+// POST /tables/:id/cancel-reservation - Cancel an active table reservation and free table
+tablesRouter.post("/tables/:id/cancel-reservation", requireAuth, async (req: AuthedRequest, res) => {
+  try {
+    const outletId = req.auth!.outletId;
+    const tableId = req.params.id;
+
+    const table = await prisma.diningTable.findFirst({
+      where: { id: tableId, outletId },
+    });
+    if (!table) {
+      return res.status(404).json({ error: "Table not found" });
+    }
+
+    // Cancel all confirmed reservations for this table
+    await (prisma as any).table_reservations.updateMany({
+      where: {
+        outlet_id: outletId,
+        dining_table_id: tableId,
+        status: "CONFIRMED",
+      },
+      data: { status: "CANCELLED" },
+    }).catch(() => {});
+
+    // Set table status back to VACANT if no running order
+    const liveOrders = await findLiveOrdersOnTables(prisma, outletId, [tableId]);
+    const newStatus = liveOrders.length > 0 ? "OCCUPIED" : "VACANT";
+
+    await prisma.diningTable.update({
+      where: { id: tableId },
+      data: { status: newStatus },
+    }).catch(() => {});
+
+    import("../websockets").then(({ broadcast }) => {
+      broadcast(outletId, "table.status_updated", {
+        tableId,
+        status: newStatus,
+        reservation: null,
+      });
+    }).catch(() => {});
+
+    res.status(200).json({
+      ok: true,
+      message: `Reservation for Table ${table.tableNumber} cancelled. Table is now ${newStatus}.`,
+      tableId,
+      status: newStatus,
+    });
+  } catch (err: any) {
+    console.error("Error cancelling reservation:", err);
+    res.status(500).json({ error: err.message || "Failed to cancel reservation" });
+  }
+});
+
+// POST /tables/:id/seat - Seat arriving guests for a reserved table
+tablesRouter.post("/tables/:id/seat", requireAuth, async (req: AuthedRequest, res) => {
+  try {
+    const outletId = req.auth!.outletId;
+    const tableId = req.params.id;
+
+    const table = await prisma.diningTable.findFirst({
+      where: { id: tableId, outletId },
+    });
+    if (!table) {
+      return res.status(404).json({ error: "Table not found" });
+    }
+
+    await (prisma as any).table_reservations.updateMany({
+      where: {
+        outlet_id: outletId,
+        dining_table_id: tableId,
+        status: "CONFIRMED",
+      },
+      data: { status: "SEATED" },
+    }).catch(() => {});
+
+    await prisma.diningTable.update({
+      where: { id: tableId },
+      data: { status: "OCCUPIED" },
+    }).catch(() => {});
+
+    import("../websockets").then(({ broadcast }) => {
+      broadcast(outletId, "table.status_updated", {
+        tableId,
+        status: "OCCUPIED",
+        reservation: null,
+      });
+    }).catch(() => {});
+
+    res.status(200).json({
+      ok: true,
+      message: `Table ${table.tableNumber} guests seated.`,
+      tableId,
+      status: "OCCUPIED",
+    });
+  } catch (err: any) {
+    console.error("Error seating table:", err);
+    res.status(500).json({ error: err.message || "Failed to seat table" });
   }
 });
 
@@ -1043,7 +1259,101 @@ const handleTableTransfer = async (req: AuthedRequest, res: any) => {
     let transferredOrderId = sourceOrder.id;
     let sourceVacated = true;
 
-    if (transferMode === "KOT") {
+    if (transferMode === "ITEM") {
+      const orderItemId = req.body.orderItemId;
+      if (!orderItemId) {
+        return res.status(400).json({ error: "orderItemId is required when transferMode is ITEM" });
+      }
+      const itemToMove = await prisma.orderItem.findFirst({
+        where: { id: orderItemId, orderId: sourceOrder.id, isVoided: false },
+      });
+      if (!itemToMove) {
+        return res.status(404).json({ error: "Order item not found on source table" });
+      }
+      const movedSubtotal = itemToMove.subtotal;
+      const sourceSub = sourceOrder.subtotal || 0n;
+      const originalTax = sourceOrder.taxTotal || 0n;
+      const movedTax = sourceSub > 0n ? (originalTax * movedSubtotal) / sourceSub : 0n;
+      const remainingSourceTax = originalTax - movedTax;
+      const movedGrand = movedSubtotal + movedTax;
+
+      transferredOrderId = await prisma.$transaction(async (tx) => {
+        let targetOrder = await tx.order.findFirst({
+          where: {
+            outletId,
+            diningTableId: targetTableId,
+            status: { notIn: ["COMPLETED", "CANCELLED", "FAILED"] },
+          },
+          orderBy: { createdAt: "desc" },
+        });
+
+        if (!targetOrder) {
+          const dateKey = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+          const count = await tx.order.count({
+            where: { outletId, orderNumber: { startsWith: dateKey } },
+          });
+          targetOrder = await tx.order.create({
+            data: {
+              outletId,
+              orderNumber: `${dateKey}-${String(count + 1).padStart(4, "0")}`,
+              orderType: sourceOrder.orderType,
+              status: sourceOrder.status,
+              subtotal: movedSubtotal,
+              taxTotal: movedTax,
+              grandTotal: movedGrand,
+              diningTableId: targetTableId,
+              waiterId: sourceOrder.waiterId,
+            },
+          });
+        } else {
+          await tx.order.update({
+            where: { id: targetOrder.id },
+            data: {
+              subtotal: { increment: movedSubtotal },
+              taxTotal: { increment: movedTax },
+              grandTotal: { increment: movedGrand },
+            },
+          });
+        }
+
+        await tx.orderItem.update({
+          where: { id: itemToMove.id },
+          data: { orderId: targetOrder.id },
+        });
+
+        await tx.order.update({
+          where: { id: sourceOrder.id },
+          data: {
+            subtotal: { decrement: movedSubtotal },
+            taxTotal: remainingSourceTax,
+            grandTotal: { decrement: movedGrand },
+          },
+        });
+
+        const remaining = await tx.orderItem.count({
+          where: { orderId: sourceOrder.id, isVoided: false },
+        });
+        if (remaining === 0) {
+          await tx.order.update({
+            where: { id: sourceOrder.id },
+            data: { status: "CANCELLED" },
+          });
+          await tx.diningTable.update({
+            where: { id: sourceTableId },
+            data: { status: "VACANT" },
+          });
+        }
+        await tx.diningTable.update({
+          where: { id: targetTableId },
+          data: { status: "OCCUPIED" },
+        });
+        return targetOrder.id;
+      });
+      const leftover = await prisma.orderItem.count({
+        where: { orderId: sourceOrder.id, isVoided: false },
+      });
+      sourceVacated = leftover === 0;
+    } else if (transferMode === "KOT") {
       if (!kotTicketId) {
         return res.status(400).json({ error: "kotTicketId is required when transferMode is KOT" });
       }
@@ -1210,6 +1520,19 @@ const handleTableTransfer = async (req: AuthedRequest, res: any) => {
       });
     }
 
+    // Record cashier transfer audit log with mandatory reason
+    await prisma.auditLog.create({
+      data: {
+        outletId,
+        userId: req.auth!.userId,
+        action: "TRANSFER",
+        entityType: "TABLE_TRANSFER",
+        entityId: targetTableId,
+        beforeState: { sourceTableId, sourceTable: sourceTable.tableNumber },
+        afterState: { targetTableId, targetTable: targetTable.tableNumber, transferMode, reason: req.body.reason || "CASHIER_TRANSFER" },
+        createdAt: new Date(),
+      },
+    }).catch(() => {});
 
     import("../websockets").then(({ broadcast }) => {
       broadcast(outletId, "table.transferred", {

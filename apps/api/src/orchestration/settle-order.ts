@@ -163,18 +163,30 @@ export async function settleOrderCommand(
     throw new Error(`Cannot settle order in status ${order.status}`);
   }
 
-  // Strict restaurant policy: When order has unserved KOTs in kitchen, cannot settle or accept payment
-  const unservedKots = await prisma.kOTTicket.findMany({
-    where: {
-      orderId,
-      outletId,
-      status: { in: ["QUEUED", "PREPARING", "READY"] },
-    },
-  });
-  if (unservedKots.length > 0) {
-    throw new Error(
-      `Cannot take payment or settle bill: Order has ${unservedKots.length} unserved KOT item(s) in kitchen. All items must be marked as served to table before payment can be accepted.`
-    );
+  // Cashiers/Managers/Admins can settle and accept payment at any time.
+  // Waitstaff cannot settle if items are still unserved in the kitchen.
+  const userRoles = input.userId ? await prisma.userRole.findMany({
+    where: { userId: input.userId, OR: [{ outletId }, { outletId: null }] },
+    include: { role: { select: { name: true } } },
+  }) : [];
+  const roleNames = userRoles.map((ur) => (ur.role?.name || "").toUpperCase());
+  const isCashierOrAbove = !input.userId || roleNames.length === 0 || roleNames.some((r) =>
+    ["CASHIER", "ADMIN", "SUPER_ADMIN", "OWNER", "MANAGER", "OUTLET_MANAGER", "RESTAURANT_ADMIN"].includes(r)
+  );
+
+  if (!isCashierOrAbove) {
+    const unservedKots = await prisma.kOTTicket.findMany({
+      where: {
+        orderId,
+        outletId,
+        status: { in: ["QUEUED", "PREPARING", "READY"] },
+      },
+    });
+    if (unservedKots.length > 0) {
+      throw new Error(
+        `Cannot take payment or settle bill: Order has ${unservedKots.length} unserved KOT item(s) in kitchen. All items must be marked as served to table before payment can be accepted.`
+      );
+    }
   }
 
   const isTakeaway = order.orderType === "PICKUP" || String(order.orderType) === "TAKEAWAY";
@@ -278,7 +290,7 @@ export async function settleOrderCommand(
 
   if (order.customerId) {
     const outlet = await prisma.outlet.findUnique({ where: { id: outletId } });
-    const paisePerPoint = outlet?.loyaltyPaisePerPoint;
+    const paisePerPoint = (outlet as any)?.loyaltyPaisePerPoint;
     if (paisePerPoint && paisePerPoint > 0n) {
       const pointsEarned = Number(payAmount / paisePerPoint);
       if (pointsEarned > 0) {

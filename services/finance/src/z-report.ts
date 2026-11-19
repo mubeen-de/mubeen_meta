@@ -1,8 +1,18 @@
 import { PrismaClient } from "@prisma/client";
 
-function businessDayWindow(dayStartTime: Date | null | undefined, date: Date): { start: Date; end: Date } {
-  const hours = dayStartTime instanceof Date ? dayStartTime.getHours() : 5;
-  const minutes = dayStartTime instanceof Date ? dayStartTime.getMinutes() : 0;
+function businessDayWindow(dayStartTime: Date | string | null | undefined, date: Date): { start: Date; end: Date } {
+  let hours = 5;
+  let minutes = 0;
+  if (dayStartTime instanceof Date) {
+    hours = dayStartTime.getHours();
+    minutes = dayStartTime.getMinutes();
+  } else if (typeof dayStartTime === "string") {
+    const parts = dayStartTime.split(":");
+    if (parts.length >= 2) {
+      hours = parseInt(parts[0], 10) || 0;
+      minutes = parseInt(parts[1], 10) || 0;
+    }
+  }
   const start = new Date(date);
   start.setHours(hours, minutes, 0, 0);
   const end = new Date(start);

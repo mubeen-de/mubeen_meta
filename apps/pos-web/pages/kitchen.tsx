@@ -97,11 +97,14 @@ export default function KitchenMonitor() {
 
   const handleUpdateStatus = async (ticketId: string, toStatus: "PREPARING" | "READY" | "SERVED") => {
     try {
-      await authedFetch(`/kitchen/kot/${ticketId}/status`, {
+      const res = await authedFetch(`/kitchen/kot/${ticketId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toStatus }),
       });
+      if (!res.ok) {
+        console.error("Failed to update status, HTTP:", res.status);
+      }
       fetchTickets();
     } catch (e) {
       console.error("Failed to update status", e);
@@ -118,7 +121,9 @@ export default function KitchenMonitor() {
         : t.orderType === "DELIVERY"
         ? "Delivery"
         : "Pick Up",
-    orderTag: t.tableNumber ? `b${t.tableNumber}` : undefined,
+    orderTag: t.tableNumber
+      ? (/^\d+$/.test(t.tableNumber) ? `b${t.tableNumber}` : t.tableNumber)
+      : undefined,
     initialElapsedSeconds: Math.max(
       0,
       Math.floor((now - new Date(t.createdAt).getTime()) / 1000)

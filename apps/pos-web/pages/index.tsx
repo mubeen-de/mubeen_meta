@@ -37,12 +37,14 @@ export default function POSIndexPage() {
   const handleNewOrder = () => {
     setSelectedTable("Direct");
     setSelectedTableId("");
+    setSelectedOrderMode("PICKUP");
     setViewMode("BILLING");
   };
 
   const handleSelectTableFromFloor = (table: any) => {
     setSelectedTable(table.tableNumber);
     setSelectedTableId(table.id);
+    setSelectedOrderMode("DINE_IN");
     setViewMode("BILLING");
   };
 

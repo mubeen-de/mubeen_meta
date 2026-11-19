@@ -6,29 +6,50 @@ interface TableOption {
   tableNumber: string;
   section: string | null;
   status: string;
+  waiterId?: string | null;
+  waiterName?: string | null;
   currentOrder?: {
     id: string;
+    waiterId?: string | null;
+    waiterName?: string | null;
     kots?: { id: string; ticketNumber: string; status: string }[];
   } | null;
 }
 
 interface MoveKotModalProps {
   tables: TableOption[];
+  currentUserId?: string;
+  isManager?: boolean;
+  isCashier?: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function MoveKotModal({ tables, onClose, onSuccess }: MoveKotModalProps) {
+export default function MoveKotModal({ tables, currentUserId, isManager, isCashier, onClose, onSuccess }: MoveKotModalProps) {
   const [sourceTableId, setSourceTableId] = useState("");
   const [targetTableId, setTargetTableId] = useState("");
   const [transferMode, setTransferMode] = useState<"FULL_TABLE" | "KOT">("FULL_TABLE");
   const [kotTicketId, setKotTicketId] = useState("");
+  const [reason, setReason] = useState("Customer requested table switch");
+  const [customReason, setCustomReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Source tables can be any occupied table, or any table with active orders, or fallback to all tables
-  const occupiedTables = tables.filter((t) => t.status === "OCCUPIED" || t.status === "RESERVED" || t.status !== "VACANT");
-  const availableSourceTables = occupiedTables.length > 0 ? occupiedTables : tables;
+  const canTransfer = isCashier || isManager;
+
+  // Source tables can be any occupied table belonging to this waiter (or all if manager/admin)
+  const occupiedTables = tables.filter((t) => {
+    const isOccupied = t.status === "OCCUPIED" || t.status === "RESERVED" || t.status !== "VACANT";
+    if (!isOccupied) return false;
+    if (isManager || !currentUserId) return true;
+    const tableWaiterId = t.currentOrder?.waiterId || t.waiterId;
+    return !tableWaiterId || tableWaiterId === currentUserId;
+  });
+  const availableSourceTables = occupiedTables.length > 0 ? occupiedTables : tables.filter((t) => {
+    if (isManager || !currentUserId) return true;
+    const tableWaiterId = t.currentOrder?.waiterId || t.waiterId;
+    return !tableWaiterId || tableWaiterId === currentUserId;
+  });
   const vacantTables = tables.filter((t) => t.id !== sourceTableId);
   const sourceKots = tables.find((t) => t.id === sourceTableId)?.currentOrder?.kots || [];
 
@@ -43,6 +64,12 @@ export default function MoveKotModal({ tables, onClose, onSuccess }: MoveKotModa
       return;
     }
 
+    const finalReason = reason === "Other" ? customReason.trim() : reason;
+    if (!finalReason) {
+      setError("Please provide a reason for the transfer (Cashier requirement).");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -53,6 +80,7 @@ export default function MoveKotModal({ tables, onClose, onSuccess }: MoveKotModa
           targetTableId,
           transferMode,
           kotTicketId: transferMode === "KOT" ? kotTicketId : undefined,
+          reason: finalReason,
         }),
       });
 
@@ -79,6 +107,11 @@ export default function MoveKotModal({ tables, onClose, onSuccess }: MoveKotModa
             <h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 700 }}>Move KOT / Transfer Table</h3>
           </div>
           <button className="close-btn" onClick={onClose}>✕</button>
+        </div>
+
+        <div style={{ marginTop: "10px", padding: "8px 12px", background: "rgba(59, 130, 246, 0.12)", border: "1px solid rgba(59, 130, 246, 0.3)", borderRadius: "8px", fontSize: "0.75rem", color: "#93c5fd", display: "flex", alignItems: "center", gap: "8px" }}>
+          <span>🛡️</span>
+          <span><strong>Cashier / Manager Authorization:</strong> Reason is logged in audit records.</span>
         </div>
 
         <form onSubmit={handleSubmit} style={{ marginTop: "16px" }}>
@@ -169,6 +202,38 @@ export default function MoveKotModal({ tables, onClose, onSuccess }: MoveKotModa
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="form-group" style={{ marginTop: "14px" }}>
+            <label style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>Reason for Moving / Transfer <span style={{ color: "#ef4444" }}>*</span></span>
+              <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>Required for Cashier Audit</span>
+            </label>
+            <select
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="select-field"
+              style={{ marginTop: "4px" }}
+              required
+            >
+              <option value="Customer requested table switch">Customer requested table switch</option>
+              <option value="Table merged with another party">Table merged with another party</option>
+              <option value="A/C or seating comfort preference">A/C or seating comfort preference</option>
+              <option value="Order punched on wrong table by steward">Order punched on wrong table by steward</option>
+              <option value="VIP / Reserved guest relocation">VIP / Reserved guest relocation</option>
+              <option value="Other">Other (Specify Below)</option>
+            </select>
+            {reason === "Other" && (
+              <input
+                type="text"
+                placeholder="Enter specific transfer reason..."
+                value={customReason}
+                onChange={(e) => setCustomReason(e.target.value)}
+                className="select-field"
+                style={{ marginTop: "6px" }}
+                required
+              />
+            )}
           </div>
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "24px" }}>

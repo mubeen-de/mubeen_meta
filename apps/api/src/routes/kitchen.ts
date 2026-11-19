@@ -120,11 +120,14 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
         OR: searchConditions,
       };
     } else {
-      // Live tickets, plus anything SERVED within the recall grace window so
-      // the board can offer an "Undo" on an accidental last tap.
-      const recallCutoff = new Date(Date.now() - RECALL_GRACE_WINDOW_MS);
+      // Live tickets, plus anything SERVED within the last 2 hours so recent tickets
+      // (or tickets erroneously marked served by earlier logic) remain visible
+      const recallCutoff = new Date(Date.now() - 2 * 60 * 60 * 1000);
       whereClause = {
         outletId: req.auth!.outletId,
+        order: {
+          status: { notIn: ["CANCELLED", "FAILED"] },
+        },
         OR: [
           { status: { in: ["QUEUED", "PREPARING", "READY"] } },
           { status: "SERVED", servedAt: { gt: recallCutoff } },
@@ -141,14 +144,24 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
       include: {
         kotItems: { include: { menuItem: { select: { name: true } } } },
         station: { select: { name: true, slaWarningSeconds: true, slaBreachSeconds: true } },
-        order: { select: { orderType: true, diningTable: { select: { id: true, tableNumber: true } } } },
+        order: {
+          select: {
+            orderType: true,
+            status: true,
+            diningTableId: true,
+            diningTable: { select: { id: true, tableNumber: true, status: true, isActive: true } },
+          },
+        },
       },
       orderBy: { createdAt: queryStr ? "desc" : "asc" },
     });
 
+    // All active tickets in QUEUED, PREPARING, or READY status must be displayed
+    const validTickets = tickets;
+
     const allOrderItemIds = Array.from(
       new Set(
-        tickets.flatMap((t) => t.kotItems.map((ki) => ki.orderItemId).filter(Boolean))
+        validTickets.flatMap((t) => t.kotItems.map((ki) => ki.orderItemId).filter(Boolean))
       )
     ) as string[];
 
@@ -163,7 +176,7 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
     const labels = new Map<string, string>();
 
     res.status(200).json(
-      tickets.map((t) => ({
+      validTickets.map((t) => ({
         id: t.id,
         orderId: t.orderId,
         ticketNumber: t.ticketNumber,

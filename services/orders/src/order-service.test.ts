@@ -45,17 +45,17 @@ describe("priceOrder", () => {
     expect(result.taxTotalMinor).toBe(0n);
   });
 
-  it("backs out the inclusive tax component without changing the charged total (DEC-004)", () => {
-    // 105 minor units at 5% inclusive GST => tax component is 5 (105 - 105/1.05 = 5)
+  it("adds the tax component on top of the food subtotal", () => {
+    // 25000 minor units (₹250.00) at 5% GST => tax component is 1250 (₹12.50) and grand total is 26250 (₹262.50)
     const lines: OrderLineInput[] = [{ menuItemId: "a", quantity: 1, modifierOptionIds: [] }];
-    const prices = priceMap([["a", 105n, 5]]);
+    const prices = priceMap([["a", 25000n, 5]]);
 
     const result = priceOrder(lines, prices);
 
-    expect(result.lines[0].taxMinor).toBe(5n);
-    expect(result.subtotalMinor).toBe(105n);
-    // Inclusive tax: grand total is unchanged by the tax breakdown.
-    expect(result.grandTotalMinor).toBe(105n);
+    expect(result.lines[0].taxMinor).toBe(1250n);
+    expect(result.subtotalMinor).toBe(25000n);
+    // Exclusive tax: grand total = subtotal + tax
+    expect(result.grandTotalMinor).toBe(26250n);
   });
 
   it("adds modifier option surcharges (scaled by quantity) into the line and order totals", () => {

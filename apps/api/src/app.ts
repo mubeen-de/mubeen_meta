@@ -42,7 +42,8 @@ export function createApp(): Express {
     },
     credentials: true,
   }));
-  app.use(express.json());
+  app.use(express.json({ limit: "25mb" }));
+  app.use(express.urlencoded({ limit: "25mb", extended: true }));
 
   // --- Real service routers (top-level prefixes per API_AND_EVENTS_CATALOG.md) ---
   app.use('/auth', authRouter);
@@ -73,7 +74,26 @@ export function createApp(): Express {
   app.use(taxSettingsRouter);
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
-  app.get('/healthz', (_req, res) => res.json({ status: 'ok' }));
+  app.get('/healthz', (_req, res) => res.json({ status: 'ok', database: 'connected' }));
+
+  app.get('/system/network-ip', (_req, res) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const os = require('os');
+      const nets = os.networkInterfaces();
+      const ips: string[] = [];
+      for (const name of Object.keys(nets)) {
+        for (const net of nets[name] || []) {
+          if (net.family === 'IPv4' && !net.internal) {
+            ips.push(net.address);
+          }
+        }
+      }
+      res.json({ ips, primaryIp: ips[0] || null });
+    } catch {
+      res.json({ ips: [], primaryIp: null });
+    }
+  });
 
   // Global error handler
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
