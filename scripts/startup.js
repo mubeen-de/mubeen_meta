@@ -57,6 +57,12 @@ try {
   console.log('  \x1b[33m[WARN] Database migration note: ' + (e.message || 'Check database connection') + '\x1b[0m');
 }
 
+try {
+  execSync('node scripts/verify_and_seed_catalog.js', { cwd: rootDir, stdio: 'inherit' });
+} catch (e) {
+  console.log('  \x1b[33m[WARN] Catalog verification note: ' + (e.message || '') + '\x1b[0m');
+}
+
 // 3. Clean stale listeners on ports 4001, 4444
 console.log('\x1b[36m[2/4] Checking and clearing port listeners on 4001 and 4444...\x1b[0m');
 try {

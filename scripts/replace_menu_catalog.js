@@ -249,7 +249,36 @@ async function main() {
 
     console.log(`Parsed ${parsedItems.length} items from CSV.`);
 
-    const outlets = await prisma.outlet.findMany({ select: { id: true, name: true } });
+    let outlets = await prisma.outlet.findMany({ select: { id: true, name: true } });
+    if (outlets.length === 0) {
+      console.log("No outlets found in database. Creating default Hotel Kapila outlet...");
+      await prisma.organization.upsert({
+        where: { id: "00000000-0000-0000-0000-000000000000" },
+        update: { name: "Hotel Kapila Hospitality Group" },
+        create: {
+          id: "00000000-0000-0000-0000-000000000000",
+          name: "Hotel Kapila Hospitality Group",
+          taxNumber: "36AAACH7412K1Z9",
+        },
+      });
+      const defaultOutlet = await prisma.outlet.upsert({
+        where: { id: "11111111-1111-1111-1111-111111111111" },
+        update: { name: "Hotel Kapila (Main Outlet)" },
+        create: {
+          id: "11111111-1111-1111-1111-111111111111",
+          organizationId: "00000000-0000-0000-0000-000000000000",
+          name: "Hotel Kapila (Main Outlet)",
+          code: "NZB-01",
+          address: "Pragathi Nagar, Central Nizamabad, Telangana 503001",
+          fssaiNumber: "13619014000382",
+          upiVpa: "hotelkapila@hdfcbank",
+          timezone: "Asia/Kolkata",
+          currency: "INR",
+          dayStartTime: "06:00",
+        },
+      });
+      outlets = [defaultOutlet];
+    }
     console.log(`Updating menu catalog for ${outlets.length} outlets...`);
 
     const categoryOrder = [];
@@ -275,18 +304,27 @@ async function main() {
         const existing = await prisma.menuCategory.findFirst({
           where: { outletId, name: catName },
         });
+        let catId;
         if (existing) {
+          catId = existing.id;
           await prisma.menuCategory.update({
             where: { id: existing.id },
             data: { isActive: true, sortOrder: idx + 1 },
           });
-          catIdByName.set(catName, existing.id);
         } else {
           const created = await prisma.menuCategory.create({
             data: { outletId, name: catName, sortOrder: idx + 1, isActive: true },
           });
-          catIdByName.set(catName, created.id);
+          catId = created.id;
         }
+        catIdByName.set(catName, catId);
+
+        // Sync legacy categories table if present
+        await prisma.$executeRaw`
+          INSERT INTO categories (id, outlet_id, name, sort_order, is_active, created_at, updated_at)
+          VALUES (${catId}::uuid, ${outletId}::uuid, ${catName}, ${idx + 1}, true, NOW(), NOW())
+          ON CONFLICT (id) DO UPDATE SET is_active = true, sort_order = ${idx + 1}, updated_at = NOW()
+        `.catch(() => {});
       }
 
       // 3. Upsert every new menu item with Dine-In, Parcel, Zomato & Swiggy prices

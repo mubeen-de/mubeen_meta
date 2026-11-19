@@ -75,6 +75,9 @@ const dbFiles = [
   'scripts/setup-users-roles.sql',
   'scripts/db-migrate.js',
   'scripts/db-verify.js',
+  'scripts/replace_menu_catalog.js',
+  'scripts/seed_demo_recipes.js',
+  'scripts/verify_and_seed_catalog.js',
   'scripts/seed-dynamic-data.ts',
   'README.md'
 ].filter(f => fs.existsSync(path.join(projectRoot, f)));
@@ -92,6 +95,7 @@ const frontendFiles = [
   'Start_PetPooja.bat',
   'Stop_PetPooja.bat',
   'Status_PetPooja.bat',
+  'Restore_Database.bat',
   '.env.example',
   '.env',
   'README.md'
@@ -117,6 +121,10 @@ const backendFiles = [
   'db',
   'docs',
   'brain',
+  'tests',
+  'agents',
+  'checkpoints',
+  'kapmeta',
   'package.json',
   'package-lock.json',
   'tsconfig.json',
@@ -125,6 +133,7 @@ const backendFiles = [
   'Start_PetPooja.bat',
   'Stop_PetPooja.bat',
   'Status_PetPooja.bat',
+  'Restore_Database.bat',
   '.env.example',
   '.env',
   'README.md'
@@ -173,12 +182,25 @@ console.log('             ALL ZIP ARCHIVES GENERATED SUCCESSFULLY!              
 console.log('=======================================================================\n');
 
 // Summary of archives
+const backupsDir = path.join(parentDir, 'backups');
+if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
+
+const timestamp = new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14);
+
 const zipFiles = ['database.zip', 'frontend.zip', 'backend.zip', 'PetPooja_Complete.zip'];
 zipFiles.forEach(z => {
   const p = path.join(parentDir, z);
   if (fs.existsSync(p)) {
     const sz = (fs.statSync(p).size / 1024 / 1024).toFixed(2);
     console.log(`  • ${z.padEnd(24)}: ${sz} MB -> ${p}`);
+
+    // Create timestamped copy in backups directory
+    const ext = path.extname(z);
+    const base = path.basename(z, ext);
+    const stampedName = `${base}_${timestamp}${ext}`;
+    const stampedPath = path.join(backupsDir, stampedName);
+    fs.copyFileSync(p, stampedPath);
+    console.log(`    ↳ Snapshot: ${stampedName} in backups/`);
   }
 });
 console.log('');

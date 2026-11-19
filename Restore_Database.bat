@@ -14,10 +14,13 @@ set DB_PORT=5432
 set DB_USER=pos
 set DB_NAME=kapmeta
 set PGPASSWORD=pos
-set DUMP_FILE=db\backup\kapmeta_backup_sep14.sql
+set DUMP_FILE=db\backup\kapmeta_backup_latest.sql
 
+if not exist "%DUMP_FILE%" set DUMP_FILE=db\backup\kapmeta_backup_sep14.sql
 if not exist "%DUMP_FILE%" (
-    if exist "kapmeta_backup_sep14.sql" (
+    if exist "kapmeta_backup_latest.sql" (
+        set DUMP_FILE=kapmeta_backup_latest.sql
+    ) else if exist "kapmeta_backup_sep14.sql" (
         set DUMP_FILE=kapmeta_backup_sep14.sql
     ) else if exist "database_dump_sep14.sql" (
         set DUMP_FILE=database_dump_sep14.sql
