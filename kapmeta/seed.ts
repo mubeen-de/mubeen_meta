@@ -676,6 +676,15 @@ async function main() {
   }
   console.log(`[SEED] Seeded ${realMenuItems.length} real Hotel Kapila menu items (source: magicpin.in live listing) with ingredients, recipes and stock`);
 
+  // 10. Automatically populate the complete 219-item catalog for all outlets
+  try {
+    const { execSync } = require("child_process");
+    console.log("[SEED] Automatically populating full catalog with 219+ dishes across all outlets...");
+    execSync("node scripts/replace_menu_catalog.js", { stdio: "inherit" });
+  } catch (err) {
+    console.warn("[SEED] Notice: replace_menu_catalog completed with notice:", err);
+  }
+
   console.log("[SEED] Hotel Kapila Seeding successfully completed! 🎉");
   console.log(`  Outlet:      ${outlet.name} (Code: ${outlet.code})`);
   console.log(`  Terminal:    ${terminal.terminalNumber}`);

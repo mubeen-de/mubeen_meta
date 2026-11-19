@@ -28,6 +28,7 @@
     "lint": "eslint apps packages services --max-warnings=-1",
     "contracts:validate": "redocly lint --config=redocly.yaml",
     "db:migrate": "node scripts/db-migrate.js",
+    "seed": "node scripts/verify_and_seed_catalog.js",
     "seed:dynamic": "ts-node scripts/seed-dynamic-data.ts",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
@@ -57,6 +58,7 @@
     "vitest": "^4.1.10"
   },
   "prisma": {
-    "schema": "kapmeta/schema.prisma"
+    "schema": "kapmeta/schema.prisma",
+    "seed": "node scripts/verify_and_seed_catalog.js"
   }
 }

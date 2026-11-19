@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict GKcj8pyHzz7OZ6pP2kvrP3JNQWXYTFepfvzAVX2rxycyoKGrao7eVjQ82u5qXXH
+\restrict GbtxlVwuQdzhwfKocAmKpXmoiWjzsgQpbHHhWftqELGQWPoT7Dfr6lbdVeY73t1
 
 -- Dumped from database version 16.15
 -- Dumped by pg_dump version 16.15
@@ -11520,5 +11520,5 @@ ALTER TABLE ONLY public.waiter_shift_handovers
 -- PostgreSQL database dump complete
 --
 
-\unrestrict GKcj8pyHzz7OZ6pP2kvrP3JNQWXYTFepfvzAVX2rxycyoKGrao7eVjQ82u5qXXH
+\unrestrict GbtxlVwuQdzhwfKocAmKpXmoiWjzsgQpbHHhWftqELGQWPoT7Dfr6lbdVeY73t1
 
