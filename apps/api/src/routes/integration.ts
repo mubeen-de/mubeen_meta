@@ -14,14 +14,18 @@ const router = Router();
 router.post(["/channels", "/integrations/channels", "/integration/channels", "/integration/integrations/channels"], requireAuth, requirePermission("integration.manage"), async (req: AuthedRequest, res) => {
   try {
     const { channel, externalOutletId, credentialsRef } = req.body;
+    const chUpper = String(channel || "SWIGGY").toUpperCase();
+    const integ = await (prisma as any).integrations.findFirst({
+      where: { code: chUpper },
+    });
+    const integration_id = integ?.id || (chUpper === "ZOMATO" ? "c185eb00-4dcd-4f32-b700-39c5d5f9429c" : "a0b27e38-ffc0-4967-b3e5-7bedd6210fab");
 
     const account = await prisma.channelAccount.create({
       data: {
         outletId: req.auth!.outletId,
-        integration_id: req.auth!.outletId,
-        channel,
+        integration_id,
         externalOutletId,
-        credentialsRef,
+        credentialsRef: credentialsRef || chUpper,
         is_active: true,
       } as any
     });
@@ -35,18 +39,31 @@ router.post(["/channels", "/integrations/channels", "/integration/channels", "/i
 // "Easy connect" flow — list all delivery-app connections for this outlet.
 router.get(["/channels", "/integrations/channels", "/integration/channels", "/integration/integrations/channels"], requireAuth, requirePermission("integration.manage"), async (req: AuthedRequest, res) => {
   try {
+    const outletId = req.auth!.outletId;
     const accounts = await prisma.channelAccount.findMany({
-      where: { outletId: req.auth!.outletId },
+      where: { outletId },
     });
     res.status(200).json(
-      accounts.map((a: any) => ({
-        id: a.id,
-        channel: a.channel || a.credentialsRef || "SWIGGY",
-        externalOutletId: a.externalOutletId || "EXT-001",
-        status: a.is_active ? "ACTIVE" : "PAUSED",
-        connectedAt: a.createdAt,
-        hasCredentials: true,
-      }))
+      accounts.map((a: any) => {
+        const ref = String(a.credentialsRef || "").toUpperCase();
+        const ext = String(a.externalOutletId || "").toUpperCase();
+        let ch = "SWIGGY";
+        if (ref.includes("ZOMATO") || ext.startsWith("ZM") || ext.includes("ZOMATO")) {
+          ch = "ZOMATO";
+        } else if (ref.includes("SWIGGY") || ext.startsWith("SW") || ext.includes("SWIGGY")) {
+          ch = "SWIGGY";
+        } else if (a.channel) {
+          ch = String(a.channel).toUpperCase();
+        }
+        return {
+          id: a.id,
+          channel: ch,
+          externalOutletId: a.externalOutletId || "EXT-001",
+          status: a.is_active ? "ACTIVE" : "PAUSED",
+          connectedAt: a.createdAt,
+          hasCredentials: true,
+        };
+      })
     );
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -68,15 +85,43 @@ router.put(["/channels/:channel/connect", "/integrations/channels/:channel/conne
     }
 
     const outletId = req.auth!.outletId;
-    const account = await prisma.channelAccount.create({
-      data: {
+    const existing = await prisma.channelAccount.findFirst({
+      where: {
         outletId,
-        integration_id: outletId,
-        externalOutletId,
-        credentialsRef: channel,
-        is_active: true,
-      } as any
+        OR: [
+          { credentialsRef: { contains: channel, mode: "insensitive" } },
+          { externalOutletId: { contains: channel === "SWIGGY" ? "SW" : "ZM", mode: "insensitive" } },
+        ],
+      },
     });
+
+    const integ = await (prisma as any).integrations.findFirst({
+      where: { code: channel },
+    });
+    const integration_id = integ?.id || (channel === "ZOMATO" ? "c185eb00-4dcd-4f32-b700-39c5d5f9429c" : "a0b27e38-ffc0-4967-b3e5-7bedd6210fab");
+
+    let account;
+    if (existing) {
+      account = await prisma.channelAccount.update({
+        where: { id: existing.id },
+        data: {
+          externalOutletId,
+          credentialsRef: channel,
+          is_active: true,
+          updated_at: new Date(),
+        } as any,
+      });
+    } else {
+      account = await prisma.channelAccount.create({
+        data: {
+          outletId,
+          integration_id,
+          externalOutletId,
+          credentialsRef: channel,
+          is_active: true,
+        } as any,
+      });
+    }
 
     res.status(200).json({
       id: account.id,
@@ -168,10 +213,21 @@ router.get(["/channel-items", "/integration/channel-items"], requireAuth, requir
       const channels = channelAccounts.map((acc) => {
         const row = availByKey.get(`${acc.id}_${item.id}`);
         const isAvailable = row ? row.state !== "OFF" : true;
+        const ref = String(acc.credentialsRef || "").toUpperCase();
+        const ext = String(acc.externalOutletId || "").toUpperCase();
+        let chName = "SWIGGY";
+        if (ref.includes("ZOMATO") || ext.startsWith("ZM") || ext.includes("ZOMATO")) {
+          chName = "ZOMATO";
+        } else if (ref.includes("SWIGGY") || ext.startsWith("SW") || ext.includes("SWIGGY")) {
+          chName = "SWIGGY";
+        } else if (acc.credentialsRef) {
+          chName = acc.credentialsRef;
+        }
+
         return {
           mappingId: row?.id || `${acc.id}:${item.id}`,
           channelAccountId: acc.id,
-          channel: acc.credentialsRef || "CHANNEL",
+          channel: chName,
           menuItemId: item.id,
           isAvailable,
           version: row?.version ?? 1,
@@ -257,7 +313,17 @@ router.patch(["/channel-items/:mappingId/availability", "/integration/channel-it
 // INBOUND AGGREGATOR WEBHOOK INGESTION
 // =====================================
 
-router.post(["/webhooks/:channel", "/webhooks/swiggy", "/webhooks/zomato"], async (req, res) => {
+router.post([
+  "/webhooks/:channel",
+  "/webhooks/swiggy",
+  "/webhooks/zomato",
+  "/api/webhooks/:channel",
+  "/api/webhooks/swiggy",
+  "/api/webhooks/zomato",
+  "/integration/webhooks/:channel",
+  "/integration/webhooks/swiggy",
+  "/integration/webhooks/zomato",
+], async (req, res) => {
   try {
     const channelParam = (req.params.channel || (req.path.includes("swiggy") ? "SWIGGY" : "ZOMATO")).toUpperCase();
     const { externalOrderId, externalEventId, customer, items, rider, otp } = req.body;

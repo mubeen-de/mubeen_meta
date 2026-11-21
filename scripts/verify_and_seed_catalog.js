@@ -21,6 +21,50 @@ async function verifyAndSeed() {
     } else {
       console.log(`\x1b[32m[CATALOG READY] Menu catalog is fully populated (${count} active dishes).\x1b[0m`);
     }
+
+    // Ensure Swiggy and Zomato channel accounts exist for all outlets
+    let swIntegRes = await client.query("SELECT id FROM integrations WHERE code = 'SWIGGY' OR type = 'SWIGGY'");
+    let swIntegId = swIntegRes.rows[0]?.id;
+    if (!swIntegId) {
+      const ins = await client.query("INSERT INTO integrations (id, code, type, is_active, created_at, updated_at) VALUES (gen_random_uuid(), 'SWIGGY', 'SWIGGY', true, NOW(), NOW()) RETURNING id");
+      swIntegId = ins.rows[0].id;
+    }
+
+    let zmIntegRes = await client.query("SELECT id FROM integrations WHERE code = 'ZOMATO' OR type = 'ZOMATO'");
+    let zmIntegId = zmIntegRes.rows[0]?.id;
+    if (!zmIntegId) {
+      const ins = await client.query("INSERT INTO integrations (id, code, type, is_active, created_at, updated_at) VALUES (gen_random_uuid(), 'ZOMATO', 'ZOMATO', true, NOW(), NOW()) RETURNING id");
+      zmIntegId = ins.rows[0].id;
+    }
+
+    const outletsRes = await client.query('SELECT id, name FROM outlets WHERE is_active = true');
+    for (const outlet of outletsRes.rows) {
+      const swiggyAcc = await client.query(
+        "SELECT id FROM channel_accounts WHERE outlet_id = $1 AND (credentials_ref ILIKE '%swiggy%' OR external_outlet_id ILIKE '%sw%')",
+        [outlet.id]
+      );
+      if (swiggyAcc.rows.length === 0) {
+        const swOutletCode = `SW-${outlet.name.replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toUpperCase()}-01`;
+        await client.query(`
+          INSERT INTO channel_accounts (id, outlet_id, integration_id, external_outlet_id, credentials_ref, is_active, created_at, updated_at)
+          VALUES (gen_random_uuid(), $1, $2, $3, 'SWIGGY', true, NOW(), NOW())
+        `, [outlet.id, swIntegId, swOutletCode]);
+        console.log(`[INTEGRATION] ✓ Swiggy channel connected for outlet: ${outlet.name}`);
+      }
+
+      const zomatoAcc = await client.query(
+        "SELECT id FROM channel_accounts WHERE outlet_id = $1 AND (credentials_ref ILIKE '%zomato%' OR external_outlet_id ILIKE '%zm%')",
+        [outlet.id]
+      );
+      if (zomatoAcc.rows.length === 0) {
+        const zmOutletCode = `ZM-${outlet.name.replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toUpperCase()}-01`;
+        await client.query(`
+          INSERT INTO channel_accounts (id, outlet_id, integration_id, external_outlet_id, credentials_ref, is_active, created_at, updated_at)
+          VALUES (gen_random_uuid(), $1, $2, $3, 'ZOMATO', true, NOW(), NOW())
+        `, [outlet.id, zmIntegId, zmOutletCode]);
+        console.log(`[INTEGRATION] ✓ Zomato channel connected for outlet: ${outlet.name}`);
+      }
+    }
   } catch (err) {
     console.warn(`[CATALOG CHECK WARN] ${err.message}`);
   } finally {

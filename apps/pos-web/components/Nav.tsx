@@ -173,10 +173,11 @@ export const SIDEBAR_GROUPS: SidebarGroupDef[] = [
   },
   {
     id: "aggregator-center",
-    header: "Aggregator Center",
+    header: "Aggregator Center (Swiggy / Zomato)",
     links: [
-      { href: "/integrations", permission: "integration.manage", label: "Connect Delivery Apps" },
-      { href: "/channel-availability", permission: "integration.manage", label: "Online Item Status" },
+      { href: "/integrations", permission: "integration.manage", label: "Connect Delivery Apps", alwaysVisible: true },
+      { href: "/channel-availability", permission: "integration.manage", label: "Online Item Status (86 List)", alwaysVisible: true },
+      { href: "/orders?tab=online", permission: "order.read", label: "Online Orders Feed", alwaysVisible: true },
     ],
   },
 ];

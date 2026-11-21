@@ -262,6 +262,68 @@ export default function Integrations() {
             })}
           </div>
         )}
+
+        {/* Integration Instructions & Help Card */}
+        <div
+          style={{
+            marginTop: 24,
+            background: "var(--bg-card, #111c38)",
+            border: "1px solid var(--border, #1e293b)",
+            borderRadius: 12,
+            padding: 20,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <span style={{ fontSize: "1.2rem" }}>🚀</span>
+            <h2 style={{ fontSize: "0.95rem", fontWeight: 700, margin: 0, color: "var(--text-primary, #f8fafc)" }}>
+              How Swiggy & Zomato Integration Works in KapMeta POS
+            </h2>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14, fontSize: "0.78rem", color: "var(--text-secondary, #94a3b8)", lineHeight: 1.5 }}>
+            <div style={{ background: "var(--bg-subtle, #070d1e)", padding: 12, borderRadius: 8, border: "1px solid var(--border, #1e293b)" }}>
+              <strong style={{ color: "#fc8019", display: "block", marginBottom: 4 }}>1. Inbound Order Ingestion</strong>
+              When an order is placed on Swiggy or Zomato, their server sends a webhook directly to:
+              <code style={{ display: "block", marginTop: 4, padding: "3px 6px", background: "rgba(255,255,255,0.05)", borderRadius: 4, color: "#f8fafc", wordBreak: "break-all" }}>
+                /webhooks/swiggy & /webhooks/zomato
+              </code>
+              Orders auto-confirm, assign rider details & OTP, and fire to the Kitchen KOT screen instantly.
+            </div>
+
+            <div style={{ background: "var(--bg-subtle, #070d1e)", padding: 12, borderRadius: 8, border: "1px solid var(--border, #1e293b)" }}>
+              <strong style={{ color: "#38bdf8", display: "block", marginBottom: 4 }}>2. Online 86 & Item Toggle</strong>
+              Run out of stock? Instantly turn any dish ON/OFF per channel from the 
+              <a href="/channel-availability" style={{ color: "#38bdf8", textDecoration: "underline", marginLeft: 4, fontWeight: 600 }}>
+                Online Item Status
+              </a> page without affecting your in-restaurant dine-in menu.
+            </div>
+
+            <div style={{ background: "var(--bg-subtle, #070d1e)", padding: 12, borderRadius: 8, border: "1px solid var(--border, #1e293b)" }}>
+              <strong style={{ color: "#4ade80", display: "block", marginBottom: 4 }}>3. Live Testing with Simulator</strong>
+              Click the <strong style={{ color: "#f8fafc" }}>⚡ Simulate Customer Order</strong> button on either card above to inject a real sample order end-to-end to verify order notifications and KOT printing.
+            </div>
+          </div>
+
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border, #1e293b)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+            <span style={{ fontSize: "0.74rem", color: "var(--text-muted, #64748b)" }}>
+              Production Setup: Enter your Swiggy Partner / Zomato Merchant API credentials above and provide your public webhook URL in the partner portal.
+            </span>
+            <a
+              href="/orders?tab=online"
+              style={{
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                color: "var(--btn-primary-text, #ffffff)",
+                background: "var(--btn-primary-bg, #2563eb)",
+                padding: "6px 12px",
+                borderRadius: 6,
+                textDecoration: "none",
+              }}
+            >
+              View Live Online Orders →
+            </a>
+          </div>
+        </div>
       </div>
 
       {connectingChannel && (
