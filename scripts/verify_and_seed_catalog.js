@@ -65,6 +65,14 @@ async function verifyAndSeed() {
         console.log(`[INTEGRATION] ✓ Zomato channel connected for outlet: ${outlet.name}`);
       }
     }
+
+    // Configure and verify the 4 Kitchen Departments / TV Stations
+    try {
+      const { setupDepartments } = require('./setup_4_kitchen_departments');
+      await setupDepartments();
+    } catch (deptErr) {
+      console.warn(`[KITCHEN DEPT CHECK WARN] ${deptErr.message}`);
+    }
   } catch (err) {
     console.warn(`[CATALOG CHECK WARN] ${err.message}`);
   } finally {

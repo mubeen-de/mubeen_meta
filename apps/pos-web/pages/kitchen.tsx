@@ -51,10 +51,15 @@ export default function KitchenMonitor() {
   const outletName = me?.outlet?.name || "Hotel kapila";
   const outletCode = me?.outlet?.taxNumber ? `R${me.outlet.taxNumber.slice(0, 6)}` : "R327038";
 
+  const stationParam = (router.query.station || router.query.stationId || "") as string;
+
   const fetchTickets = () => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
-    authedFetch("/kitchen/kot", { signal: controller.signal })
+    const url = stationParam
+      ? `/kitchen/kot?station=${encodeURIComponent(stationParam)}`
+      : "/kitchen/kot";
+    authedFetch(url, { signal: controller.signal })
       .then((res) => {
         clearTimeout(timeout);
         if (!res.ok) throw new Error("HTTP error " + res.status);
@@ -72,7 +77,7 @@ export default function KitchenMonitor() {
   useEffect(() => {
     if (authLoading || isHistoryView) return;
     fetchTickets();
-  }, [authLoading, isHistoryView]);
+  }, [authLoading, isHistoryView, stationParam]);
 
   // Long-lived socket + backup poller + clock tick
   useKapmetaSocket(
@@ -93,7 +98,7 @@ export default function KitchenMonitor() {
       clearInterval(interval);
       clearInterval(clock);
     };
-  }, [authLoading, isHistoryView]);
+  }, [authLoading, isHistoryView, stationParam]);
 
   const handleUpdateStatus = async (ticketId: string, toStatus: "PREPARING" | "READY" | "SERVED") => {
     try {

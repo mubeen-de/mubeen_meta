@@ -37,6 +37,14 @@ export interface KapMetaKotViewProps {
 // Clean empty reference set - live tickets are provisioned from PostgreSQL kot_tickets
 export const REFERENCE_KOT_TICKETS: KotCardData[] = [];
 
+export const KITCHEN_DEPARTMENTS = [
+  { id: "all", name: "All Kitchen Stations", tvLabel: "Master Screen (All)", code: "ALL", icon: "🌐" },
+  { id: "chinese", name: "Chinese Kitchen", tvLabel: "TV 1: Chinese", code: "CHINESE", icon: "🥢" },
+  { id: "cafe", name: "Continental & Cafe", tvLabel: "TV 2: Continental & Cafe", code: "CONTINENTAL_CAFE", icon: "☕" },
+  { id: "indian", name: "Indian & Tandoor", tvLabel: "TV 3: Indian & Tandoor", code: "INDIAN_MAIN", icon: "🍛" },
+  { id: "south", name: "South Indian & Pantry", tvLabel: "TV 4: South Indian & Pantry", code: "SOUTH_INDIAN", icon: "🥞" },
+];
+
 // Kitchen Audio Chime Helper
 function playKitchenReadyChime() {
   try {
@@ -106,6 +114,50 @@ export default function KapMetaKotView({
   const [channelFilter, setChannelFilter] = useState<string>("ALL");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Determine active department from query param
+  const rawStation = (router.query.station || router.query.stationId || "").toString().toLowerCase();
+  const activeStationKey = useMemo(() => {
+    if (!rawStation || rawStation === "all") return "all";
+    if (rawStation.includes("chin")) return "chinese";
+    if (rawStation.includes("cafe") || rawStation.includes("contin")) return "cafe";
+    if (rawStation.includes("ind") || rawStation.includes("tand")) return "indian";
+    if (rawStation.includes("south") || rawStation.includes("pant")) return "south";
+    return rawStation;
+  }, [rawStation]);
+
+  const activeDepartment = useMemo(() => {
+    return KITCHEN_DEPARTMENTS.find((d) => d.id === activeStationKey) || null;
+  }, [activeStationKey]);
+
+  const handleSelectDepartment = (deptId: string) => {
+    const nextQuery = { ...router.query };
+    if (deptId === "all") {
+      delete nextQuery.station;
+      delete nextQuery.stationId;
+      router.push({ pathname: router.pathname, query: nextQuery });
+    } else {
+      nextQuery.station = deptId;
+      router.push({ pathname: router.pathname, query: nextQuery });
+    }
+  };
+
+  const handleLaunchAllScreens = () => {
+    const depts = ["chinese", "cafe", "indian", "south"];
+    depts.forEach((d) => {
+      window.open(`/kitchen?station=${d}`, `_tv_${d}`, "width=1200,height=800,menubar=no,toolbar=no");
+    });
+  };
+
+  const toggleFullscreen = () => {
+    try {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    } catch {}
+  };
 
   // Sync query params from router (e.g. from header search or QuickSearchModal)
   useEffect(() => {
@@ -365,6 +417,63 @@ export default function KapMetaKotView({
           </button>
         </div>
       </div>
+
+      {/* 4 Kitchen Departments / TV Display Screens Switcher Bar */}
+      <div className="kitchen-department-screens-bar">
+        <div className="dept-tabs-left">
+          <span className="dept-bar-label">📺 TV SCREENS / DEPARTMENTS:</span>
+          {KITCHEN_DEPARTMENTS.map((dept) => {
+            const isSelected = activeStationKey === dept.id;
+            return (
+              <button
+                key={dept.id}
+                type="button"
+                className={`dept-screen-tab ${isSelected ? "is-active-dept" : ""}`}
+                onClick={() => handleSelectDepartment(dept.id)}
+                title={`Switch to ${dept.name} (${dept.tvLabel})`}
+              >
+                <span className="dept-icon">{dept.icon}</span>
+                <span className="dept-tab-name">{dept.tvLabel}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="dept-controls-right">
+          <button
+            type="button"
+            className="tv-launcher-btn"
+            onClick={handleLaunchAllScreens}
+            title="Open all 4 kitchen department TV screens in separate windows"
+          >
+            🚀 Launch 4 TV Screens
+          </button>
+          <button
+            type="button"
+            className="kiosk-fullscreen-btn"
+            onClick={toggleFullscreen}
+            title="Toggle TV Fullscreen Kiosk Mode"
+          >
+            ⛶ TV Fullscreen
+          </button>
+        </div>
+      </div>
+
+      {/* Station Kiosk Banner when locked to a specific department TV screen */}
+      {activeDepartment && activeDepartment.id !== "all" && (
+        <div className="station-kiosk-banner">
+          <span className="kiosk-pulse-badge">🔴 LIVE TV SCREEN</span>
+          <span className="kiosk-dept-name">{activeDepartment.icon} {activeDepartment.name} ({activeDepartment.tvLabel})</span>
+          <span className="kiosk-hint">• Showing orders for {activeDepartment.name} only</span>
+          <button
+            type="button"
+            className="kiosk-reset-btn"
+            onClick={() => handleSelectDepartment("all")}
+            title="Return to Master Kitchen Screen"
+          >
+            View All Stations
+          </button>
+        </div>
+      )}
 
       {/* Filter, Status Legend & Quick MFR Bar */}
       <div className="kot-filter-legend-bar">
@@ -1957,6 +2066,167 @@ export default function KapMetaKotView({
           font-size: 0.8125rem;
           font-weight: 600;
           cursor: pointer;
+        }
+
+        /* 4 Kitchen Departments / TV Display Screens Bar */
+        .kitchen-department-screens-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 8px 16px;
+          background: #0f172a;
+          color: #f8fafc;
+          border-bottom: 2px solid #1e293b;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .dept-tabs-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .dept-bar-label {
+          font-size: 0.75rem;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          color: #94a3b8;
+          text-transform: uppercase;
+          margin-right: 4px;
+        }
+
+        .dept-screen-tab {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border-radius: 6px;
+          border: 1px solid #334155;
+          background: #1e293b;
+          color: #e2e8f0;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .dept-screen-tab:hover {
+          background: #334155;
+          color: #ffffff;
+          border-color: #475569;
+        }
+
+        .dept-screen-tab.is-active-dept {
+          background: #2563eb;
+          color: #ffffff;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+          font-weight: 700;
+        }
+
+        .dept-icon {
+          font-size: 0.95rem;
+        }
+
+        .dept-controls-right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .tv-launcher-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border-radius: 6px;
+          border: 1px solid #059669;
+          background: #10b981;
+          color: #ffffff;
+          font-size: 0.75rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .tv-launcher-btn:hover {
+          background: #059669;
+        }
+
+        .kiosk-fullscreen-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 12px;
+          border-radius: 6px;
+          border: 1px solid #475569;
+          background: #334155;
+          color: #f1f5f9;
+          font-size: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .kiosk-fullscreen-btn:hover {
+          background: #475569;
+        }
+
+        /* Station Kiosk Banner */
+        .station-kiosk-banner {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: linear-gradient(90deg, #1e3a8a, #1e293b);
+          color: #ffffff;
+          padding: 10px 18px;
+          border-bottom: 2px solid #3b82f6;
+          gap: 12px;
+        }
+
+        .kiosk-pulse-badge {
+          background: #dc2626;
+          color: #ffffff;
+          font-size: 0.7rem;
+          font-weight: 800;
+          padding: 3px 8px;
+          border-radius: 4px;
+          letter-spacing: 0.05em;
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+
+        .kiosk-dept-name {
+          font-size: 0.95rem;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+        }
+
+        .kiosk-hint {
+          font-size: 0.8rem;
+          color: #cbd5e1;
+        }
+
+        .kiosk-reset-btn {
+          background: rgba(255, 255, 255, 0.15);
+          color: #ffffff;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          border-radius: 4px;
+          padding: 4px 10px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.12s;
+        }
+
+        .kiosk-reset-btn:hover {
+          background: rgba(255, 255, 255, 0.25);
         }
       `}</style>
     </div>

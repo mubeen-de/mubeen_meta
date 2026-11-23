@@ -135,8 +135,33 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
       };
     }
 
-    if (typeof stationId === "string") {
-      whereClause.stationId = stationId;
+    const rawStation = String(req.query.stationId || req.query.station || req.query.department || "").trim();
+    if (rawStation && rawStation.toLowerCase() !== "all") {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawStation);
+      if (isUuid) {
+        whereClause.stationId = rawStation;
+      } else {
+        const found = await prisma.station.findFirst({
+          where: {
+            outletId: req.auth!.outletId,
+            name: { contains: rawStation, mode: "insensitive" },
+          },
+        });
+        if (found) {
+          whereClause.stationId = found.id;
+        } else {
+          const shortKeyword = rawStation.slice(0, 4);
+          const alt = await prisma.station.findFirst({
+            where: {
+              outletId: req.auth!.outletId,
+              name: { contains: shortKeyword, mode: "insensitive" },
+            },
+          });
+          if (alt) {
+            whereClause.stationId = alt.id;
+          }
+        }
+      }
     }
 
     const tickets = await prisma.kOTTicket.findMany({

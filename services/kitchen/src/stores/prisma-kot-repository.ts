@@ -26,6 +26,10 @@ export class PrismaKotRepository implements KotRepository {
 
     const map = new Map<string, string | null>();
     for (const item of items) {
+      if ((item as any).station_id || (item as any).stationId) {
+        map.set(item.id, (item as any).station_id || (item as any).stationId);
+        continue;
+      }
       const catName = item.category?.name?.toLowerCase() || "";
       const matched = stations.find(
         (s) =>
