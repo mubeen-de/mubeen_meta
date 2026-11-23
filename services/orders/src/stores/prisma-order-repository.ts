@@ -660,8 +660,10 @@ export class PrismaOrderRepository implements OrderRepository {
     orderId: string,
     orderItemId: string,
     reasonCode: string,
-    userId: string
-  ): Promise<{ ok: boolean }> {
+    userId: string,
+    quantityToVoid?: number,
+    notes?: string
+  ): Promise<{ ok: boolean; voidedQuantity?: number; remainingQuantity?: number }> {
     return this.prisma.$transaction(async (tx) => {
       const item = await tx.orderItem.findFirst({
         where: { id: orderItemId, orderId, outletId, isVoided: false },
@@ -670,10 +672,53 @@ export class PrismaOrderRepository implements OrderRepository {
         return { ok: false };
       }
 
-      await tx.orderItem.update({
-        where: { id: orderItemId },
-        data: { isVoided: true, voidedBy: userId, voidReason: reasonCode },
-      });
+      const totalItemQty = Number(item.quantity) || 1;
+      const voidQty = (quantityToVoid && Number(quantityToVoid) > 0)
+        ? Math.min(totalItemQty, Math.max(1, Number(quantityToVoid)))
+        : totalItemQty;
+
+      const remainingQty = totalItemQty - voidQty;
+      const combinedReason = notes ? `${reasonCode} (${notes})` : reasonCode;
+
+      if (remainingQty > 0) {
+        // Partial cancellation: reduce original orderItem quantity and subtotal
+        const newSubtotal = item.unitPrice * BigInt(remainingQty);
+        await tx.orderItem.update({
+          where: { id: orderItemId },
+          data: {
+            quantity: remainingQty,
+            subtotal: newSubtotal,
+          },
+        });
+
+        // Insert separate voided line item for the cancelled quantity for full audit trail
+        await tx.orderItem.create({
+          data: {
+            outletId,
+            orderId,
+            menuItemId: item.menuItemId,
+            quantity: voidQty,
+            unitPrice: item.unitPrice,
+            subtotal: item.unitPrice * BigInt(voidQty),
+            isVoided: true,
+            voidReason: combinedReason,
+            voidedBy: userId,
+            course: item.course,
+            seatNumber: item.seatNumber,
+            notes: notes || item.notes,
+          },
+        });
+      } else {
+        // Full cancellation of this line item
+        await tx.orderItem.update({
+          where: { id: orderItemId },
+          data: {
+            isVoided: true,
+            voidedBy: userId,
+            voidReason: combinedReason,
+          },
+        });
+      }
 
       const remainingItems = await tx.orderItem.findMany({
         where: { orderId, outletId, isVoided: false },
@@ -716,11 +761,12 @@ export class PrismaOrderRepository implements OrderRepository {
         action: "ORDER_ITEM_VOIDED",
         entityType: "ORDER",
         entityId: orderId,
-        beforeState: { orderItemId, subtotal: item.subtotal.toString() },
-        reasonCode,
+        beforeState: { orderItemId, originalQuantity: totalItemQty, subtotal: item.subtotal.toString() },
+        afterState: { voidedQuantity: voidQty, remainingQuantity: remainingQty },
+        reasonCode: combinedReason,
       });
 
-      return { ok: true };
+      return { ok: true, voidedQuantity: voidQty, remainingQuantity: remainingQty };
     });
   }
 

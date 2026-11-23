@@ -783,7 +783,9 @@ export default function KapMetaKotView({
                         <div key={it.id || idx} className="kds-item-entry" style={{ padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                           <div className="kds-item-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", flex: 1, paddingRight: "8px" }}>
-                              <span className="kds-item-name">{it.name}</span>
+                              <span className="kds-item-name" style={{ textDecoration: it.quantity === 0 ? "line-through" : "none", color: it.quantity === 0 ? "#94a3b8" : "inherit" }}>
+                                {it.name}
+                              </span>
                               {it.seatNumber != null && (
                                 <span
                                   className="kds-seat-tag"
@@ -805,7 +807,9 @@ export default function KapMetaKotView({
                                 </span>
                               )}
                             </div>
-                            <span className="kds-item-qty">×{it.quantity}</span>
+                            <span className="kds-item-qty" style={{ color: it.quantity === 0 ? "#f87171" : "inherit" }}>
+                              {it.quantity === 0 ? "❌ Void" : `×${it.quantity}`}
+                            </span>
                           </div>
                           {it.notes && (
                             <div
@@ -814,9 +818,9 @@ export default function KapMetaKotView({
                                 marginTop: "3px",
                                 fontSize: "11px",
                                 fontWeight: 700,
-                                color: "#fef08a",
-                                background: "rgba(234, 179, 8, 0.15)",
-                                border: "1px solid rgba(234, 179, 8, 0.35)",
+                                color: it.notes.includes("CANCEL") ? "#fecaca" : "#fef08a",
+                                background: it.notes.includes("CANCEL") ? "rgba(220, 38, 38, 0.35)" : "rgba(234, 179, 8, 0.15)",
+                                border: it.notes.includes("CANCEL") ? "1px solid rgba(239, 68, 68, 0.6)" : "1px solid rgba(234, 179, 8, 0.35)",
                                 borderRadius: "4px",
                                 padding: "2px 7px",
                                 display: "inline-block",
@@ -824,7 +828,11 @@ export default function KapMetaKotView({
                                 wordBreak: "break-word",
                               }}
                             >
-                              💬 <span style={{ textDecoration: "underline" }}>Chef Note:</span> {it.notes}
+                              {it.notes.includes("CANCEL") ? (
+                                <span>🚨 <strong style={{ color: "#f87171" }}>CANCELLED:</strong> {it.notes}</span>
+                              ) : (
+                                <span>💬 <span style={{ textDecoration: "underline" }}>Chef Note:</span> {it.notes}</span>
+                              )}
                             </div>
                           )}
                         </div>
@@ -988,7 +996,9 @@ export default function KapMetaKotView({
                         <div key={it.id || idx} className="card-item-entry" style={{ padding: "4px 0", borderBottom: "1px dashed #e2e8f0" }}>
                           <div className="card-item-line-row">
                             <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", flex: 1, paddingRight: "6px" }}>
-                              <span className="item-title" style={{ fontWeight: 600 }}>{it.name}</span>
+                              <span className="item-title" style={{ fontWeight: 600, textDecoration: it.quantity === 0 ? "line-through" : "none", color: it.quantity === 0 ? "#94a3b8" : "inherit" }}>
+                                {it.name}
+                              </span>
                               {it.seatNumber != null && (
                                 <span
                                   className="kot-seat-badge"
@@ -1010,7 +1020,9 @@ export default function KapMetaKotView({
                                 </span>
                               )}
                             </div>
-                            <span className="item-qty-number">{it.quantity}</span>
+                            <span className="item-qty-number" style={{ color: it.quantity === 0 ? "#dc2626" : "inherit" }}>
+                              {it.quantity === 0 ? "❌ Void" : it.quantity}
+                            </span>
                           </div>
                           {it.notes && (
                             <div
@@ -1019,9 +1031,9 @@ export default function KapMetaKotView({
                                 marginTop: "3px",
                                 fontSize: "11px",
                                 fontWeight: 700,
-                                color: "#9a3412",
-                                background: "#ffedd5",
-                                border: "1px solid #fdba74",
+                                color: it.notes.includes("CANCEL") ? "#991b1b" : "#9a3412",
+                                background: it.notes.includes("CANCEL") ? "#fee2e2" : "#ffedd5",
+                                border: it.notes.includes("CANCEL") ? "1px solid #f87171" : "1px solid #fdba74",
                                 borderRadius: "4px",
                                 padding: "2px 7px",
                                 display: "inline-block",
@@ -1029,7 +1041,11 @@ export default function KapMetaKotView({
                                 wordBreak: "break-word",
                               }}
                             >
-                              💬 <span style={{ textDecoration: "underline" }}>Chef Note:</span> {it.notes}
+                              {it.notes.includes("CANCEL") ? (
+                                <span>🚨 <strong style={{ color: "#dc2626" }}>CANCELLED:</strong> {it.notes}</span>
+                              ) : (
+                                <span>💬 <span style={{ textDecoration: "underline" }}>Chef Note:</span> {it.notes}</span>
+                              )}
                             </div>
                           )}
                         </div>

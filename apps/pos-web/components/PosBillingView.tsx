@@ -307,8 +307,9 @@ export default function PosBillingView({
 
   // Item cancellation modal state (Cashier Only + Mandatory Reason)
   const [cancelTargetItem, setCancelTargetItem] = useState<RunningOrderItem | null>(null);
-  const [cancelReasonPreset, setCancelReasonPreset] = useState("Customer Changed Mind");
+  const [cancelReasonPreset, setCancelReasonPreset] = useState("Food Quality / Taste Complaint");
   const [cancelCustomReason, setCancelCustomReason] = useState("");
+  const [cancelQuantity, setCancelQuantity] = useState(1);
   const [cancellingItem, setCancellingItem] = useState(false);
 
   // Item move modal state (Cashier Only + Mandatory Reason)
@@ -325,7 +326,8 @@ export default function PosBillingView({
       return;
     }
     setCancelTargetItem(rItem);
-    setCancelReasonPreset("Customer Changed Mind");
+    setCancelQuantity(1);
+    setCancelReasonPreset("Food Quality / Taste Complaint");
     setCancelCustomReason("");
   };
 
@@ -336,13 +338,20 @@ export default function PosBillingView({
       alert("Please enter a reason for cancelling this item (Cashier Requirement).");
       return;
     }
+    if (cancelReasonPreset === "Other" && !cancelCustomReason.trim()) {
+      alert("Please specify the detailed cancellation reason in the notes field.");
+      return;
+    }
+    const qtyToCancel = Math.min(cancelTargetItem.quantity, Math.max(1, cancelQuantity));
     setCancellingItem(true);
     try {
       const res = await authedFetch(`/orders/${activeOrder.id}/items/${cancelTargetItem.id}/void`, {
         method: "POST",
         body: JSON.stringify({
+          quantity: qtyToCancel,
           reasonCode: cancelReasonPreset === "Other" ? "OTHER" : "CUSTOMER_VOID",
           reason: finalReason,
+          notes: cancelCustomReason.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -352,7 +361,12 @@ export default function PosBillingView({
       setCancelTargetItem(null);
       await loadActiveTableOrder();
       await loadMenu();
-      alert(`Item "${cancelTargetItem.menuItemName}" was cancelled. Reason: ${finalReason}`);
+      const remaining = cancelTargetItem.quantity - qtyToCancel;
+      if (remaining > 0) {
+        alert(`✓ Cancelled ${qtyToCancel} of "${cancelTargetItem.menuItemName}". Remaining on bill: ${remaining} qty. KOT updated.`);
+      } else {
+        alert(`✓ Item "${cancelTargetItem.menuItemName}" (all ${qtyToCancel} qty) cancelled. KOT updated.`);
+      }
     } catch (err: any) {
       alert(err.message || "Failed to cancel item");
     } finally {
@@ -2769,18 +2783,96 @@ export default function PosBillingView({
             </div>
 
             <div style={{ marginTop: "14px", padding: "12px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px" }}>
-              <div style={{ fontWeight: 800, fontSize: "0.9375rem", color: "#991b1b" }}>
-                {cancelTargetItem.menuItemName} (Qty: {cancelTargetItem.quantity})
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 800, fontSize: "0.95rem", color: "#991b1b" }}>
+                  {cancelTargetItem.menuItemName}
+                </span>
+                <span style={{ fontSize: "0.78rem", fontWeight: 700, background: "#fee2e2", color: "#991b1b", padding: "2px 8px", borderRadius: "4px" }}>
+                  Ordered: {cancelTargetItem.quantity}
+                </span>
               </div>
-              <div style={{ fontSize: "0.78rem", color: "#475569", marginTop: "3px", fontWeight: 600 }}>
-                Void amount: ₹{(cancelTargetItem.subtotalMinor / 100).toFixed(2)} • Table: {tableNumber}
-              </div>
-              <div style={{ fontSize: "0.72rem", color: "#1d4ed8", marginTop: "5px", fontWeight: 600 }}>
-                🛡️ Cashier permission verified • Stock will be restored
-              </div>
+              {(() => {
+                const uPrice = cancelTargetItem.unitPriceMinor || (cancelTargetItem.quantity > 0 ? Math.round(cancelTargetItem.subtotalMinor / cancelTargetItem.quantity) : 0);
+                const qVoid = Math.min(cancelTargetItem.quantity, Math.max(1, cancelQuantity));
+                const vMinor = qVoid * uPrice;
+                const remQty = cancelTargetItem.quantity - qVoid;
+                const remMinor = remQty * uPrice;
+                return (
+                  <>
+                    <div style={{ fontSize: "0.82rem", color: "#475569", marginTop: "4px", fontWeight: 600 }}>
+                      Void amount: <strong style={{ color: "#dc2626" }}>₹{(vMinor / 100).toFixed(2)}</strong> ({qVoid} portion{qVoid > 1 ? "s" : ""}) • Table: {tableNumber}
+                    </div>
+                    {remQty > 0 ? (
+                      <div style={{ fontSize: "0.8rem", color: "#15803d", marginTop: "4px", fontWeight: 700 }}>
+                        ✓ Keeping on bill: {remQty} portion{remQty > 1 ? "s" : ""} (₹{(remMinor / 100).toFixed(2)})
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "0.8rem", color: "#b91c1c", marginTop: "4px", fontWeight: 700 }}>
+                        ⚠️ Cancelling all {cancelTargetItem.quantity} portions of this item
+                      </div>
+                    )}
+                    <div style={{ fontSize: "0.72rem", color: "#1d4ed8", marginTop: "5px", fontWeight: 600 }}>
+                      🛡️ Cashier permission verified • {qVoid} portion stock restored • KOT will update
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
-            <div style={{ marginTop: "16px" }}>
+            {/* Quantity Stepper when ordered quantity > 1 */}
+            {cancelTargetItem.quantity > 1 && (
+              <div style={{ marginTop: "14px" }}>
+                <label style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#334155", display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                  <span>Quantity to Cancel <span style={{ color: "#dc2626" }}>*</span></span>
+                  <span style={{ color: "#64748b", fontWeight: 600 }}>Total: {cancelTargetItem.quantity}</span>
+                </label>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <button
+                    type="button"
+                    disabled={cancelQuantity <= 1 || cancellingItem}
+                    onClick={() => setCancelQuantity((q) => Math.max(1, q - 1))}
+                    style={{ width: "36px", height: "36px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: "1.2rem", fontWeight: 800, cursor: cancelQuantity <= 1 ? "not-allowed" : "pointer" }}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    max={cancelTargetItem.quantity}
+                    value={cancelQuantity}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!isNaN(v)) setCancelQuantity(Math.min(cancelTargetItem.quantity, Math.max(1, v)));
+                    }}
+                    style={{ width: "65px", height: "36px", textAlign: "center", fontSize: "1rem", fontWeight: 800, borderRadius: "8px", border: "1px solid #cbd5e1", outline: "none" }}
+                  />
+                  <button
+                    type="button"
+                    disabled={cancelQuantity >= cancelTargetItem.quantity || cancellingItem}
+                    onClick={() => setCancelQuantity((q) => Math.min(cancelTargetItem.quantity, q + 1))}
+                    style={{ width: "36px", height: "36px", borderRadius: "8px", border: "1px solid #cbd5e1", background: "#f8fafc", fontSize: "1.2rem", fontWeight: 800, cursor: cancelQuantity >= cancelTargetItem.quantity ? "not-allowed" : "pointer" }}
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCancelQuantity(1)}
+                    style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", background: cancelQuantity === 1 ? "#2563eb" : "#f1f5f9", color: cancelQuantity === 1 ? "#ffffff" : "#334155", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                  >
+                    Cancel 1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCancelQuantity(cancelTargetItem.quantity)}
+                    style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", background: cancelQuantity === cancelTargetItem.quantity ? "#dc2626" : "#f1f5f9", color: cancelQuantity === cancelTargetItem.quantity ? "#ffffff" : "#334155", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer" }}
+                  >
+                    Cancel All ({cancelTargetItem.quantity})
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginTop: "14px" }}>
               <label style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#334155", display: "block", marginBottom: "6px" }}>
                 Reason for Cancellation <span style={{ color: "#dc2626" }}>*</span>
               </label>
@@ -2799,35 +2891,38 @@ export default function PosBillingView({
                   outline: "none",
                 }}
               >
-                <option value="Customer Changed Mind" style={{ color: "#0f172a", background: "#ffffff" }}>Customer Changed Mind</option>
+                <option value="Food Quality / Taste Complaint" style={{ color: "#0f172a", background: "#ffffff" }}>Food Quality / Disliked Taste</option>
                 <option value="Wrong Item Punched" style={{ color: "#0f172a", background: "#ffffff" }}>Wrong Item Punched by Steward</option>
                 <option value="Kitchen Delay / Late Preparation" style={{ color: "#0f172a", background: "#ffffff" }}>Kitchen Delay / Late Preparation</option>
-                <option value="Food Quality / Taste Complaint" style={{ color: "#0f172a", background: "#ffffff" }}>Food Quality / Taste Complaint</option>
+                <option value="Customer Changed Mind" style={{ color: "#0f172a", background: "#ffffff" }}>Customer Changed Mind</option>
+                <option value="Burnt / Defective Food" style={{ color: "#0f172a", background: "#ffffff" }}>Burnt / Defective / Cold Food</option>
                 <option value="Guest Left Table" style={{ color: "#0f172a", background: "#ffffff" }}>Guest Left Table</option>
-                <option value="Other" style={{ color: "#0f172a", background: "#ffffff" }}>Other (Specify Below)</option>
+                <option value="Other" style={{ color: "#0f172a", background: "#ffffff" }}>Other (Specify Notes Below)</option>
               </select>
+            </div>
 
-              {cancelReasonPreset === "Other" && (
-                <textarea
-                  placeholder="Enter detailed reason for voiding this item (Mandatory)..."
-                  value={cancelCustomReason}
-                  onChange={(e) => setCancelCustomReason(e.target.value)}
-                  style={{
-                    width: "100%",
-                    marginTop: "8px",
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    background: "#f8fafc",
-                    color: "#0f172a",
-                    border: "1px solid #cbd5e1",
-                    minHeight: "72px",
-                    boxSizing: "border-box",
-                    fontSize: "0.84rem",
-                    outline: "none",
-                  }}
-                  required
-                />
-              )}
+            <div style={{ marginTop: "10px" }}>
+              <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "#64748b", display: "block", marginBottom: "4px" }}>
+                Notes / Kitchen Feedback {cancelReasonPreset === "Other" ? <span style={{ color: "#dc2626" }}>*</span> : <span style={{ fontWeight: 400 }}>(Optional - e.g. customer ate 1, didn't like spice on 2nd)</span>}
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Customer ate 1, disliked taste on 2nd; or delayed service"
+                value={cancelCustomReason}
+                onChange={(e) => setCancelCustomReason(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "8px",
+                  background: "#f8fafc",
+                  color: "#0f172a",
+                  border: "1px solid #cbd5e1",
+                  fontSize: "0.84rem",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+                required={cancelReasonPreset === "Other"}
+              />
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
@@ -2845,7 +2940,7 @@ export default function PosBillingView({
                 disabled={cancellingItem}
                 style={{ padding: "9px 16px", borderRadius: "8px", background: "#dc2626", color: "#ffffff", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.8125rem" }}
               >
-                {cancellingItem ? "Cancelling..." : "Confirm Cancellation"}
+                {cancellingItem ? "Cancelling..." : `Confirm Cancellation (${Math.min(cancelTargetItem.quantity, Math.max(1, cancelQuantity))})`}
               </button>
             </div>
           </div>

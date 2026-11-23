@@ -1181,32 +1181,84 @@ const handleVoidItem = async (req: AuthedRequest, res: any) => {
       return res.status(403).json({ error: "TABLE_OWNED_BY_ANOTHER_WAITER", message: access.error });
     }
 
+    const voidQuantity = req.body?.quantity ? Math.max(1, Number(req.body.quantity)) : undefined;
+    const notes = req.body?.notes ? String(req.body.notes).trim() : undefined;
+    const finalReason = notes ? `${reasonText} (${notes})` : reasonText;
+
     const result = await orderRepo.voidItem(
       outletId,
       req.params.id,
       req.params.itemId,
       reasonText,
-      userId
+      userId,
+      voidQuantity,
+      notes
     );
     if (!result.ok) {
       return res.status(404).json({ error: "Item not found or already voided" });
     }
 
+    const actualVoidQty = result.voidedQuantity || 1;
+
     // Restore item portion stock in item_availability
     const voidedItem = await prisma.orderItem.findUnique({
       where: { id: req.params.itemId },
+      include: { menuItem: { select: { name: true } } },
     }).catch(() => null);
+
     if (voidedItem?.menuItemId) {
       await restoreItemPortionOnVoid(
         outletId,
         voidedItem.menuItemId,
-        Number(voidedItem.quantity) || 1,
+        actualVoidQty,
         prisma,
         userId,
         voidedItem.id
       ).catch((err) => {
         console.error("Failed to restore portion on void:", err);
       });
+    }
+
+    // Update active KOT tickets and items so KDS immediately displays the cancellation
+    try {
+      const activeKotTickets = await prisma.kOTTicket.findMany({
+        where: { orderId: req.params.id, status: { in: ["QUEUED", "PREPARING", "READY"] } },
+        include: { kotItems: true },
+      });
+
+      for (const t of activeKotTickets) {
+        const matchingKotItem = t.kotItems.find(
+          (ki) => ki.orderItemId === req.params.itemId || (voidedItem?.menuItemId && ki.menuItemId === voidedItem.menuItemId)
+        );
+
+        if (matchingKotItem) {
+          if (result.remainingQuantity && result.remainingQuantity > 0) {
+            // Partial cancellation on KOT
+            const updatedNotes = matchingKotItem.notes
+              ? `${matchingKotItem.notes} | ⚠️ CANCELLED ${actualVoidQty}x: ${finalReason}`
+              : `⚠️ CANCELLED ${actualVoidQty}x: ${finalReason}`;
+            await prisma.kOTItem.update({
+              where: { id: matchingKotItem.id },
+              data: {
+                quantity: result.remainingQuantity,
+                notes: updatedNotes,
+              },
+            });
+          } else {
+            // Full line item cancelled
+            const updatedNotes = `❌ CANCELLED (${actualVoidQty}x): ${finalReason}`;
+            await prisma.kOTItem.update({
+              where: { id: matchingKotItem.id },
+              data: {
+                quantity: 0,
+                notes: updatedNotes,
+              },
+            });
+          }
+        }
+      }
+    } catch (kotErr) {
+      console.warn("Failed to update active KOT items on void:", kotErr);
     }
 
     // If voiding the last item cancelled the whole order, also cancel active KOTs and free table
@@ -1232,12 +1284,21 @@ const handleVoidItem = async (req: AuthedRequest, res: any) => {
 
     import("../websockets").then(({ broadcast }) => {
       broadcast(outletId, "order.updated", { orderId: req.params.id, status: updatedOrder?.status });
+      broadcast(outletId, "kot.cancelled", {
+        orderId: req.params.id,
+        menuItemName: (voidedItem as any)?.menuItem?.name || "Item",
+        voidedQuantity: actualVoidQty,
+        remainingQuantity: result.remainingQuantity,
+        reason: finalReason,
+        notes,
+      });
+      broadcast(outletId, "kot.updated", { orderId: req.params.id });
       if (updatedOrder?.status === "CANCELLED" && updatedOrder.diningTableId) {
         broadcast(outletId, "table.status_updated", { tableId: updatedOrder.diningTableId, status: "VACANT" });
       }
     }).catch(() => {});
 
-    res.status(200).json({ ...result, reason: reasonText, orderStatus: updatedOrder?.status });
+    res.status(200).json({ ...result, reason: finalReason, orderStatus: updatedOrder?.status });
   } catch (err: any) {
     console.error("Error voiding order item:", err);
     res.status(400).json({ error: err.message || "Failed to void item" });
