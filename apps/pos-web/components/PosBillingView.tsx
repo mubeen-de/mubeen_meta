@@ -759,8 +759,9 @@ export default function PosBillingView({
               const ord = await ordRes.json();
               setActiveOrder(ord);
               if (ord.items && Array.isArray(ord.items)) {
+                const activeOnly = ord.items.filter((it: any) => !it.isVoided && !it.is_voided);
                 setRunningItems(
-                  ord.items.map((it: any) => ({
+                  activeOnly.map((it: any) => ({
                     id: it.id,
                     menuItemName: it.menuItemName || it.item_name || it.name,
                     quantity: it.quantity,
@@ -808,8 +809,9 @@ export default function PosBillingView({
                 const ord = await ordRes.json();
                 setActiveOrder(ord);
                 if (ord.items && Array.isArray(ord.items)) {
+                  const activeOnly = ord.items.filter((it: any) => !it.isVoided && !it.is_voided);
                   setRunningItems(
-                    ord.items.map((it: any) => ({
+                    activeOnly.map((it: any) => ({
                       id: it.id,
                       menuItemName: it.menuItemName || it.item_name || it.name,
                       quantity: it.quantity,

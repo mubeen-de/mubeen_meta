@@ -845,11 +845,16 @@ ordersRouter.get("/orders/:id", requireAuth, async (req: AuthedRequest, res) => 
       taxTotalMinor: String(order.taxTotalMinor),
       discountTotalMinor: String(order.discountTotalMinor),
       paymentMethod: order.paymentMethod || (payments[0]?.method ?? null),
-      items: (order.items || []).map((it: any) => ({
+      items: (order.items || []).filter((it: any) => !it.isVoided && !it.is_voided).map((it: any) => ({
         ...it,
         unitPriceMinor: String(it.unitPriceMinor),
         subtotalMinor: String(it.subtotalMinor),
         kitchenStatus: kitchenByOrderItem.get(it.id) || null,
+      })),
+      voidedItems: (order.items || []).filter((it: any) => it.isVoided || it.is_voided).map((it: any) => ({
+        ...it,
+        unitPriceMinor: String(it.unitPriceMinor),
+        subtotalMinor: String(it.subtotalMinor),
       })),
       kots: kotTickets.map((k: any) => ({
         id: k.id,
@@ -932,7 +937,7 @@ ordersRouter.patch("/orders/:id/status", requireAuth, requirePermission("order.u
         await dissolveMergeGroupForTable(prisma, order.outletId, order.diningTableId).catch(() => {});
       }
       await prisma.kOTTicket.updateMany({
-        where: { orderId, status: { in: ["QUEUED", "PREPARING", "READY"] } },
+        where: { orderId },
         data: { status: "CANCELLED" },
       }).catch(() => {});
     }
@@ -1222,7 +1227,7 @@ const handleVoidItem = async (req: AuthedRequest, res: any) => {
     // Update active KOT tickets and items so KDS immediately displays the cancellation
     try {
       const activeKotTickets = await prisma.kOTTicket.findMany({
-        where: { orderId: req.params.id, status: { in: ["QUEUED", "PREPARING", "READY"] } },
+        where: { orderId: req.params.id },
         include: { kotItems: true },
       });
 
@@ -1256,6 +1261,15 @@ const handleVoidItem = async (req: AuthedRequest, res: any) => {
             });
           }
         }
+
+        // If all items on this ticket are now voided/0, mark the ticket CANCELLED
+        const ticketItems = await prisma.kOTItem.findMany({ where: { kotTicketId: t.id } });
+        if (ticketItems.length > 0 && ticketItems.every((it) => it.quantity === 0)) {
+          await prisma.kOTTicket.update({
+            where: { id: t.id },
+            data: { status: "CANCELLED" },
+          }).catch(() => {});
+        }
       }
     } catch (kotErr) {
       console.warn("Failed to update active KOT items on void:", kotErr);
@@ -1269,7 +1283,7 @@ const handleVoidItem = async (req: AuthedRequest, res: any) => {
 
     if (updatedOrder?.status === "CANCELLED") {
       await prisma.kOTTicket.updateMany({
-        where: { orderId: updatedOrder.id, status: { in: ["QUEUED", "PREPARING", "READY"] } },
+        where: { orderId: updatedOrder.id },
         data: { status: "CANCELLED" },
       }).catch(() => {});
 

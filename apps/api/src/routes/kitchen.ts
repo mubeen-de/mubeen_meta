@@ -125,12 +125,11 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
       const recallCutoff = new Date(Date.now() - 2 * 60 * 60 * 1000);
       whereClause = {
         outletId: req.auth!.outletId,
-        order: {
-          status: { notIn: ["CANCELLED", "FAILED"] },
-        },
         OR: [
           { status: { in: ["QUEUED", "PREPARING", "READY"] } },
           { status: "SERVED", servedAt: { gt: recallCutoff } },
+          { status: "CANCELLED", updatedAt: { gt: recallCutoff } },
+          { order: { status: "CANCELLED", updatedAt: { gt: recallCutoff } } },
         ],
       };
     }
@@ -193,7 +192,7 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
     const orderItems = allOrderItemIds.length > 0
       ? await prisma.orderItem.findMany({
           where: { id: { in: allOrderItemIds } },
-          select: { id: true, notes: true, seatNumber: true },
+          select: { id: true, notes: true, seatNumber: true, isVoided: true, voidReason: true },
         }).catch(() => [])
       : [];
     const orderItemMap = new Map(orderItems.map((oi) => [oi.id, oi]));
@@ -209,7 +208,7 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
         stationName: t.station?.name ?? null,
         slaWarningSeconds: t.station?.slaWarningSeconds ?? 600,
         slaBreachSeconds: t.station?.slaBreachSeconds ?? 900,
-        status: t.status,
+        status: (t.order?.status === "CANCELLED" ? "CANCELLED" : t.status),
         createdAt: t.createdAt,
         servedAt: t.servedAt,
         orderType: t.order?.orderType ?? "DINE_IN",
@@ -220,10 +219,17 @@ router.get("/kot", requireAuth, requirePermission("kot.read", "kitchen.kds.view"
           null,
         kotItems: t.kotItems.map((ki) => {
           const linked = ki.orderItemId ? orderItemMap.get(ki.orderItemId) : null;
+          const isItemVoided = linked?.isVoided === true;
+          const voidNote = isItemVoided
+            ? (linked?.voidReason ? `❌ CANCELLED: ${linked.voidReason}` : `❌ CANCELLED ITEM`)
+            : null;
+          const finalNotes = voidNote
+            ? (ki.notes ? `${ki.notes} | ${voidNote}` : voidNote)
+            : (ki.notes || linked?.notes || null);
           return {
             id: ki.id,
-            quantity: ki.quantity,
-            notes: ki.notes || linked?.notes || null,
+            quantity: isItemVoided ? 0 : ki.quantity,
+            notes: finalNotes,
             course: ki.course,
             seatNumber: (ki as any).seatNumber ?? (ki as any).seat_number ?? linked?.seatNumber ?? null,
             servedAt: ki.servedAt,

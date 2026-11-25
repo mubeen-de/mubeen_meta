@@ -111,7 +111,7 @@ function serializeCurrentOrder(activeOrder: any, resolvedWaiterName?: string | n
         course: ki.course || null,
       })),
     })),
-    items: (activeOrder.orderItems || []).map((oi: any) => ({
+    items: (activeOrder.orderItems || []).filter((oi: any) => !oi.isVoided).map((oi: any) => ({
       id: oi.id,
       menuItemId: oi.menuItemId,
       menuItemName: oi.menuItem?.name || oi.item_name || "Item",
@@ -284,6 +284,7 @@ tablesRouter.get("/tables", requireAuth, async (req: AuthedRequest, res) => {
           orderBy: { createdAt: "asc" },
         },
         orderItems: {
+          where: { isVoided: false },
           include: {
             menuItem: { select: { name: true } },
           },

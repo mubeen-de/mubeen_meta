@@ -25,7 +25,7 @@ interface KOTTicket {
   ticketNumber: string;
   stationId: string | null;
   stationName: string | null;
-  status: "QUEUED" | "PREPARING" | "READY" | "SERVED";
+  status: "QUEUED" | "PREPARING" | "READY" | "SERVED" | "CANCELLED";
   createdAt: string;
   servedAt: string | null;
   kotItems: KOTItem[];

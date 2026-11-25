@@ -19,7 +19,7 @@ export interface KotCardData {
   initialElapsedSeconds: number; // For MM:SS timer
   biller: string;
   items: KotItemLine[];
-  status: "QUEUED" | "PREPARING" | "READY" | "SERVED";
+  status: "QUEUED" | "PREPARING" | "READY" | "SERVED" | "CANCELLED";
   createdAt?: string;
 }
 
@@ -705,6 +705,7 @@ export default function KapMetaKotView({
                 const formattedTime = formatTimer(currentElapsed);
                 const isExceeded = currentElapsed >= 1200; // > 20 mins
                 const isWarning = currentElapsed >= 600 && !isExceeded; // 10-20 mins
+                const isCancelled = card.status === "CANCELLED";
                 const isReady = card.status === "READY";
                 const isCooking = card.status === "PREPARING";
                 const isServed = card.status === "SERVED";
@@ -715,7 +716,9 @@ export default function KapMetaKotView({
                   <div
                     key={card.id}
                     className={`modern-kds-card ${
-                      isReady
+                      isCancelled
+                        ? "kds-cancelled"
+                        : isReady
                         ? "kds-ready"
                         : isCooking
                         ? "kds-cooking"
@@ -773,7 +776,9 @@ export default function KapMetaKotView({
                           ? "🔥 Cooking"
                           : card.status === "READY"
                           ? "🔔 Food Ready"
-                          : "✓ Served"}
+                          : card.status === "SERVED"
+                          ? "✓ Served"
+                          : "❌ Cancelled"}
                       </span>
                     </div>
 
@@ -883,6 +888,12 @@ export default function KapMetaKotView({
                       {card.status === "SERVED" && (
                         <div className="kds-served-notice">✓ Food Delivered</div>
                       )}
+
+                      {card.status === "CANCELLED" && (
+                        <div style={{ textAlign: "center", color: "#f87171", fontSize: "11px", fontWeight: 800, padding: "8px 0", background: "rgba(220, 38, 38, 0.2)", borderRadius: "6px", border: "1px solid rgba(239, 68, 68, 0.4)" }}>
+                          ❌ ORDER / KOT CANCELLED
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -900,14 +911,16 @@ export default function KapMetaKotView({
               return (
                 <div
                   key={card.id}
-                  className={`kot-ticket-card-box ${isReady ? "is-ready-state" : card.status === "PREPARING" ? "is-cooking-state" : ""}`}
+                  className={`kot-ticket-card-box ${card.status === "CANCELLED" ? "is-cancelled-state" : isReady ? "is-ready-state" : card.status === "PREPARING" ? "is-cooking-state" : ""}`}
                 >
                   {/* Card Red / Amber / Green Header Bar */}
                   <div
                     className="card-top-red-bar"
                     style={{
                       background:
-                        card.status === "READY"
+                        card.status === "CANCELLED"
+                          ? "#b91c1c"
+                          : card.status === "READY"
                           ? "#15803d"
                           : card.status === "PREPARING"
                           ? "#d97706"
@@ -917,7 +930,9 @@ export default function KapMetaKotView({
                     }}
                   >
                     <div className="badge-order-type">
-                      {card.status === "PREPARING"
+                      {card.status === "CANCELLED"
+                        ? "❌ Cancelled"
+                        : card.status === "PREPARING"
                         ? "👨‍🍳 Cooking"
                         : card.status === "READY"
                         ? "🔔 Food Ready"
@@ -1108,6 +1123,12 @@ export default function KapMetaKotView({
                     {card.status === "SERVED" && (
                       <div style={{ textAlign: "center", color: "#10b981", fontSize: "11px", fontWeight: 700, padding: "8px 0" }}>
                         ✓ Food Delivered to Table
+                      </div>
+                    )}
+
+                    {card.status === "CANCELLED" && (
+                      <div style={{ textAlign: "center", color: "#dc2626", fontSize: "11px", fontWeight: 800, padding: "8px 0", background: "rgba(220, 38, 38, 0.12)", borderRadius: "6px", border: "1px solid rgba(220, 38, 38, 0.3)" }}>
+                        ❌ ORDER / KOT CANCELLED (DO NOT PREPARE)
                       </div>
                     )}
                   </div>
@@ -1366,6 +1387,17 @@ export default function KapMetaKotView({
           opacity: 0.8;
         }
 
+        .modern-kds-card.kds-cancelled {
+          border-top: 4px solid #dc2626;
+          background: #1c1111;
+          box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.4);
+        }
+
+        .kot-ticket-card-box.is-cancelled-state {
+          border: 2px solid #dc2626;
+          opacity: 0.9;
+        }
+
         .kds-card-header {
           padding: 8px 12px;
           background: #f8fafc;
@@ -1548,6 +1580,12 @@ export default function KapMetaKotView({
         .kds-status-pill.pill-served {
           background: #f1f5f9;
           color: #64748b;
+        }
+
+        .kds-status-pill.pill-cancelled {
+          background: #fee2e2;
+          color: #dc2626;
+          font-weight: 800;
         }
 
         .kds-items-list {
